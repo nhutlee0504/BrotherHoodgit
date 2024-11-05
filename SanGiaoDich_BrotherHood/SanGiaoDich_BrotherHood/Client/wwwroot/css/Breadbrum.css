@@ -1,0 +1,58 @@
+﻿.profile-card {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    transition: box-shadow 0.3s ease;
+}
+
+.profile-avatar img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.profile-info {
+    margin-left: 20px;
+}
+
+    .profile-info p {
+        margin: 0;
+        padding: 5px 0;
+    }
+
+.text-success {
+    color: #28a745;
+}
+.product-description {
+    background-color: #ffffff; /* Nền trắng */
+    border-radius: 10px; /* Bo góc cho card */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ */
+    padding: 15px; /* Khoảng cách bên trong cho card */
+    margin-bottom: 20px; /* Khoảng cách dưới card */
+}
+
+.card-title {
+    color: #333; /* Màu chữ tiêu đề tối hơn để dễ đọc */
+    margin-bottom: 10px; /* Khoảng cách dưới tiêu đề */
+}
+
+.list-unstyled {
+    padding: 0; /* Loại bỏ padding mặc định */
+}
+
+    .list-unstyled li {
+        margin: 5px 0; /* Khoảng cách giữa các mục */
+        padding: 8px; /* Khoảng cách bên trong cho mục */
+        border-radius: 4px; /* Bo góc cho từng mục */
+        transition: background-color 0.3s; /* Hiệu ứng chuyển đổi */
+    }
+
+        .list-unstyled li:hover {
+            background-color: #f9f9f9; /* Nền nhẹ hơn khi hover */
+        }

@@ -1,0 +1,194 @@
+﻿@page "/orderdetails"
+@using System.ComponentModel.DataAnnotations
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<style>
+
+
+    .small-text {
+        font-size: 0.8rem; /* Điều chỉnh kích thước chữ nhỏ lại */
+    }
+
+    .small-label {
+        font-size: 1.0rem; /* Kích thước chữ nhỏ hơn cho label */
+    }
+
+    /* Loại bỏ viền của bảng */
+    .no-border {
+        border: none !important; /* Không có viền */
+    }
+
+        .no-border td,
+        .no-border th {
+            border: none !important; /* Không có viền cho các ô */
+        }
+
+    .custom-box {
+        background-color: #f8f9fa; /* Màu nền của khung */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Bóng đổ phía dưới */
+        border-radius: 5px; /* Bo góc cho khung */
+    }
+</style>
+
+<div class="container-fluid">
+    <ul class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="#">Đơn mua</a></li>
+        <li class="breadcrumb-item"><a href="#">Chi tiết đơn / 1</a></li>
+    </ul>
+</div>
+<div class="container mt-4">
+    <!-- Khung bao ngoài -->
+    <div class="custom-box p-3">
+        <div class="row">
+            <div class="col-md-6">
+                <label class="me-2"><strong>Đơn hàng:</strong></label>
+                <span class="text-success">#12345</span>
+            </div>
+            <div class="col-md-6">
+                <label class="me-2"><strong>Ngày đặt:</strong></label>
+                <span class=" ">2024-10-05</span>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <label class="me-2"><strong>Trạng thái:</strong></label>
+                <span class="text-success">Đang xử lý</span>
+            </div>
+            <div class="col-md-6">
+                <label class="me-2"><strong>Ngày nhận</strong></label>
+                <span class="">2024-10-10</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<div class="container mt-4 mb-5">
+    <div class="row">
+        <div class="col-md-9">
+            <div class="shadow p-3 table-responsive">
+                <table class="table text-center no-border">
+                    <thead>
+                        <tr>
+                            <th>Tên sản phẩm</th>
+                            <th>Số lượng</th>
+                            <th>Đơn giá</th>
+                            <th>Tổng tiền</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span class="form-control-plaintext">Sản phẩm ABC</span>
+                            </td>
+                            <td>
+                                <span class="form-control-plaintext">3</span>
+                            </td>
+                            <td>
+                                <span class="form-control-plaintext">100,000 VND</span>
+                            </td>
+                            <td>
+                                <span class="form-control-plaintext">300,000 VND</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-success">
+                                    <i class="fa fa-star"></i> Đánh giá
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="form-control-plaintext">Sản phẩm ABC</span>
+                            </td>
+                            <td>
+                                <span class="form-control-plaintext">3</span>
+                            </td>
+                            <td>
+                                <span class="form-control-plaintext">100,000 VND</span>
+                            </td>
+                            <td>
+                                <span class="form-control-plaintext">300,000 VND</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-success">
+                                    <i class="fa fa-star"></i> Đánh giá
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="form-control-plaintext">Sản phẩm ABC</span>
+                            </td>
+                            <td>
+                                <span class="form-control-plaintext">3</span>
+                            </td>
+                            <td>
+                                <span class="form-control-plaintext">100,000 VND</span>
+                            </td>
+                            <td>
+                                <span class="form-control-plaintext">300,000 VND</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-success">
+                                    <i class="fa fa-star"></i> Đánh giá
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="form-control-plaintext">Sản phẩm ABC</span>
+                            </td>
+                            <td>
+                                <span class="form-control-plaintext">3</span>
+                            </td>
+                            <td>
+                                <span class="form-control-plaintext">100,000 VND</span>
+                            </td>
+                            <td>
+                                <span class="form-control-plaintext">300,000 VND</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-success">
+                                    <i class="fa fa-star"></i> Đánh giá
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="custom-border p-3 border">
+                        <h5><i class="fa fa-user-circle"></i> Thông tin người bán</h5>
+                        <p class="mb-1 small-text"><strong><i class="fa fa-user"></i> Tên:</strong> TÔN THẤT HUY</p>
+                        <p class="mb-1 small-text"><strong><i class="fa fa-phone"></i> Số điện thoại:</strong> 39485895235</p>
+                        <p class="mb-1 small-text"><strong><i class="fa fa-map-marker-alt"></i> Địa chỉ:</strong> 123 Đường ABC, Quận 1, TP.HCM</p>
+                    </div>
+                </div>
+                <div class="col-md-12 mt-2">
+                    <div class="custom-border p-3 border">
+                        <h5><i class="fa fa-user-circle"></i> Thông tin người mua</h5>
+                        <p class="mb-1 small-text"><strong><i class="fa fa-user"></i> Tên:</strong> Lê Minh Nhựt</p>
+                        <p class="mb-1 small-text"><strong><i class="fa fa-phone"></i> Số điện thoại:</strong> 0838427384</p>
+                        <p class="mb-1 small-text"><strong><i class="fa fa-map-marker-alt"></i> Địa chỉ:</strong> Ninh Kiều, Cần Thơ, Cà Mau</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+@code {
+
+}

@@ -1,0 +1,73 @@
+﻿@page "/dangky"
+@using SanGiaoDich_BrotherHood.Shared.Dto
+@using SanGiaoDich_BrotherHood.Shared.Models
+@inject HttpClient Http
+<div style="background-color:blue">
+
+</div>
+<h3>Đăng Ký Tài Khoản</h3>
+
+@if (!string.IsNullOrEmpty(Message))
+{
+    <div class="alert alert-danger">@Message</div>
+}
+
+<EditForm Model="registerDto" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="UserName">Tên đăng nhập:</label>
+        <InputText id="UserName" @bind-Value="registerDto.UserName" class="form-control" />
+        <ValidationMessage For="@(() => registerDto.UserName)" />
+    </div>
+    <div class="form-group">
+        <label for="Password">Mật khẩu:</label>
+        <InputText id="Password" @bind-Value="registerDto.Password" type="password" class="form-control" />
+        <ValidationMessage For="@(() => registerDto.Password)" />
+    </div>
+    <div class="form-group">
+        <label for="ConformPassword">Xác nhận mật khẩu:</label>
+        <InputText id="ConformPassword" @bind-Value="registerDto.ConformPassword" type="password" class="form-control" />
+        <ValidationMessage For="@(() => registerDto.ConformPassword)" />
+    </div>
+    <button type="submit" class="btn btn-primary">Đăng ký</button>
+</EditForm>
+
+@if (registeredAccount != null)
+{
+    <h4>Thông tin tài khoản vừa đăng ký:</h4>
+    <ul>
+        <li><strong>Tên đăng nhập:</strong> @registeredAccount.UserName</li>
+        <li><strong>Thời gian tạo:</strong> @registeredAccount.CreatedTime</li>
+        <li><strong>Vai trò:</strong> @registeredAccount.Role</li>
+    </ul>
+}
+
+@code {
+    private RegisterDto registerDto = new RegisterDto();
+    private string Message;
+    private Account registeredAccount;
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/User/RegisterUser", registerDto);
+            if (response.IsSuccessStatusCode)
+            {
+                registeredAccount = await response.Content.ReadFromJsonAsync<Account>();
+                Message = string.Empty; // Reset message if registration is successful
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                Message = errorMessage; // Hiển thị thông báo lỗi từ server
+            }
+        }
+        catch (Exception ex)
+        {
+            Message = $"Có lỗi xảy ra: {ex.Message}"; // Hiển thị thông báo lỗi chung
+        }
+    }
+}

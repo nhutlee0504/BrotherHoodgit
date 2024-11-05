@@ -1,0 +1,396 @@
+﻿@inherits LayoutComponentBase
+@inject HttpClient http
+@inject IJSRuntime jsruntime
+@inject NavigationManager NavigationManager
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    .navbar-nav .nav-link {
+        color: black;
+        text-decoration: none;
+        padding: 10px 15px;
+        transition: color 0.3s ease, background-color 0.3s ease;
+    }
+
+        .navbar-nav .nav-link:hover {
+            color: white; 
+            background-color: green; 
+            border-radius: 5px; 
+        }
+
+    body {
+        font-family: Arial, sans-serif;
+    }
+
+    .navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background-color: #fff;
+        border-bottom: 1px solid #ddd;
+
+    }
+
+    .logo img {
+        width: 50px;
+        height: auto;
+    }
+
+    .search-bar {
+        display: flex;
+        align-items: center;
+        border: 1px solid #ddd;
+        border-radius: 15px;
+        padding: 5px;
+        background-color: #f9f9f9;
+    }
+
+        .search-bar input {
+            border: none;
+            outline: none;
+            padding: 5px;
+        }
+
+        .search-bar button {
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+    .menu {
+        display: flex;
+        gap: 15px;
+    }
+
+        .menu a {
+            text-decoration: none;
+            color: black;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+            .menu a:hover {
+                background-color: lightgray;
+            }
+
+    .auth-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+        .auth-buttons .register {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .auth-buttons .login {
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .auth-buttons button:hover {
+            opacity: 0.8;
+        }
+
+    footer {
+        background-color: #ffffff;
+        padding: 20px 0;
+        border-top: 1px solid #ccc;
+    }
+
+    ul {
+        padding-left: 0;
+        margin: 0; 
+    }
+    ul>li>a{
+        text-decoration:none;
+        color:black;
+    }
+
+    ul>li{
+        list-style:none;
+    }
+    .social-icons {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        gap: 10px;
+        padding-right: 150px;
+        padding-bottom: 90px;
+    }
+
+        .social-icons a {
+            color: #28a745;
+            top: 20px;
+        }
+        .navbar-toggler-icon{
+            background-image: url('/AnhGiaoDien/menu.png');
+        }
+        .page{
+        font-family: 'Playfair Display', serif;
+        }
+        .content{
+        font-family: 'Playfair Display', serif;
+        }
+
+    #scrollToTopBtn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        border-radius: 50%;
+        padding: 10px 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+
+<div class="page">
+    <div class="main">
+        @*Header*@
+        <header>
+            <div class="container-fluid" style="padding-left:0px;">
+                <nav class="navbar navbar-expand-lg sticky-top  shadow rounded" style="position:fixed; width:100%;">
+
+                    <!-- Logo -->
+                    <div class="logo me-5">
+                        <a href="#"><img class="rounded-circle" src="/AnhGiaoDien/Logo.jpg" alt="Logo" style="max-width: 100px;"></a>
+                    </div>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <!-- Nội dung của navbar -->
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <div class="d-flex justify-content-center  me-md-3 me-0">
+                            <div class="search-box">
+                                <button class="btn-search"><i class="fas fa-search"></i></button>
+                                <input type="text" class="input-search" style="color:black;border-color:#15ba6d !important; border-radius:15px; font-size:14px; font-family:Arial, Helvetica, sans-serif" placeholder="Nhập thông tin tìm kiếm...">
+                            </div>
+    
+                        </div>
+                       
+                        <!-- Menu điều hướng -->
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <p class="m-0 text-center"><i class="bi bi-house"></i></p>
+                                    <div class="d-flex justify-content-center">Trang chủ</div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="sanpham">
+                                    <p class="m-0 text-center"><i class="bi bi-box-seam"></i></p>
+                                    <div class="d-flex justify-content-center">Sản phẩm</div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/PageGioHang">
+                                    <p class="m-0 text-center"><i class="bi bi-basket"></i></p>
+                                    <div class="d-flex justify-content-center">Giỏ hàng</div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="bill">
+                                    <p class="m-0 text-center"><i class="bi bi-receipt"></i></p>
+                                    <div class="d-flex justify-content-center">Hóa đơn</div>
+                                </a>
+                            </li>
+                        </ul>
+
+                        <!-- Auth buttons -->
+                        <div class="auth-buttons ms-auto d-flex justify-content-center align-items-center">
+                            @if (isLoading)
+                            {
+                                <span>Loading...</span>
+                            }
+                            else if (!IsLoggedIn)
+                            {
+                                <a href="register" class="btn btn-success me-2">
+                                    <i class="fas fa-user-plus"></i> Đăng ký
+                                </a>
+                                <a href="login" class="btn btn-dark">
+                                    <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="/ThongTinNguoiDung/@accountInfo.UserName">  <span>Xin chào, @accountInfo.UserName!</span></a>
+                                <button @onclick="Logout" class="btn btn-danger ms-2">
+                                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                                </button>
+                            }
+                        </div>
+
+                    </div>
+
+                </nav>
+            </div>
+
+        </header>
+
+
+        <div class="content" style="margin-top:75px;">
+            @Body
+        </div>
+       
+
+        @*Footer*@
+        <button id="scrollToTopBtn" class="btn btn-primary" style="display: none;">
+            <i class="fas fa-arrow-up"></i> Quay lên
+        </button>
+            <footer>
+                 <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="group-item text-center">
+                            <a href="#"><i class="fab fa-facebook-square text-success" style="font-size:36px"></i></a>
+                            <a href="#"><i class="fab fa-instagram text-success" style="font-size:36px"></i></a>
+                            <a href="#"><i class="fab fa-youtube text-success" style="font-size:36px"></i></a>
+                            <a href="#"><i class="fab fa-linkedin text-success" style="font-size:36px"></i></a>
+
+                        </div>
+                    </div>
+
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <!-- Footer Section 1 -->
+                                <h5 style="font-weight:bolder">Trung tâm hỗ trợ khách hàng</h5>
+                                <ul>
+                                    <li><a href="#">Quy tắc an toàn mua bán</a></li>
+                                    <li><a href="#">Các câu hỏi thường gặp</a></li>
+                                    <li><a href="#">Q&A</a></li>
+                                    <li><a href="#">Liên hệ hỗ trợ</a></li>
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+
+                                <!-- Footer Section 2 -->
+                                <h5 style="font-weight:bolder">Về BrothersHood</h5>
+                                <ul>
+                                    <li><a href="#">Giới thiệu</a></li>
+                                    <li><a href="#">Đánh giá bảo mật</a></li>
+                                    <li><a href="#">Giải quyết tranh chấp</a></li>
+                                    <li><a href="#">Tuyển dụng</a></li>
+                                    <li><a href="#">Truyền thông</a></li>
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+                                <!-- Footer Section 3 -->
+                                <h5 style="font-weight:bolder">Resources</h5>
+                                <ul>
+                                    <li><a href="#">API</a></li>
+                                    <li><a href="#">AI API</a></li>
+                                    <li><a href="#">Source Web</a></li>
+                                    <li><a href="#">Dev tool</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+
+
+
+                    </div>
+                </div>
+            </div>
+            </footer>
+        </div>
+
+
+</div>
+@code {
+    private bool isLoading = true;
+    private string errorMessage;
+    private AccountInfoDto accountInfo;
+    private bool IsLoggedIn { get; set; } = false; // Biến để theo dõi trạng thái đăng nhập
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckTokenAndLoadAccountInfo();
+    }
+
+    private async Task CheckTokenAndLoadAccountInfo()
+    {
+        var token = await jsruntime.InvokeAsync<string>("localStorage.getItem", "token");
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            // Thiết lập token cho yêu cầu HTTP
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            await LoadAccountInfo();
+        }
+        else
+        {
+            isLoading = false; // Không cần tải thông tin tài khoản
+        }
+    }
+
+    private async Task LoadAccountInfo()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var response = await http.GetAsync("api/User/GetMyInfo");
+
+            if (response.IsSuccessStatusCode)
+            {
+                accountInfo = await response.Content.ReadFromJsonAsync<AccountInfoDto>();
+                IsLoggedIn = true; // Đánh dấu là người dùng đã đăng nhập
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                IsLoggedIn = false; // Đánh dấu là người dùng chưa đăng nhập
+                await Logout();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Có lỗi xảy ra: " + ex.Message;
+            IsLoggedIn = false; // Đánh dấu là người dùng chưa đăng nhập
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private class AccountInfoDto
+    {
+        public string UserName { get; set; }
+        public string FullName { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Gender { get; set; }
+        public DateTime? Birthday { get; set; }
+        public string ImageAccount { get; set; }
+    }
+
+    private async Task Logout()
+    {
+        // Xóa token khỏi local storage và cập nhật trạng thái
+        await jsruntime.InvokeVoidAsync("localStorage.removeItem", "token");
+        IsLoggedIn = false;
+        accountInfo = null; // Đặt lại thông tin tài khoản
+        NavigationManager.NavigateTo("/", forceLoad: true);
+    }
+}1

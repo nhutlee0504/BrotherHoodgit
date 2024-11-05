@@ -1,0 +1,187 @@
+﻿@page "/bill"
+@using System.ComponentModel.DataAnnotations
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+<style>
+    .nav-tabs .nav-link {
+        color: green;
+    }
+
+        .nav-tabs .nav-link:hover {
+            color: forestgreen; 
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #ffffff; 
+            background-color: green;
+            border-color: green; 
+        }
+
+            .nav-tabs .nav-link.active:hover {
+                background-color: green;
+            }
+
+
+</style>
+<div class="container-fluid">
+    <ul class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="#">Hóa đơn của tôi</a></li>
+    </ul>
+</div>
+<div class="container mt-4">
+    <ul class="nav nav-tabs mb-2" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="purchase-tab" data-bs-toggle="tab" href="#purchase" role="tab" aria-controls="purchase" aria-selected="true">
+                <i class="fas fa-shopping-cart"></i> Đơn Mua
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="sale-tab" data-bs-toggle="tab" href="#sale" role="tab" aria-controls="sale" aria-selected="false">
+                <i class="fas fa-shopping-basket"></i> Đơn Bán
+            </a>
+        </li>
+    </ul>
+
+
+    <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade show active" id="purchase" role="tabpanel" aria-labelledby="purchase-tab">
+            @foreach (var order in Orders) // Giả định bạn có một danh sách đơn mua
+            {
+                <div class="card mb-4 shadow" style="border:none; border-radius:20px;">
+                    <div class="row g-0">
+                        <!-- Phần 1: Khung hình -->
+                        <div class="col-md-3">
+                            <img src="/AnhSanPham/default.png" class="img-fluid rounded-start" alt="Image">
+                        </div>
+                        <!-- Phần 2: Thông tin -->
+                        <div class="col-md-9">
+                            <div class="card-body">
+                                <div class="py-1">
+                                    <p class="mb-1"><i class="fa fa-receipt"></i> <strong>Mã đơn:</strong> @order.OrderId</p>
+                                    <p class="mb-1"><i class="fa fa-user"></i> <strong>Họ tên:</strong> @order.CustomerName</p>
+                                    <p class="mb-1"><i class="fa fa-map-marker-alt"></i> <strong>Địa chỉ:</strong> @order.Address</p>
+                                    <p class="mb-1"><i class="fa fa-money-bill-wave"></i> <strong>Tổng tiền:</strong> @order.TotalAmount.ToString("N0") VND</p>
+                                    <p class="mb-1"><i class="fa fa-calendar-alt"></i> <strong>Ngày đặt:</strong> @order.OrderDate.ToString("dd/MM/yyyy")</p>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-0">
+                                    <div>
+                                        <p class="mb-1">
+                                            <i class="fa fa-calendar-check"></i>
+                                            <strong>Ngày nhận:</strong> @order.DeliveryDate.ToString("dd/MM/yyyy")
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="mb-1">
+                                            <i class="fa fa-info-circle"></i>
+                                            <strong>Trạng thái:</strong> @order.Status
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-success" @onclick="() => XacNhan(order)">
+                                            <i class="fa fa-check-circle"></i> Xác nhận
+                                        </button>
+                                        <a href="orderdetails" class="btn btn-light ms-2">
+                                            <i class="fa fa-eye"></i> Xem Chi Tiết
+                                        </a>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="tab-pane fade" id="sale" role="tabpanel" aria-labelledby="sale-tab">
+            @foreach (var order in Orders) // Giả định bạn có một danh sách đơn mua
+            {
+                <div class="card mb-4 shadow" style="border:none;border-radius:20px;">
+                    <div class="row g-0">
+                        <!-- Phần 1: Khung hình -->
+                        <div class="col-md-3">
+                            <img src="/AnhSanPham/ao4.webp" class="img-fluid rounded-start" alt="Image">
+                        </div>
+                        <!-- Phần 2: Thông tin -->
+                        <div class="col-md-9">
+                            <div class="card-body">
+                                <div class="py-1">
+                                    <p class="mb-1"><i class="fa fa-receipt"></i> <strong>Mã đơn mua:</strong> @order.OrderId</p>
+                                    <p class="mb-1"><i class="fa fa-user"></i> <strong>Người mua:</strong> @order.CustomerName</p>
+                                    <p class="mb-1"><i class="fa fa-map-marker-alt"></i> <strong>Địa chỉ giao hàng:</strong> @order.Address</p>
+                                    <p class="mb-1"><i class="fa fa-money-bill-wave"></i> <strong>Tổng tiền:</strong> @order.TotalAmount.ToString("N0") VND</p>
+                                    <p class="mb-1"><i class="fa fa-calendar-alt"></i> <strong>Ngày đặt mua:</strong> @order.OrderDate.ToString("dd/MM/yyyy")</p>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-0">
+                                    <div>
+                                        <p class="mb-1"><i class="fa fa-calendar-check"></i> <strong>Dự kiến giao:</strong> @order.DeliveryDate.ToString("dd/MM/yyyy")</p>
+                                    </div>
+                                    <p class="mb-1"><i class="fa fa-info-circle"></i> <strong>Trạng thái đơn:</strong> @order.Status</p>
+                                    <button class="btn btn-outline-success" @onclick="() => XacNhan(order)">
+                                        <i class="fa fa-check-circle"></i> Xác nhận nhận hàng
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+        </div>
+    </div>
+
+</div>
+
+
+@code {
+    // Class để chứa thông tin đơn hàng
+    public class Order
+    {
+        public string OrderId { get; set; }
+        public string CustomerName { get; set; }
+        public string Address { get; set; }
+        public decimal TotalAmount { get; set; }
+        public DateTime OrderDate { get; set; }
+        public DateTime DeliveryDate { get; set; }
+        public string Status { get; set; }
+        public string ImageUrl { get; set; }
+    }
+
+    // Danh sách đơn hàng (thay thế bằng dữ liệu thực tế từ cơ sở dữ liệu)
+    private List<Order> Orders = new List<Order>
+    {
+        new Order
+        {
+            OrderId = "001", CustomerName = "Nguyen Van A", Address = "123 ABC Street",
+            TotalAmount = 1000000, OrderDate = DateTime.Now.AddDays(-5), DeliveryDate = DateTime.Now.AddDays(2),
+            Status = "Chưa xác nhận", ImageUrl = "your-image-url-here.jpg"
+        },
+        new Order
+        {
+            OrderId = "002", CustomerName = "Tran Van B", Address = "456 DEF Street",
+            TotalAmount = 2000000, OrderDate = DateTime.Now.AddDays(-3), DeliveryDate = DateTime.Now.AddDays(1),
+            Status = "Chưa xác nhận", ImageUrl = "your-image-url-here.jpg"
+        },
+        new Order
+        {
+            OrderId = "003", CustomerName = "Le Thi C", Address = "789 GHI Street",
+            TotalAmount = 1500000, OrderDate = DateTime.Now.AddDays(-7), DeliveryDate = DateTime.Now.AddDays(3),
+            Status = "Chưa xác nhận", ImageUrl = "your-image-url-here.jpg"
+        },
+        new Order
+        {
+            OrderId = "004", CustomerName = "Pham Van D", Address = "101 JKL Street",
+            TotalAmount = 500000, OrderDate = DateTime.Now.AddDays(-2), DeliveryDate = DateTime.Now.AddDays(4),
+            Status = "Chưa xác nhận", ImageUrl = "your-image-url-here.jpg"
+        }
+    };
+
+    // Phương thức để xử lý khi nhấn nút Xác nhận
+    private void XacNhan(Order order)
+    {
+        // Cập nhật trạng thái đơn hàng và thông báo
+        order.Status = "Đã xác nhận";
+        JSRuntime.InvokeVoidAsync("alert", $"Đơn hàng {order.OrderId} đã được xác nhận!");
+    }
+}

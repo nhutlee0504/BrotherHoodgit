@@ -1,0 +1,281 @@
+﻿@page "/register"
+@using System.ComponentModel.DataAnnotations
+@inject HttpClient http
+@inject NavigationManager navigation
+@inject IJSRuntime js
+@using SanGiaoDich_BrotherHood.Shared.Dto
+@using SanGiaoDich_BrotherHood.Shared.Models
+@using System.Security.Cryptography
+@using System.Text
+
+<style>
+    .content {
+        background-image: url('/AnhGiaoDien/Rectangle 5 (2).png'); 
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        padding: 20px; 
+    }
+
+    .alert {
+        border-radius: 0.5rem;
+        padding: 1rem;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .alert-danger {
+        background-color: #dc3545;
+        color: #ffffff;
+    }
+
+    .alert-success {
+        background-color: #28a745;
+        color: #ffffff;
+    }
+
+    .btn-google, .btn-facebook {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+        .btn-google img, .btn-facebook img {
+            width: 20px;
+            height: 20px;
+        }
+
+    .btn-google {
+        background-color: white;
+        border-color: white;
+    }
+
+    .btn-facebook {
+        background-color: #1877F2;
+        color: white;
+    }
+    .btn-success{
+        background-color: #34C759;
+    }
+    /* Khung nhỏ gọn */
+    .form-container {
+        max-width: 400px; /* Điều chỉnh kích thước khung */
+        margin: 0 auto; /* Căn giữa khung */
+        padding: 2rem; /* Điều chỉnh độ dày padding */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ */
+        border-radius: 0.75rem; /* Bo tròn góc */
+        background-color: white; /* Đặt nền màu trắng cho khung */
+    }
+
+
+        /* Điều chỉnh khoảng cách trong form */
+        .form-container h2, .form-container .mb-3, .form-container .text-center {
+            margin-bottom: 1rem; /* Điều chỉnh khoảng cách giữa các phần */
+        }
+
+        /* Giảm chiều cao nút bấm */
+        .form-container button {
+            height: 40px;
+        }
+
+    /* Gạch chân cho thẻ a */
+    a {
+        text-decoration: underline; /* Thêm gạch chân */
+        color: #007bff; /* Màu cho thẻ a */
+    }
+</style>
+
+<div class="container">
+    <div class="row justify-content-center mt-5 mb-2">
+        <div class="col-md-6">
+            <div class="form-container p-4 rounded bg-white shadow-sm">
+                <h4 class="text-center mb-4" style="font-weight:bolder">Đăng kí tài khoản</h4>
+
+                @if (!string.IsNullOrEmpty(successMessage))
+                {
+                    <div class="alert alert-success" role="alert">
+                        @successMessage
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @errorMessage
+                    </div>
+                }
+
+                <EditForm Model="@register" OnValidSubmit="Submit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label for="UserName" class="form-label">Tên tài khoản</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            <InputText id="UserName" class="form-control" style="border-top-right-radius:10px; border-bottom-right-radius: 10px;" @bind-Value="register.UserName" placeholder="Nhập tên tài khoản" />
+                        </div>
+                        <ValidationMessage For="@(() => register.UserName)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Password" class="form-label">Mật khẩu</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <InputText id="Password" type="password" style="border-top-right-radius:10px; border-bottom-right-radius: 10px;" class="form-control" @bind-Value="register.Password" placeholder="Nhập mật khẩu" />
+                        </div>
+                        <ValidationMessage For="@(() => register.Password)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Confirm" class="form-label">Nhập lại mật khẩu</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <InputText id="Confirm" type="password" style="border-top-right-radius:10px; border-bottom-right-radius: 10px;" class="form-control" @bind-Value="register.ConformPassword" placeholder="Nhập lại mật khẩu" />
+                        </div>
+                        <ValidationMessage For="@(() => register.ConformPassword)" />
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input type="checkbox" @bind-value="checKed" class="form-check-input" id="checkbox">
+                        <label class="form-check-label" for="checkbox">
+                            Tôi đồng ý với <a href="#">Chính sách và điều khoản</a>
+                        </label>
+                        @if (!string.IsNullOrEmpty(errorChecked))
+                        {
+                            <br />
+                            <span class="text-danger">@errorChecked</span>
+                        }
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-block w-100" style="border-radius:10px;">
+                        <i class="fas fa-user-plus"></i> Đăng kí tài khoản
+                    </button>
+                </EditForm>
+            </div>
+        </div>
+
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center mt-3">
+            Bạn đã có tài khoản? <a class="text-primary" href="Pages/Register" style="font-weight:bolder">Đăng nhập ngay</a><br />
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center mt-3">
+            <strong>Hoặc đăng nhập bằng</strong>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-5 text-center mt-3">
+            <a onclick="LoginWithGoogle" class="btn btn-google btn-block rounded-pill border w-100" style="height: 40px;  max-width:400px">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" />
+                Đăng nhập với Google
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-5 text-center mt-3">
+            <a onclick="LoginWithFacebook" class="btn btn-facebook btn-block rounded-pill w-100" style="color: white; height: 40px; max-width:400px">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook logo" />
+                Đăng nhập với Facebook
+            </a>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private RegisterDto register = new RegisterDto();
+    private List<Account> accounts;
+    private LoginDto login;
+    private string errorMessage;
+    private string successMessage;
+    private bool checKed = false;
+    private string errorChecked;
+    private string token;
+
+    private async Task Submit()
+    {
+        try
+        {
+            if (!checKed)
+            {
+                errorChecked = "Bạn cần đồng ý với chính sách và điều khoản";
+                return;
+            }
+            else
+                errorChecked = null;
+
+            var response = await http.PostAsJsonAsync("api/User/RegisterUser", register);
+            if (response.IsSuccessStatusCode)
+            {
+                try
+                {
+                    login = new LoginDto()
+                        {
+                            UserName = register.UserName,
+                            Password = register.Password
+                        };
+                    var responseLogin = await http.PostAsJsonAsync("api/User/LoginUser", login);
+
+                    if (responseLogin.IsSuccessStatusCode)
+                    {
+                        token = await responseLogin.Content.ReadAsStringAsync();
+                        await js.InvokeVoidAsync("localStorage.setItem", "token", token);
+                        http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                        navigation.NavigateTo("/", forceLoad: true);
+                    }
+                    else
+                    {
+                        errorMessage = await responseLogin.Content.ReadAsStringAsync();
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                    errorMessage = "Đã xảy ra lỗi đăng nhập: " + ex.Message;
+                    successMessage = null;
+                    await ClearErrorMessage();
+                }
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                successMessage = null;
+                await ClearErrorMessage();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Đã xảy ra lỗi đăng ký: " + ex.Message;
+            successMessage = null;
+            await ClearErrorMessage();
+        }
+    }
+
+    private async Task ClearErrorMessage()
+    {
+        await Task.Delay(3000);
+        errorMessage = null;
+        StateHasChanged();
+    }
+
+    private string HashPassword(string password)
+    {
+        using (var sha256 = SHA256.Create())
+        {
+            byte[] inputBytes = Encoding.UTF8.GetBytes(password);
+            byte[] hashBytes = sha256.ComputeHash(inputBytes);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < hashBytes.Length && i < 16; i++)
+            {
+                sb.Append(hashBytes[i].ToString("x2"));
+            }
+            return sb.ToString();
+        }
+    }
+}

@@ -1,0 +1,32 @@
+﻿@page "/categories"
+@using SanGiaoDich_BrotherHood.Shared.Models
+@inject HttpClient http
+
+<h3>ProductPage</h3>
+<div>
+    @if (categories != null)
+    {
+        foreach (var x in categories)
+        {
+            <p>@x.IDCategory - @x.NameCate</p>
+        }
+    }
+    else
+    {
+        <p>Error</p>
+    }
+</div>
+
+@code {
+    private List<Category> categories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await http.GetFromJsonAsync<List<Category>>("api/Category/GetCategories");
+    }
+    // public class CategoryResponse
+    // {
+    //     [JsonPropertyName("$values")]
+    //     public List<Category> Values { get; set; }
+    // }
+}
