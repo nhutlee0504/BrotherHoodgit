@@ -1,5 +1,7 @@
+﻿
 
-
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -70,6 +72,22 @@ namespace SanGiaoDich_BrotherHood.Server
                     ValidAudience = jwtSection["ValidAudience"],
                     IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
+            });
+
+            // Thêm Google Authentication
+            services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+            })
+            .AddCookie() // Cấu hình Cookie Authentication
+            .AddGoogle(options =>
+            {
+                options.ClientId = Configuration["Authentication:Google:ClientId"];
+                options.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
+                options.CallbackPath = "/signin-google"; // Đảm bảo rằng bạn có route này trong Configure
+                options.SaveTokens = true;
             });
 
             // Dependency injections
