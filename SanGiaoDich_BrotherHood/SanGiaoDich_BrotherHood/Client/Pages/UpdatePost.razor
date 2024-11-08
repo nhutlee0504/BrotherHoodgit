@@ -1,0 +1,189 @@
+﻿@page "/updatepost/{ProductId:int}"
+
+@using SanGiaoDich_BrotherHood.Shared.Models
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@using SanGiaoDich_BrotherHood.Shared.Dto
+
+<h3>Cập nhật sản phẩm</h3>
+
+<div class="container">
+    <!-- Tên sản phẩm -->
+    <div class="form-group mb-3">
+        <label for="ProductName">Tên sản phẩm:</label>
+        <input type="text" @bind="ProductName" class="form-control" placeholder="Nhập tên sản phẩm" id="ProductName" />
+    </div>
+
+    <!-- Giá sản phẩm -->
+    <div class="form-group mb-3">
+        <label for="ProductPrice">Giá sản phẩm:</label>
+        <input type="number" @bind="ProductPrice" class="form-control" placeholder="Nhập giá sản phẩm" id="ProductPrice" />
+    </div>
+
+    <!-- Số lượng sản phẩm -->
+    <div class="form-group mb-3">
+        <label for="ProductQuantity">Số lượng sản phẩm:</label>
+        <input type="number" @bind="ProductQuantity" class="form-control" placeholder="Nhập số lượng sản phẩm" id="ProductQuantity" />
+    </div>
+
+    <!-- Loại sản phẩm -->
+    <div class="form-group mb-3">
+        <label for="ProductCategory">Loại sản phẩm:</label>
+        <select @bind="ProductCategoryId" class="form-control" id="ProductCategory">
+            <option value="">Chọn loại sản phẩm</option>
+            @foreach (var category in categories)
+            {
+                <option value="@category.IDCategory" selected="@(category.IDCategory == ProductCategoryId ? "selected" : null)">
+                    @category.NameCate
+                </option>
+            }
+        </select>
+    </div>
+
+    <!-- Mô tả sản phẩm -->
+    <div class="form-group mb-3">
+        <label for="ProductDescription">Mô tả sản phẩm:</label>
+        <textarea @bind="Description" class="form-control" id="ProductDescription" rows="4"></textarea>
+    </div>
+
+    <!-- Hiển thị hình ảnh từ thư mục với tên file cụ thể -->
+    <div class="form-group mb-3">
+        <label>Hình ảnh:</label> <br />
+        <img src="@GetImage(ProductId)" class="img-fluid rounded-start" alt="@ProductName" style="width: 150px; height: 150px;" />
+    </div>
+
+    <!-- Nút cập nhật -->
+    <button @onclick="UpdateProduct" class="btn btn-success">Cập nhật sản phẩm</button>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@code {
+    [Parameter] public int ProductId { get; set; }
+    private string ProductName { get; set; }
+    private decimal ProductPrice { get; set; }
+    private int ProductQuantity { get; set; }
+    private string Description { get; set; }
+    private int ProductCategoryId { get; set; }
+    private string errorMessage { get; set; }
+    private List<Category> categories = new List<Category>();
+    private Dictionary<int, string> productImages = new Dictionary<int, string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadCategories();
+
+            // Tải thông tin sản phẩm
+            var product = await GetProductById(ProductId);
+            if (product != null)
+            {
+                ProductName = product.Name;
+                ProductPrice = product.Price;
+                ProductQuantity = product.Quantity;
+                ProductCategoryId = product.Category?.IDCategory ?? 0;
+                Description = product.Description;
+
+                // Gọi LoadImagesByIdProduct để lấy ảnh cho sản phẩm
+                await LoadImagesByIdProduct(ProductId);
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Không tìm thấy sản phẩm");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Lỗi khi tải thông tin sản phẩm: {ex.Message}");
+        }
+    }
+
+    private async Task<Product> GetProductById(int id)
+    {
+        var response = await HttpClient.GetAsync($"api/product/GetProductById/{id}");
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<Product>();
+        }
+        throw new Exception("Không thể tải dữ liệu sản phẩm");
+    }
+
+    private async Task LoadCategories()
+    {
+        try
+        {
+            var categoryList = await HttpClient.GetFromJsonAsync<List<Category>>("api/category/GetCategories");
+            categories = categoryList ?? new List<Category>();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Không thể tải danh sách loại sản phẩm: {ex.Message}");
+        }
+    }
+
+    private async Task LoadImagesByIdProduct(int id)
+    {
+        try
+        {
+            var images = await HttpClient.GetFromJsonAsync<List<ImageProduct>>($"api/imageproduct/GetImageProduct/{id}");
+
+            // Lấy ảnh đầu tiên hoặc ảnh mặc định nếu không có
+            if (images != null && images.Count > 0)
+            {
+                var imageUrl = images.First().Image; // Lấy ảnh đầu tiên
+                productImages[id] = $"/AnhSanPham/{imageUrl}";
+            }
+            else
+            {
+                productImages[id] = "/images/defaultImg.png"; // Ảnh mặc định
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            productImages[id] = "/images/defaultImg.png"; // Ảnh mặc định nếu có lỗi
+        }
+    }
+
+    private string GetImage(int id)
+    {
+        return productImages.ContainsKey(id) ? productImages[id] : "/images/defaultImg.png";
+    }
+
+    private async Task UpdateProduct()
+    {
+        try
+        {
+            var updatedProduct = new Product
+                {
+                    IDProduct = ProductId,
+                    Name = ProductName,
+                    Price = ProductPrice,
+                    Quantity = ProductQuantity,
+                    Category = categories.FirstOrDefault(c => c.IDCategory == ProductCategoryId),
+                    Description = Description
+                };
+
+            var response = await HttpClient.PutAsJsonAsync($"api/product/UpdateProduct/{ProductId}", updatedProduct);
+
+            if (response.IsSuccessStatusCode)
+            {
+                NavigationManager.NavigateTo("/"); // Điều hướng về trang chính hoặc trang danh sách sản phẩm
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                await JSRuntime.InvokeVoidAsync("alert", $"Cập nhật không thành công: {errorMessage}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Lỗi khi cập nhật sản phẩm: {ex.Message}");
+        }
+    }
+}
