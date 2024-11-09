@@ -1,4 +1,5 @@
 ﻿using API.Data;
+using API.Dto;
 using API.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -26,14 +27,14 @@ namespace API.Services
         public async Task<Favorite> AddFavorite(int idProd)//Thêm sản phẩm vào danh sách yêu thích của người dùng
         {
             var user = GetUserInfoFromClaims();
-            if(user.Role != "Người dùng")
-            {
-                throw new UnauthorizedAccessException("Bạn không thể thêm sản phẩm vào danh sách yêu thích"); 
-            }
+            //if(user.Role != "Người dùng")
+            //{
+            //    throw new UnauthorizedAccessException("Bạn không thể thêm sản phẩm vào danh sách yêu thích"); 
+            //}
             var newFav = new Favorite
             {
                 UserName = user.UserName,
-                IDFavorite = idProd,
+                IDProduct = idProd,
             };
             await _context.Favorites.AddAsync(newFav);
             await _context.SaveChangesAsync();
@@ -43,10 +44,10 @@ namespace API.Services
         public async Task<Favorite> DeleteFavorite(int idprod)//Xóa sản phẩm yêu thích của người dùng
         {
             var user = GetUserInfoFromClaims();
-            if (user.Role != "Người dùng")
-            {
-                throw new UnauthorizedAccessException("Bạn không thể xóa sản phẩm vào danh sách yêu thích");
-            }
+            //if (user.Role != "Người dùng")
+            //{
+            //    throw new UnauthorizedAccessException("Bạn không thể xóa sản phẩm vào danh sách yêu thích");
+            //}
             var deFav = await _context.Favorites.FirstOrDefaultAsync(x => x.IDProduct == idprod && x.UserName == user.UserName);
             if (deFav != null)
             {
@@ -60,10 +61,10 @@ namespace API.Services
         public async Task<IEnumerable<Favorite>> GetFavoritesAccount()//Lấy tất cả danh sách yêu thích của người dùng
         {
             var user = GetUserInfoFromClaims();
-            if (user.Role != "Người dùng")
-            {
-                throw new UnauthorizedAccessException("Bạn không thể thực hiện chức năng này");
-            }
+            //if (user.Role != "Người dùng")
+            //{
+            //    throw new UnauthorizedAccessException("Bạn không thể thực hiện chức năng này");
+            //}
             var getFav = await _context.Favorites.Where(x => x.UserName == user.UserName).ToListAsync();
             if (getFav != null)
             {
