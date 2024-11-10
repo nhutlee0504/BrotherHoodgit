@@ -67,8 +67,9 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         }
         public async Task<string> LoginAdmin(LoginDto loginDto)//Đăng nhập dành cho Admin
         {
-            var userInfo = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == loginDto.UserName);
-            if (userInfo == null || !VerifyPassword(loginDto.Password, userInfo.Password))
+			var userInfo = await _context.Accounts
+			.FirstOrDefaultAsync(u => EF.Functions.Collate(u.UserName, "Latin1_General_BIN") == loginDto.UserName);
+			if (userInfo == null || !VerifyPassword(loginDto.Password, userInfo.Password))
             {
                 throw new UnauthorizedAccessException("Tên tài khoản hoặc mật khẩu không đúng.");
             }
