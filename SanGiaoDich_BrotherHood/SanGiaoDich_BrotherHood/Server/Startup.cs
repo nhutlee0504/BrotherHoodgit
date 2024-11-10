@@ -1,6 +1,7 @@
 ﻿
 
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -74,24 +75,33 @@ namespace SanGiaoDich_BrotherHood.Server
                 };
             });
 
-            // Thêm Google Authentication
-            services.AddAuthentication(options =>
-            {
-                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
-            })
-            .AddCookie() // Cấu hình Cookie Authentication
-            .AddGoogle(options =>
-            {
-                options.ClientId = Configuration["Authentication:Google:ClientId"];
-                options.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
-                options.CallbackPath = "/signin-google"; // Đảm bảo rằng bạn có route này trong Configure
-                options.SaveTokens = true;
-            });
+			// Cấu hình chung cho các Authentication schemes (Google, Facebook)
+			services.AddAuthentication(options =>
+			{
+				options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+				options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+			})
+			.AddCookie() // Cấu hình Cookie Authentication một lần duy nhất
+			.AddGoogle(options =>
+			{
+				options.ClientId = Configuration["Authentication:Google:ClientId"];
+				options.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
+				options.CallbackPath = "/signin-google"; // Đảm bảo rằng bạn có route này trong Configure
+				options.SaveTokens = true;
+			})
+			.AddFacebook(options =>
+			{
+				options.AppId = Configuration["Authentication:Facebook:AppId"];
+				options.AppSecret = Configuration["Authentication:Facebook:AppSecret"];
+				options.Scope.Add("email");
+				options.Fields.Add("email");
+				options.Fields.Add("name");
+				options.SaveTokens = true;
+			});
 
-            // Dependency injections
-            services.AddHttpContextAccessor();
+
+			// Dependency injections
+			services.AddHttpContextAccessor();
             services.AddScoped<IProduct, ProductResponse>();
             services.AddScoped<IFavorite, FavoriteResponse>();
             services.AddScoped<IImageProduct, ImageProductResponse>();

@@ -60,7 +60,13 @@
                         <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" class="me-2" style="height: 20px;" />
                         Đăng nhập với Google
                     </button>
-                </div>
+                </div
+                 <div class="mt-3">
+                <button @onclick="LoginWithFacebook" class="btn btn-facebook mx-auto rounded-pill" style="max-width: 400px;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook logo" class="me-2" style="height: 20px;" />
+                    Đăng nhập với Facebook
+                </button>
+            </div>
             </div>
 
         </div>
@@ -152,6 +158,14 @@
         var googleAuthUrl = "https://localhost:44359/api/user/signin-google";
         NavigationManager.NavigateTo(googleAuthUrl, true);  // Điều hướng đến trang đăng nhập Google
     }
+
+    private async Task LoginWithFacebook()
+    {
+    // Redirect the user to the Facebook authentication page
+    var facebookAuthUrl = "https://localhost:44359/api/user/signin-facebook";
+    NavigationManager.NavigateTo(facebookAuthUrl, true);  // Điều hướng đến trang đăng nhập Facebook
+    }
+
 
     private async Task ClearErrorMessageAfterDelay()
     {

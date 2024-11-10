@@ -23,6 +23,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authentication.Facebook;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -225,7 +226,9 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                     UserName = email.Substring(0, 5),
                     Email = email,
                     Password = "default-password",
-                    CreatedTime = DateTime.Now
+                    CreatedTime = DateTime.Now,
+                    Role = "Người dùng",
+                    IsDelete = false
                 };
 
                 _context.Accounts.Add(newUser);
@@ -257,9 +260,6 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             }
             return Ok(token);
         }
-
-
-
         private string GenerateJwtToken(Account user)
         {
             // Kiểm tra người dùng không null
@@ -296,6 +296,65 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             // Trả về token dưới dạng chuỗi
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        [HttpGet("signin-facebook")]
+        public IActionResult SignInFacebook()
+        {
+            var properties = new AuthenticationProperties
+            {
+                RedirectUri = Url.Action("FacebookResponse")  // Điều hướng sau khi Facebook xử lý đăng nhập
+            };
+
+            return Challenge(properties, FacebookDefaults.AuthenticationScheme);
+        }
+
+        [HttpGet("facebook-response")]
+        public async Task<IActionResult> FacebookResponse()
+        {
+            var authenticateResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            if (!authenticateResult.Succeeded)
+            {
+                return RedirectToAction(nameof(LogginSai));
+            }
+
+            var email = authenticateResult.Principal.FindFirst(ClaimTypes.Email)?.Value;
+
+            if (string.IsNullOrEmpty(email))
+            {
+                return BadRequest(new { message = "Không thể lấy email từ tài khoản Facebook." });
+            }
+
+            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.Email == email);
+
+            string token;
+
+            if (existingUser != null)
+            {
+                token = GenerateJwtToken(existingUser); // Tạo token cho người dùng đã có
+            }
+            else
+            {
+                var newUser = new Account
+                {
+                    UserName = email.Substring(0, 5),
+                    Email = email,
+                    Password = "default-password",
+                    CreatedTime = DateTime.Now,
+                    Role = "Người dùng",
+                    IsDelete = false
+                };
+
+                _context.Accounts.Add(newUser);
+                await _context.SaveChangesAsync();
+
+                token = GenerateJwtToken(newUser);
+            }
+
+            // Trả về token và chuyển hướng về trang login kèm token trong URL
+            return Redirect($"/login?token={token}");
+        }
+
 
     }
 }
