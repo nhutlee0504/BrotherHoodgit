@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Routing;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -21,7 +22,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             prod = prods;
         }
-
+        [AllowAnonymous]
         [HttpGet("GetAllProduct")]
         public async Task<IActionResult> GetAllProduct()
         {

@@ -38,6 +38,10 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
 
         [Column(TypeName = "date")]
         public DateTime? EndDate { get; set; }
+        public string ProrityLevel { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public DateTime UpdatedDate { get; set; }
+        public string AccountAccept {  get; set; }
 
         [JsonIgnore] 
         public Account Account { get; set; }
@@ -53,6 +57,9 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
 
         [JsonIgnore]
         public ICollection<ImageProduct> imageProducts { get; set; }
+
+        [JsonIgnore]
+        public ICollection<CartItem> cartItem { get; set; }
 
         [JsonIgnore]
         public Category Category { get; set; }

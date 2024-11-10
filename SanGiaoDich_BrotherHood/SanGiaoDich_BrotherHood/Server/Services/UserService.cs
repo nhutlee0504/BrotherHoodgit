@@ -32,19 +32,16 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         }
         public async Task<Account> RegisterUser(RegisterDto registerDto)//Tạo tài khoản ngươi dùng
         {
-            // Kiểm tra quy chuẩn mật khẩu
             if (!IsValidPassword(registerDto.Password))
             {
                 throw new ArgumentException("Mật khẩu phải có ít nhất 6 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt");
             }
 
-            // Kiểm tra xem username đã tồn tại hay chưa
             var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == registerDto.UserName);
             if (existingUser != null)
             {
                 throw new ArgumentException("Tên người dùng đã tồn tại.");
             }
-            // Kiểm tra nếu mật khẩu và xác nhận mật khẩu không khớp
             if (registerDto.Password != registerDto.ConformPassword)
             {
                 throw new ArgumentException("Mật khẩu và xác nhận mật khẩu không khớp.");
@@ -55,7 +52,9 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 Password = HashPassword(registerDto.Password),
                 IsDelete = false,
                 CreatedTime = DateTime.Now,
-                Role = "Người dùng"
+                Role = "Người dùng",
+                PreSystem = 10000,
+                IsActived = true
             };
             await _context.Accounts.AddAsync(newAdmin);
             await _context.SaveChangesAsync();

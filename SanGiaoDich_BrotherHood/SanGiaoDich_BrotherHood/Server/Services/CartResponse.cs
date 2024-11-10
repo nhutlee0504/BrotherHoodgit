@@ -56,8 +56,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 if (cartUpdate == null)
                     return null;
                 cartUpdate.UserName = cart.UserName;
-                cartUpdate.IDProduct = cart.IDProduct;
-                cartUpdate.Quantity = cart.Quantity;
+                
                 _context.Carts.Update(cartUpdate);
                 await _context.SaveChangesAsync();
                 return cart;

@@ -37,15 +37,15 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 }
 
                 // Cập nhật thông tin hình ảnh vào message
-                message.Image = fileName; // Lưu tên tệp hình ảnh
-                message.TypeContent = "image"; // Đánh dấu kiểu nội dung là hình ảnh
+                //message.Image = fileName; // Lưu tên tệp hình ảnh
+                message.Content = "image"; // Đánh dấu kiểu nội dung là hình ảnh
             }
             else
             {
                 message.TypeContent = "text"; // Đánh dấu kiểu nội dung là văn bản
             }
 
-            message.sendingTime = DateTime.UtcNow; // Đặt thời gian gửi
+            message.CreatedDate = DateTime.Now.ToString(); // Đặt thời gian gửi
             message.Status = "Đã gửi";
             _context.Messages.Add(message); // Thêm tin nhắn vào cơ sở dữ liệu
             await _context.SaveChangesAsync(); // Lưu thay đổi
@@ -55,8 +55,8 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public async Task<IEnumerable<Message>> GetMessages(string usersend, string userrevice)
         {
             return await _context.Messages
-                .Where(m => m.UserSend == usersend.ToString() && m.UserReceive == userrevice)
-                .OrderBy(m => m.sendingTime)
+                .Where(m => m.UserSend == usersend.ToString() && m.UserSend == userrevice)
+                .OrderBy(m => m.CreatedDate)
                 .ToListAsync();
         }
     }

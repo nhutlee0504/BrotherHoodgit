@@ -17,7 +17,6 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             _admin = admin;
         }
-
         [HttpGet]
         public async Task<IActionResult> GetAllAccount()//Lấy danh sách tài khoản
         {

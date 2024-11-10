@@ -31,11 +31,9 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             try
             {
                 var acc = await _user.RegisterUser(registerDto);
-
-                // Kiểm tra xem tài khoản đã được tạo hay chưa
                 if (acc != null)
                 {
-                    return Ok(acc); // Trả về thông tin tài khoản vừa tạo
+                    return Ok(acc);
                 }
 
                 return BadRequest("Đăng ký không thành công.");
@@ -45,9 +43,6 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
-
-
         [HttpPost]
         [Route("LoginUser")]
         public async Task<IActionResult> LoginUser([FromBody] LoginDto loginDto)

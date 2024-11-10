@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SanGiaoDich_BrotherHood.Shared.Models
@@ -10,6 +11,9 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
 
         [Column(TypeName = "varchar(150)")]
         public string Image { get; set; }
+        public bool IsPrimary { get; set; }
+        public DateTime CreatedDate { get; set; }
+
 
         [ForeignKey("Product")]
         public int IDProduct { get; set; }

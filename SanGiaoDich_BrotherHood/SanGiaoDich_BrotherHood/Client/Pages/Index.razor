@@ -10,6 +10,90 @@
         padding: 0;
     }
 
+    .offer-section {
+        background-image: url('/AnhGiaoDien/anhuudai.jpg');
+        background-size: cover;
+        background-position: center;
+        padding: 40px 20px;
+        color: #28a745;
+        border-radius: 10px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .offer-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.6);
+            border-radius: 10px;
+            z-index: 1;
+        }
+
+    .offer-section-content {
+        position: relative;
+        z-index: 2;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .offer-section h2 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #28a745;
+    }
+
+    .offer-section p {
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        color: #28a745;
+    }
+
+    .offer-section .input-group {
+        width: 100%;
+        max-width: 600px; /* Chiều rộng tối đa của input group */
+        margin: 0 auto;
+    }
+
+    .offer-section .form-control {
+        border-radius: 25px; /* Bo góc input để mềm mại hơn */
+        border: 1px solid #28a745;
+        padding: 12px 20px; /* Thay đổi padding để tăng chiều cao */
+        font-size: 1rem;
+        color: #28a745;
+        outline: none;
+        transition: border-color 0.3s ease; /* Thêm hiệu ứng chuyển đổi cho border */
+        width: 100%; /* Chiều rộng đầy đủ của input */
+    }
+
+        .offer-section .form-control:focus {
+            border-color: #218838;
+        }
+
+    .offer-section .btn-register {
+        border-radius: 25px;
+        background-color: #28a745;
+        border: none;
+        padding: 12px 25px;
+        font-size: 1rem;
+        color: white;
+        transition: background-color 0.3s ease;
+    }
+
+        .offer-section .btn-register:hover {
+            background-color: #218838;
+        }
+
+    .offer-section .input-group-text {
+        background-color: white;
+        border: 1px solid #28a745;
+        border-radius: 25px 0 0 25px;
+    }
     /* Carousel */
     .carousel-item img {
         width: 100%;
@@ -18,8 +102,8 @@
 
     /* Feature section */
     .features-card {
-        width: 100%; 
-        margin: 20px auto; 
+        width: 100%;
+        margin: 20px auto;
         background-color: #fff;
         border-radius: 8px;
         padding: 20px;
@@ -40,13 +124,13 @@
         align-items: center;
         border-radius: 8px;
         padding: 15px;
-        text-align: left; 
+        text-align: left;
     }
 
-    .feature-item i {
-        font-size: 36px;
-        margin-right: 15px;   
-    }
+        .feature-item i {
+            font-size: 36px;
+            margin-right: 15px;
+        }
 
     .feature-text p {
         font-weight: bold;
@@ -60,25 +144,25 @@
         color: #555;
     }
 
-   
+
     .load-more {
         text-align: center;
         margin-top: 20px;
     }
 
-    .load-more a {
-        display: inline-block;
-        font-size: 18px;
-        color: #007bff;
-        text-decoration: none;
-        margin-bottom: 10px; 
-    }
+        .load-more a {
+            display: inline-block;
+            font-size: 18px;
+            color: #007bff;
+            text-decoration: none;
+            margin-bottom: 10px;
+        }
 
-    .load-more i {
-        display: block; 
-        font-size: 24px;
-        color: #007bff;
-    }
+        .load-more i {
+            display: block;
+            font-size: 24px;
+            color: #007bff;
+        }
 
 </style>
 <div class="row">
@@ -90,19 +174,19 @@
                     <div class="carousel-item active">
                         <!-- Image with no mask -->
                         <div class="bg-image">
-                            <img src="/AnhGiaoDien/banner1.png" class="img-fluid w-100" alt="Logo">
+                            <img src="/AnhSanPham/Untitled project-Layer 1 (1).jpeg" style="height:auto;" class="img-fluid w-100" alt="Logo">
                         </div>
                     </div>
                     <div class="carousel-item">
                         <!-- Image with no mask -->
                         <div class="bg-image">
-                            <img src="/AnhGiaoDien/banner1.png" class="img-fluid w-100" alt="Logo">
+                            <img src="/AnhSanPham/Untitled project-Layer 1.jpeg" style="height:auto;" class="img-fluid w-100" alt="Logo">
                         </div>
                     </div>
                     <div class="carousel-item">
                         <!-- Image with no mask -->
                         <div class="bg-image">
-                            <img src="/AnhGiaoDien/banner1.png" class="img-fluid w-100" alt="Logo">
+                            <img src="/AnhSanPham/Untitled project-Layer 1 (1).jpeg" style="height:auto;" class="img-fluid w-100" alt="Logo">
                         </div>
                     </div>
                 </div>
@@ -115,7 +199,7 @@
                     <span class="visually-hidden">Next</span>
                 </button>
             </div>
-           
+
         </section>
     </div>
     <!-- Features section inside a card -->
@@ -154,7 +238,7 @@
         </div>
     </div>
 
-   
+
 
 </div>
 <div class="container-fluid banner-advertisement mt-4 mb-4">
@@ -263,9 +347,24 @@
 
     </div>
 </dib>
+<div class="offer-section mb-5">
+    <div class="offer-section-content">
+        <h2>Nhận ưu đãi đặc biệt từ chúng tôi!</h2>
+        <p>Đăng ký nhận tin tức, khuyến mãi từ trang web.</p>
+        <div class="input-group">
+            <input type="email" class="form-control" placeholder="Nhập email của bạn" aria-label="Email" />
+        </div>
+        <button class="btn btn-register mt-3">
+            <i class="fas fa-paper-plane"></i> Đăng ký
+        </button>
+    </div>
+</div>
+
+
+
 <script>
-     window.addEventListener('load', function() {
-            document.querySelector('.banner-overlay').classList.add('fade-in');
+    window.addEventListener('load', function () {
+        document.querySelector('.banner-overlay').classList.add('fade-in');
     });
 
 </script>

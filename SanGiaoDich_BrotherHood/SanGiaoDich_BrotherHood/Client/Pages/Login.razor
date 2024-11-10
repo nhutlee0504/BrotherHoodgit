@@ -81,7 +81,7 @@
         <div class="col-md-6">
             <div class="form-container p-4 rounded bg-white shadow-sm">
                 <h2 class="text-center mb-4">Đăng nhập tài khoản</h2>
-                
+
                 @if (!string.IsNullOrEmpty(SuccessMessage))
                 {
                     <div class="alert alert-success" role="alert">
@@ -121,6 +121,7 @@
                 </EditForm>
             </div>
 
+
             <div class="mt-4 text-center">
                 <strong>Hoặc đăng nhập bằng</strong>
                 <div class="mt-3">
@@ -142,6 +143,7 @@
 </div>
 
 @code {
+    
     private string UserName { get; set; }
     private string Password { get; set; }
     private string ErrorMessage { get; set; }
