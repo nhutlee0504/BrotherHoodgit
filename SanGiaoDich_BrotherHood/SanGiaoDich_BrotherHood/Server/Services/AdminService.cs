@@ -67,8 +67,9 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         }
         public async Task<string> LoginAdmin(LoginDto loginDto)//Đăng nhập dành cho Admin
         {
-            var userInfo = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == loginDto.UserName);
-            if (userInfo == null || !VerifyPassword(loginDto.Password, userInfo.Password))
+			var userInfo = await _context.Accounts
+			.FirstOrDefaultAsync(u => EF.Functions.Collate(u.UserName, "Latin1_General_BIN") == loginDto.UserName);
+			if (userInfo == null || !VerifyPassword(loginDto.Password, userInfo.Password))
             {
                 throw new UnauthorizedAccessException("Tên tài khoản hoặc mật khẩu không đúng.");
             }
@@ -234,18 +235,21 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         //Phương thức ngoài
         private string GenerateJwtToken(Account user)
         {
+            // Kiểm tra người dùng không null
+            if (user == null) throw new ArgumentNullException(nameof(user));
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
-            {
-        new Claim(ClaimTypes.Name, user.UserName),
-        new Claim(ClaimTypes.Email, user.Email),
-        new Claim(ClaimTypes.Role, user.Role),
-        new Claim("FullName", user.FullName),
-        new Claim("PhoneNumber", user.PhoneNumber),
-        new Claim("Gender", user.Gender),
-        new Claim("Birthday", user.Birthday?.ToString("o")),
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
+        new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+        new Claim(ClaimTypes.Role, user.Role ?? string.Empty),
+        new Claim("FullName", user.FullName ?? string.Empty),
+        new Claim("PhoneNumber", user.PhoneNumber ?? string.Empty),
+        new Claim("Gender", user.Gender ?? string.Empty),
+        new Claim("Birthday", user.Birthday?.ToString("o") ?? string.Empty),
         new Claim("ImageAccount", user.ImageAccount ?? string.Empty),
         new Claim("IsDelete", user.IsDelete.ToString()),
         new Claim("TimeBanned", user.TimeBanned?.ToString("o") ?? string.Empty)
@@ -312,46 +316,63 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             var userClaim = _httpContextAccessor.HttpContext?.User;
             if (userClaim != null && userClaim.Identity.IsAuthenticated)
             {
-                var userNameClaim = userClaim.FindFirst(ClaimTypes.Name);
-                var emailClaim = userClaim.FindFirst(ClaimTypes.Email);
-                var fullNameClaim = userClaim.FindFirst("FullName");
-                var phoneNumberClaim = userClaim.FindFirst("PhoneNumber");
-                var genderClaim = userClaim.FindFirst("Gender");
-                var idCardClaim = userClaim.FindFirst("IDCard");
-                var birthdayClaim = userClaim.FindFirst("Birthday");
-                var imageAccountClaim = userClaim.FindFirst("ImageAccount");
-                var roleClaim = userClaim.FindFirst(ClaimTypes.Role);
-                var isDeleteClaim = userClaim.FindFirst("IsDelete");
-                var timeBannedClaim = userClaim.FindFirst("TimeBanned");
-
-                DateTime? birthday = null;
-                if (!string.IsNullOrWhiteSpace(birthdayClaim?.Value))
+                // Kiểm tra thời gian hết hạn của token
+                var expirationClaim = userClaim.FindFirst("exp");
+                if (expirationClaim != null && long.TryParse(expirationClaim.Value, out long exp))
                 {
-                    if (DateTime.TryParse(birthdayClaim.Value, out DateTime parsedBirthday))
+                    var expirationTime = DateTimeOffset.FromUnixTimeSeconds(exp).UtcDateTime;
+                    if (expirationTime < DateTime.UtcNow)
                     {
-                        birthday = parsedBirthday;
-                    }
-                    else
-                    {
-                        // Log or handle the invalid date format here if needed
+                        throw new UnauthorizedAccessException("Token đã hết hạn. Vui lòng đăng nhập lại.");
                     }
                 }
 
+                var userNameClaim = userClaim.FindFirst(ClaimTypes.Name)?.Value ?? string.Empty;
+                var emailClaim = userClaim.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
+                var fullNameClaim = userClaim.FindFirst("FullName")?.Value ?? string.Empty;
+                var phoneNumberClaim = userClaim.FindFirst("PhoneNumber")?.Value ?? string.Empty;
+                var genderClaim = userClaim.FindFirst("Gender")?.Value ?? string.Empty;
+                var idCardClaim = userClaim.FindFirst("IDCard")?.Value ?? string.Empty;
+                var imageAccountClaim = userClaim.FindFirst("ImageAccount")?.Value ?? string.Empty;
+                var roleClaim = userClaim.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+
+                DateTime? birthday = null;
+                var birthdayClaimValue = userClaim.FindFirst("Birthday")?.Value;
+                if (!string.IsNullOrWhiteSpace(birthdayClaimValue) && DateTime.TryParse(birthdayClaimValue, out DateTime parsedBirthday))
+                {
+                    birthday = parsedBirthday;
+                }
+
+                bool isDelete = false;
+                var isDeleteClaimValue = userClaim.FindFirst("IsDelete")?.Value;
+                if (isDeleteClaimValue != null && bool.TryParse(isDeleteClaimValue, out bool parsedIsDeleted))
+                {
+                    isDelete = parsedIsDeleted;
+                }
+
+                DateTime? timeBanned = null;
+                var timeBannedClaimValue = userClaim.FindFirst("TimeBanned")?.Value;
+                if (!string.IsNullOrWhiteSpace(timeBannedClaimValue) && DateTime.TryParse(timeBannedClaimValue, out DateTime parsedTimeBanned))
+                {
+                    timeBanned = parsedTimeBanned;
+                }
+
                 return (
-                    userNameClaim?.Value,
-                    emailClaim?.Value,
-                    fullNameClaim?.Value,
-                    phoneNumberClaim?.Value,
-                    genderClaim?.Value,
-                    idCardClaim?.Value,
+                    userNameClaim,
+                    emailClaim,
+                    fullNameClaim,
+                    phoneNumberClaim,
+                    genderClaim,
+                    idCardClaim,
                     birthday,
-                    imageAccountClaim?.Value,
-                    roleClaim?.Value,
-                    isDeleteClaim != null && bool.TryParse(isDeleteClaim.Value, out bool isDeleted) && isDeleted,
-                    timeBannedClaim != null ? DateTime.TryParse(timeBannedClaim.Value, out DateTime parsedTimeBanned) ? parsedTimeBanned : (DateTime?)null : (DateTime?)null
+                    imageAccountClaim,
+                    roleClaim,
+                    isDelete,
+                    timeBanned
                 );
             }
-            throw new UnauthorizedAccessException("Vui lòng đăng nhập vào hệ thống.");
+
+            throw new UnauthorizedAccessException("Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.");
         }
 
     }
