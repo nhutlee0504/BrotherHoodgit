@@ -208,7 +208,7 @@
             if (uploadResponse.IsSuccessStatusCode)
             {
                 await JSRuntime.InvokeVoidAsync("alert", "Sản phẩm đã được thêm thành công!");
-                NavigationManager.NavigateTo("/");
+                NavigationManager.NavigateTo("/", forceLoad: true);
             }
             else
             {

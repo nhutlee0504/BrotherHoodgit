@@ -20,7 +20,7 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         [Required(ErrorMessage = "Vui nhập địa chỉ cụ thể"), Column(TypeName = "Nvarchar(50)")]
         public string AdditionalDetail { get; set; }
 
-        [ForeignKey("Account"), Column(TypeName = "varchar(20)")]              
+        [ForeignKey("Account")]              
         public string UserName { get; set; }
 
         public Account Account { get; set; }

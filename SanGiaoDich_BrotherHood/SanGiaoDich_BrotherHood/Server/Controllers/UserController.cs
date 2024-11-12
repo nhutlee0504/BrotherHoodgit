@@ -49,11 +49,9 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             try
             {
                 var acc = await _user.RegisterUser(registerDto);
-
-                // Kiểm tra xem tài khoản đã được tạo hay chưa
                 if (acc != null)
                 {
-                    return Ok(acc); // Trả về thông tin tài khoản vừa tạo
+                    return Ok(acc);
                 }
 
                 return BadRequest("Đăng ký không thành công.");
@@ -63,9 +61,6 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
-
-
         [HttpPost]
         [Route("LoginUser")]
         public async Task<IActionResult> LoginUser([FromBody] LoginDto loginDto)
@@ -211,7 +206,8 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 return BadRequest(new { message = "Không thể lấy email từ tài khoản Google." });
             }
 
-            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.Email == email);
+            var userName = email.Contains("@") ? email.Split('@')[0] : email;
+            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userName);
 
             string token;
 
@@ -223,12 +219,14 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             {
                 var newUser = new Account
                 {
-                    UserName = email.Substring(0, 5),
+                    UserName = userName,
                     Email = email,
                     Password = "default-password",
                     CreatedTime = DateTime.Now,
                     Role = "Người dùng",
-                    IsDelete = false
+                    IsDelete = false,
+                    PreSystem = 10000,
+                    IsActived = true
                 };
 
                 _context.Accounts.Add(newUser);
@@ -325,7 +323,9 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 return BadRequest(new { message = "Không thể lấy email từ tài khoản Facebook." });
             }
 
-            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.Email == email);
+            var userName = email.Contains("@") ? email.Split('@')[0] : email;
+
+            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userName);
 
             string token;
 
@@ -337,12 +337,14 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             {
                 var newUser = new Account
                 {
-                    UserName = email.Substring(0, 5),
+                    UserName = userName,
                     Email = email,
                     Password = "default-password",
                     CreatedTime = DateTime.Now,
                     Role = "Người dùng",
-                    IsDelete = false
+                    IsDelete = false,
+                    PreSystem = 10000,
+                    IsActived = true,
                 };
 
                 _context.Accounts.Add(newUser);

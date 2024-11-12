@@ -17,7 +17,6 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             _admin = admin;
         }
-
         [HttpGet]
         public async Task<IActionResult> GetAllAccount()//Lấy danh sách tài khoản
         {
@@ -49,8 +48,8 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             }
 
         }
-
-        [HttpPost]
+       
+        [HttpPost("LoginAdmin")]
         public async Task<IActionResult> LoginAdmin([FromBody] LoginDto userLoginDto)//Đăng nhập dành cho Admin
         {
             try

@@ -25,7 +25,18 @@ namespace API.Services
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
         }
-
+        public async Task<Product> AcceptProduct(int idproduct)
+        {
+            var existingProduct = await _context.Products.FirstOrDefaultAsync(x => x.IDProduct == idproduct);
+            if (existingProduct == null)
+            {
+                throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
+            }
+           
+            existingProduct.Status = "Đã duyệt";
+            _context.SaveChanges();
+            return existingProduct;
+        }
         public async Task<Product> AddProduct(ProductDto product)//Thêm sản phẩm mới
         {
             var user = GetUserInfoFromClaims();

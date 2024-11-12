@@ -30,14 +30,18 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         [Column(TypeName = "nvarchar(50)")]
         public string Status { get; set; }
 
-        [ForeignKey("Account"), Column(TypeName = "varchar(20)")]
+        [ForeignKey("Account")]
         public string UserName { get; set; }
 
-        [Column(TypeName = "date")]
-        public DateTime? StartDate { get; set; }
+        [Column(TypeName = "datetime")]
+        public DateTime StartDate { get; set; }
 
         [Column(TypeName = "date")]
         public DateTime? EndDate { get; set; }
+        public string ProrityLevel { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public DateTime UpdatedDate { get; set; }
+        public string AccountAccept {  get; set; }
 
         [JsonIgnore] 
         public Account Account { get; set; }
@@ -53,6 +57,9 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
 
         [JsonIgnore]
         public ICollection<ImageProduct> imageProducts { get; set; }
+
+        [JsonIgnore]
+        public ICollection<CartItem> cartItem { get; set; }
 
         [JsonIgnore]
         public Category Category { get; set; }

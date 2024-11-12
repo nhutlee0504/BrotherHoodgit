@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SanGiaoDich_BrotherHood.Server.Data;
 using SanGiaoDich_BrotherHood.Shared.Models;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -19,16 +20,21 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         {
             try
             {
+                category.CreatedDate = DateTime.Now;  
+                category.UpdatedDate = DateTime.Now; 
+                category.UserUpdated = "Admin"; 
+
                 await _context.Categories.AddAsync(category);
                 await _context.SaveChangesAsync();
                 return category;
             }
-            catch (System.Exception)
+            catch (Exception)
             {
-
+                // Nếu có lỗi, trả về null
                 return null;
             }
         }
+
 
         public async Task<Category> DeleteCategory(int IDCate)
         {

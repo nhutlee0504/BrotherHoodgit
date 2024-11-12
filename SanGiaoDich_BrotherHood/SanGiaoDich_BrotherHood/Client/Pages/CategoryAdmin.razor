@@ -1,0 +1,136 @@
+﻿@page "/Admin/Category"
+@using SanGiaoDich_BrotherHood.Shared.Models
+@layout AdminLayout
+@inject HttpClient httpClient
+@inject NavigationManager NavigationManager
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCategoryModal">
+        <i class="bi bi-plus-circle"></i> Thêm mới
+    </button>
+    <div class="input-group w-50">
+        <input type="text" class="form-control" placeholder="Tìm kiếm danh mục" @bind="searchTerm" @bind:event="oninput" />
+        <button class="btn btn-outline-secondary" type="button" @onclick="SearchCategory">
+            <i class="bi bi-search"></i> Tìm kiếm
+        </button>
+    </div>
+</div>
+@if (categories == null || !categories.Any())
+{
+    <div class="alert alert-warning" role="alert">
+        Không có dữ liệu để hiển thị.
+    </div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Tên danh mục</th>
+                <th scope="col" class="text-center">Thời gian tạo</th>
+                <th scope="col" class="text-center">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var category in categories)
+            {
+                <tr>
+                    <td>@category.IDCategory</td>
+                    <td>@category.NameCate</td>
+                    <td class="text-center">@category.CreatedDate</td>
+                    <td class="text-center">
+
+                        <button class="btn btn-info">Sửa</button>
+                        <button class="btn btn-danger">Xóa</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+<div class="modal fade" id="createCategoryModal" tabindex="-1" aria-labelledby="createCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createCategoryModalLabel">Thêm mới Loại</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@category" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="form-group">
+                        <label for="NameCate" class="form-label">Tên Loại</label>
+                        <InputText id="NameCate" class="form-control" @bind-Value="category.NameCate" />
+                        <ValidationMessage For="@(() => category.NameCate)" />
+                    </div>
+                    <div class="form-group mt-3">
+                        <button type="submit" class="btn btn-success">Thêm Mới</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Category> categories = new List<Category>();
+    private Category category = new Category();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+    }
+
+    private async Task LoadCategories()
+    {
+        try
+        {
+            categories = await httpClient.GetFromJsonAsync<List<Category>>("api/Category/GetCategories");
+        }
+        catch (Exception)
+        {
+            categories = new List<Category>();
+        }
+    }
+    private string searchTerm = string.Empty;
+    private async Task SearchCategory()
+    {
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            categories = await httpClient.GetFromJsonAsync<List<Category>>($"api/Category/search?name={searchTerm}");
+        }
+        else
+        {
+            await LoadCategories();
+        }
+    }
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("api/Category/AddCategory", category);
+            if (response.IsSuccessStatusCode)
+            {
+                categories.Add(await response.Content.ReadFromJsonAsync<Category>());
+                category = new Category(); 
+                                            
+            }
+        }
+        catch (Exception)
+        {
+            // Handle error
+        }
+    }
+
+    public class Category
+    {
+        public int IDCategory { get; set; }
+        public string NameCate { get; set; }
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        public DateTime UpdatedDate { get; set; } = DateTime.Now;
+        public string UserUpdated { get; set; } = "Admin";
+    }
+
+}

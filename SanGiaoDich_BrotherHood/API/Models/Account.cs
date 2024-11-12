@@ -43,6 +43,9 @@ namespace API.Models
         public DateTime? TimeBanned { get; set; }
 
         public bool? IsDelete { get; set; }
+        public decimal? PreSystem { get; set; }
+        public bool? IsActived { get; set; }
+
 
         public ICollection<Product> products { get; set; }
         public ICollection<Cart> carts { get; set; }
