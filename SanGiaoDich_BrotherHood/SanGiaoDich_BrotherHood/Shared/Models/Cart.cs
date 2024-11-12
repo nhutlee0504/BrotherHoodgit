@@ -9,7 +9,7 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         [Key]
         public int IDCart { get; set; }
 
-        [ForeignKey("Account"), Column(TypeName = "varchar(20)")]
+        [ForeignKey("Account")]
         public string UserName { get; set; }
         public Account Account { get; set; }
         public ICollection<CartItem> cartitem { get; set; }

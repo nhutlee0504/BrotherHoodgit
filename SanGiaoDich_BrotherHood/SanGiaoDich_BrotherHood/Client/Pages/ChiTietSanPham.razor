@@ -43,39 +43,47 @@
         </div>
 
         <div class="col-md-6 shadow rounded">
+            <!-- Thông tin người bán -->
             <div class="profile-card mb-3">
                 <div class="profile-avatar">
                     <a href="ThongTinNguoiDung">
-                        <img src="/AnhAvatar/@user?.ImageAccount" alt="Người bán" />
+                        <img src="/AnhAvatar/@user?.ImageAccount" alt="Người bán" class="img-fluid rounded-circle" style="max-width: 100px;" />
                     </a>
+
                 </div>
                 <div class="profile-info">
-                    <div class="row align-items-center">
-                        <div class="col-9 col-md-8">
-                            <p class="mb-0">
-                                <img src="/AnhAvatar/user.png" style="width:18px; margin-right: 5px;" />
-                                <strong>@user?.FullName</strong>
-                            </p>
+                    @if (user != null)
+                    {
+                        <div class="row align-items-center">
+                            <div class="col-9 col-md-8">
+                                <p class="mb-0">
+                                    <img src="/AnhAvatar/user.png" style="width:18px; margin-right: 5px;" />
+                                    <strong>@user.FullName</strong>
+                                </p>
+                            </div>
+                            <div class="col-3 col-md-4 d-flex justify-content-end">
+                                <span class="badge text-bg-success d-flex align-items-center" style="background-color: green; padding: 5px 10px;">
+                                    <img src="/AnhAvatar/king.png" style="width:18px; margin-right: 5px;" />
+                                    Thành viên
+                                </span>
+                            </div>
                         </div>
-                        <div class="col-3 col-md-4 d-flex justify-content-end">
-                            <span class="badge text-bg-success d-flex align-items-center" style="background-color: green; padding: 5px 10px;">
-                                <img src="/AnhAvatar/king.png" style="width:18px; margin-right: 5px;" />
-                                Thành viên
-                            </span>
-                        </div>
-                    </div>
-                    <p><i class="bi bi-bag"></i> Các sản phẩm đã bán: <strong></strong></p>
-                    <p class="text-success mb-0">Đang hoạt động</p>
+                    }
+
+                    <p>
+                        <i class="bi bi-bag"></i> Các sản phẩm đã bán: <strong>100</strong>
+                    </p>
+                    <p class="text-success mb-0">
+                        Đang hoạt động
+                    </p>
                 </div>
-
-                <!-- Checkbox để toggle trạng thái yêu thích -->
-                <input type="checkbox" checked="@(isFavorite)" @onchange="ToggleFavorite" />
             </div>
-
+            <!-- Checkbox để toggle trạng thái yêu thích -->
+            <input type="checkbox" checked="@(isFavorite)" @onchange="ToggleFavorite" />
             <h3 style="font-weight:bolder">@product?.Name</h3>
             <h4 class="text-success mb-2"><i class="bi bi-cash-coin"></i>@product?.Price.ToString("N0") VND</h4>
             <p><strong>Loại sản phẩm:</strong> @categoryName</p>
-            <p><i class="bi bi-clock"></i> Đăng vào lúc: @(product?.StartDate?.ToString("dd/MM/yyyy") ?? "Chưa xác định")</p>
+            <p><i class="bi bi-clock"></i> Đăng vào lúc: @(product?.StartDate.ToString("dd/MM/yyyy") ?? "Chưa xác định")</p>
 
             <button class="btn btn-danger rounded-pill mb-2 w-100"><i class="bi bi-person-circle"></i> Liên hệ người bán</button>
             <button class="btn btn-success rounded-pill mb-2 w-100"><i class="bi bi-telephone-forward"></i> Liên hệ qua 011*****</button>

@@ -23,14 +23,14 @@ namespace SanGiaoDich_BrotherHood.Server.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IConfiguration _configuration; // Thêm IConfiguration
+        private readonly IConfiguration _configuration; 
         public UserService(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
         }
-        public async Task<Account> RegisterUser(RegisterDto registerDto)//Tạo tài khoản ngươi dùng
+        public async Task<Account> RegisterUser(RegisterDto registerDto)
         {
             if (!IsValidPassword(registerDto.Password))
             {
@@ -60,7 +60,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             await _context.SaveChangesAsync();
             return newAdmin;
         }
-        public async Task<string> LoginUser(LoginDto loginDto)//Đăng nhập thường
+        public async Task<string> LoginUser(LoginDto loginDto)
         {
 			var userInfo = await _context.Accounts
 		.FirstOrDefaultAsync(u => EF.Functions.Collate(u.UserName, "Latin1_General_BIN") == loginDto.UserName);
@@ -68,13 +68,10 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             {
                 throw new UnauthorizedAccessException("Tên đăng nhập hoặc mật khẩu không đúng.");
             }
-            // Kiểm tra nếu tài khoản đã bị xóa
             if (userInfo.IsDelete == true)
             {
                 throw new UnauthorizedAccessException("Tài khoản này đã bị khóa vô thời hạn.");
             }
-
-            // Kiểm tra nếu tài khoản bị cấm
             if (userInfo.TimeBanned.HasValue && userInfo.TimeBanned > DateTime.UtcNow)
             {
                 var remainingDays = (userInfo.TimeBanned.Value - DateTime.UtcNow).TotalDays;
@@ -86,10 +83,8 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         }
         public async Task<Account> GetAccountInfo()//Lấy thông tin tài khoản đã đăng nhập vào hệ thống, bản thân
         {
-            // Lấy thông tin người dùng từ claims
             var userClaims = GetUserInfoFromClaims();
 
-            // Lấy thông tin người dùng từ cơ sở dữ liệu
             var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userClaims.UserName);
 
             if (user == null)
@@ -97,11 +92,10 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 throw new UnauthorizedAccessException("Vui lòng đăng nhập vào hệ thống.");
             }
 
-            return user; // Trả về thông tin tài khoản
+            return user;
         }
-        public async Task<Account> GetAccountByUserName(string userName)//Xem thông tin tài khoản người khác
+        public async Task<Account> GetAccountByUserName(string userName)
         {
-            // Lấy thông tin người dùng từ cơ sở dữ liệu
             var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userName);
 
             if (user == null)
@@ -109,11 +103,10 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 throw new NotImplementedException("Không tìm thấy người dùng.");
             }
 
-            return user; // Trả về thông tin tài khoản
+            return user; 
         }
-        public async Task<Account> UpdateAccountInfo(InfoAccountDto infoAccountDto)//Cập nhật tài khoản
+        public async Task<Account> UpdateAccountInfo(InfoAccountDto infoAccountDto)
         {
-            // Lấy thông tin người dùng từ claims
             var userClaims = GetUserInfoFromClaims();
             var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userClaims.UserName);
 
@@ -121,12 +114,10 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             {
                 throw new UnauthorizedAccessException("Không tìm thấy người dùng.");
             }
-            // Kiểm tra số điện thoại
             if (!IsValidPhone(infoAccountDto.Phone))
             {
                 throw new ArgumentException("Số điện thoại không hợp lệ");
             }
-            // Cập nhật thông tin tài khoản
             user.FullName = infoAccountDto.FullName;
             user.Email = infoAccountDto.Email;
             user.PhoneNumber = infoAccountDto.Phone;
@@ -135,11 +126,10 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             user.Introduce = infoAccountDto.Introduce;
 
             await _context.SaveChangesAsync();
-            return user; // Trả về thông tin đã cập nhật
+            return user; 
         }
         public async Task<Account> UpdateProfileImage(IFormFile imageFile = null)
         {
-            // Lấy thông tin người dùng từ claims
             var userClaims = GetUserInfoFromClaims();
             var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userClaims.UserName);
 
@@ -147,8 +137,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             {
                 throw new UnauthorizedAccessException("Không tìm thấy người dùng.");
             }
-
-            // Nếu có file hình ảnh, lưu vào thư mục và cập nhật tên ảnh
             if (imageFile != null && imageFile.Length > 0)
             {
                 var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "AnhAvatar");
@@ -156,22 +144,18 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 {
                     Directory.CreateDirectory(uploadsFolder);
                 }
-
-                // Lưu tên file gốc
                 var originalFileName = Path.GetFileName(imageFile.FileName);
                 var filePath = Path.Combine(uploadsFolder, originalFileName);
-
-                // Lưu file vào thư mục
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await imageFile.CopyToAsync(stream);
                 }
 
-                user.ImageAccount = originalFileName; // Lưu tên ảnh vào cơ sở dữ liệu
+                user.ImageAccount = originalFileName; 
             }
 
             await _context.SaveChangesAsync();
-            return user; // Trả về thông tin đã cập nhật
+            return user;
         }
 
         public async Task<Account> ChangePassword(string username, InfoAccountDto info)
@@ -192,11 +176,8 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             return get;
         }
 
-        //Phương thức ngoài
-
         private string GenerateJwtToken(Account user)
         {
-            // Kiểm tra người dùng không null
             if (user == null) throw new ArgumentNullException(nameof(user));
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
@@ -225,31 +206,31 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-        private string HashPassword(string password) // Băm mật khẩu
+        private string HashPassword(string password)
         {
             using (var sha256 = SHA256.Create())
             {
-                // Băm mật khẩu
+              
                 byte[] inputBytes = Encoding.UTF8.GetBytes(password);
                 byte[] hashBytes = sha256.ComputeHash(inputBytes);
 
-                // Chỉ lấy 16 byte đầu tiên và chuyển đổi sang định dạng chuỗi hex
+            
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < hashBytes.Length && i < 16; i++)
                 {
                     sb.Append(hashBytes[i].ToString("x2"));
                 }
-                return sb.ToString(); // Trả về mật khẩu băm
+                return sb.ToString(); 
             }
         }
-        private bool VerifyPassword(string password, string hashedPasswordWithSalt) // Kiểm tra mật khẩu khi đăng nhập
+        private bool VerifyPassword(string password, string hashedPasswordWithSalt) 
         {
             using (SHA256 sha256 = SHA256.Create())
             {
                 byte[] inputBytes = Encoding.UTF8.GetBytes(password);
                 byte[] hashBytes = sha256.ComputeHash(inputBytes);
 
-                // Chỉ lấy 16 byte đầu tiên và chuyển đổi sang định dạng chuỗi hex
+         
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < hashBytes.Length && i < 16; i++)
                 {
@@ -257,17 +238,17 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 }
                 var hashedPassword = sb.ToString();
 
-                // So sánh mật khẩu đã băm với mật khẩu đã lưu trong cơ sở dữ liệu
-                return hashedPasswordWithSalt == hashedPassword; // So sánh trực tiếp
+         
+                return hashedPasswordWithSalt == hashedPassword; 
             }
         }
-        private bool IsValidPassword(string password)//Bắt lỗi quy chuẩn password
+        private bool IsValidPassword(string password)
         {
-            return password.Length >= 6 && // Độ dài tối thiểu
-                   password.Any(char.IsUpper) && // Có ít nhất một chữ hoa
-                   password.Any(char.IsLower) && // Có ít nhất một chữ thường
-                   password.Any(char.IsDigit) && // Có ít nhất một số
-                   password.Any(ch => "!@#$%^&*()_-+=<>?/[]{}|~".Contains(ch)); // Có ít nhất một ký tự đặc biệt
+            return password.Length >= 6 && 
+                   password.Any(char.IsUpper) && 
+                   password.Any(char.IsLower) && 
+                   password.Any(char.IsDigit) && 
+                   password.Any(ch => "!@#$%^&*()_-+=<>?/[]{}|~".Contains(ch));
         }
         public bool IsValidPhone(string phone)//Bắt lỗi số điện thoại
         {
@@ -340,5 +321,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             throw new UnauthorizedAccessException("Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.");
         }
 
+      
     }
 }

@@ -48,8 +48,8 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             }
 
         }
-
-        [HttpPost]
+       
+        [HttpPost("LoginAdmin")]
         public async Task<IActionResult> LoginAdmin([FromBody] LoginDto userLoginDto)//Đăng nhập dành cho Admin
         {
             try

@@ -22,7 +22,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Account", b =>
                 {
                     b.Property<string>("UserName")
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime?>("Birthday")
                         .HasColumnType("datetime2");
@@ -93,7 +93,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .HasColumnType("Nvarchar(50)");
 
                     b.Property<string>("UserName")
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Wardcommune")
                         .IsRequired()
@@ -141,7 +141,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("UserName")
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("IDBill");
 
@@ -192,7 +192,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UserName")
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("IDCart");
 
@@ -273,7 +273,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("Username")
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("ConversationID");
 
@@ -296,7 +296,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UserName")
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("IDFavorite");
 
@@ -403,8 +403,8 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime");
 
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(50)");
@@ -413,7 +413,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserName")
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("IDProduct");
 
@@ -444,7 +444,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UserName")
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("IDRating");
 
@@ -454,6 +454,30 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.HasIndex("UserName");
 
                     b.ToTable("Ratings");
+                });
+
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Report", b =>
+                {
+                    b.Property<int>("ReportID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Content")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ProductID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Username")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ReportID");
+
+                    b.ToTable("Reports");
                 });
 
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.AddressDetail", b =>

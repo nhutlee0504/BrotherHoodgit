@@ -30,11 +30,11 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         [Column(TypeName = "nvarchar(50)")]
         public string Status { get; set; }
 
-        [ForeignKey("Account"), Column(TypeName = "varchar(20)")]
+        [ForeignKey("Account")]
         public string UserName { get; set; }
 
-        [Column(TypeName = "date")]
-        public DateTime? StartDate { get; set; }
+        [Column(TypeName = "datetime")]
+        public DateTime StartDate { get; set; }
 
         [Column(TypeName = "date")]
         public DateTime? EndDate { get; set; }

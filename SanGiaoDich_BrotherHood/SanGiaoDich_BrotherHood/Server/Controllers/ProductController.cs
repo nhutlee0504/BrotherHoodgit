@@ -99,8 +99,34 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 return StatusCode(500, "An error occurred while updating the product.");
             }
         }
+        [HttpPut("Accept/{id}")]
+        public async Task<IActionResult> Accept(int id)
+        {
 
-		[HttpGet]
+            try
+            {
+                var updatedProduct = await prod.AcceptProduct(id);
+                return Ok(updatedProduct);
+            }
+            catch (NotImplementedException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An error occurred while updating the product.");
+            }
+        }
+
+        [HttpGet]
         [Route("GetProductByNameAccount/{username}")]
 		public async Task<IActionResult> GetProductByNameAccount(string username)
 		{

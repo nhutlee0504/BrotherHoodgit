@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace SanGiaoDich_BrotherHood.Server.Migrations
 {
-    public partial class Adddb : Migration
+    public partial class Adddb2 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -11,7 +11,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 name: "Accounts",
                 columns: table => new
                 {
-                    UserName = table.Column<string>(type: "varchar(20)", nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Password = table.Column<string>(type: "varchar(100)", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(150)", nullable: true),
                     Email = table.Column<string>(type: "varchar(150)", nullable: true),
@@ -49,6 +49,22 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Reports",
+                columns: table => new
+                {
+                    ReportID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Username = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ProductID = table.Column<int>(type: "int", nullable: false),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reports", x => x.ReportID);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AddressDetails",
                 columns: table => new
                 {
@@ -58,7 +74,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     District = table.Column<string>(type: "Nvarchar(50)", nullable: false),
                     Wardcommune = table.Column<string>(type: "Nvarchar(50)", nullable: false),
                     AdditionalDetail = table.Column<string>(type: "Nvarchar(50)", nullable: false),
-                    UserName = table.Column<string>(type: "varchar(20)", nullable: true)
+                    UserName = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -86,7 +102,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     DateReceipt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     PaymentType = table.Column<string>(type: "nvarchar(70)", nullable: true),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserName = table.Column<string>(type: "varchar(20)", nullable: true)
+                    UserName = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -105,7 +121,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 {
                     ConversationID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Username = table.Column<string>(type: "varchar(20)", nullable: true),
+                    Username = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     CreatedDate = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
@@ -132,8 +148,8 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     IDCategory = table.Column<int>(type: "int", nullable: false),
                     Description = table.Column<string>(type: "ntext", nullable: true),
                     Status = table.Column<string>(type: "nvarchar(50)", nullable: true),
-                    UserName = table.Column<string>(type: "varchar(20)", nullable: true),
-                    StartDate = table.Column<DateTime>(type: "date", nullable: true),
+                    UserName = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    StartDate = table.Column<DateTime>(type: "datetime", nullable: false),
                     EndDate = table.Column<DateTime>(type: "date", nullable: true),
                     ProrityLevel = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -217,7 +233,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 {
                     IDCart = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserName = table.Column<string>(type: "varchar(20)", nullable: true),
+                    UserName = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     ProductIDProduct = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
@@ -243,7 +259,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 {
                     IDFavorite = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserName = table.Column<string>(type: "varchar(20)", nullable: true),
+                    UserName = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     IDProduct = table.Column<int>(type: "int", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -292,7 +308,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 {
                     IDRating = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserName = table.Column<string>(type: "varchar(20)", nullable: true),
+                    UserName = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     IDBillDetail = table.Column<int>(type: "int", nullable: false),
                     Star = table.Column<int>(type: "int", nullable: false),
                     Comment = table.Column<string>(type: "ntext", nullable: true),
@@ -450,6 +466,9 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
 
             migrationBuilder.DropTable(
                 name: "Ratings");
+
+            migrationBuilder.DropTable(
+                name: "Reports");
 
             migrationBuilder.DropTable(
                 name: "Carts");

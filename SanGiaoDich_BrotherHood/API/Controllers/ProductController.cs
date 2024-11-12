@@ -72,7 +72,32 @@ namespace API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpPut("Accept/{id}")]
+        public async Task<IActionResult> Accept(int id)
+        {
 
+            try
+            {
+                var updatedProduct = await prod.AcceptProduct(id);
+                return Ok(updatedProduct);
+            }
+            catch (NotImplementedException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An error occurred while updating the product.");
+            }
+        }
         [HttpPut("{id}")] // Specify that {id} is a route parameter for the update method
         public async Task<IActionResult> UpdateProductById(int id, [FromForm] ProductDto productDto)//Cập nhật product
         {

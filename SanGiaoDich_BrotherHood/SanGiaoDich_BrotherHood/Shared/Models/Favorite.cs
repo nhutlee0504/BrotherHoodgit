@@ -7,9 +7,10 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
     public class Favorite
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int IDFavorite { get; set; }
 
-        [ForeignKey("Account"), Column(TypeName = "varchar(20)")]
+        [ForeignKey("Account")]
         public string UserName { get; set; }
 
         [ForeignKey("Product")]
