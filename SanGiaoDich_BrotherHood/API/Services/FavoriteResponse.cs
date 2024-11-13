@@ -30,7 +30,7 @@ namespace API.Services
             var newFav = new Favorite
             {
                 UserName = user.UserName,
-                IDFavorite = idProd,
+                IDProduct = idProd,
                 CreatedDate = DateTime.Now
             };
             await _context.Favorites.AddAsync(newFav);
