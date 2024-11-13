@@ -50,7 +50,7 @@ namespace API.Services
 
         public async Task<IEnumerable<Bill>> GetBillsByUserName(string userName)
         {
-            return await _context.Bills.Where(x => x.UerName == userName).ToListAsync();
+            return await _context.Bills.Where(x => x.UserName == userName).ToListAsync();
         }
 
         public async Task<Bill> UpdateBill(int IDBill, Bill bill)

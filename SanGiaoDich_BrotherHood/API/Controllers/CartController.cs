@@ -30,8 +30,7 @@ namespace API.Controllers
             var ca = await cart.AddCart(new Cart
             {
                 UserName = c.UserName,
-                IDProduct = c.IDProduct,
-                Quantity = c.Quantity
+
             });
             if (ca == null)
                 return BadRequest();

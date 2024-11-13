@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace API.Models
@@ -8,15 +9,9 @@ namespace API.Models
         [Key]
         public int IDCart { get; set; }
 
-        [ForeignKey("Account"), Column(TypeName = "varchar(20)")]
+        [ForeignKey("Account")]
         public string UserName { get; set; }
-
-        [ForeignKey("Product")]
-        public int IDProduct { get; set; }
-
-        public int Quantity { get; set; }
-
         public Account Account { get; set; }
-        public Product Product { get; set; }
+        public ICollection<CartItem> cartitem { get; set; }
     }
 }

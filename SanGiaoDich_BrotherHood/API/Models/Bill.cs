@@ -23,19 +23,20 @@ namespace API.Models
 
         public string DeliveryAddress { get; set; }
 
-        public decimal Total {  get; set; }
+        public decimal Total { get; set; }
 
         public DateTime OrderDate { get; set; }
 
         public DateTime? DateReceipt { get; set; }
 
-        [Column(TypeName = "nvarchar(70)")]                               
+        [Column(TypeName = "nvarchar(70)")]
         public string PaymentType { get; set; }
 
         public string Status { get; set; }
 
-        [ForeignKey("Account"), Column(TypeName = "varchar(20)")]
-        public string UerName { get; set; }
+        [ForeignKey("Account")]
+        public string UserName { get; set; }
+
         public Account Account { get; set; }
         public ICollection<BillDetail> billDetails { get; set; }
     }
