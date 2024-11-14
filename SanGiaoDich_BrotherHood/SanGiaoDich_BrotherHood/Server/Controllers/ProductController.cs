@@ -70,8 +70,9 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             }
         }
 
-        [HttpPut("{id}")] // Specify that {id} is a route parameter for the update method
-        public async Task<IActionResult> UpdateProductById(int id, [FromForm] ProductDto productDto)//Cập nhật product
+        [HttpPut]
+        [Route("UpdateProduct/{Id}")]// Specify that {id} is a route parameter for the update method
+        public async Task<IActionResult> UpdateProductById(int id, ProductDto productDto)//Cập nhật product
         {
 
             try

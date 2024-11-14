@@ -61,6 +61,34 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             }
         }
 
+        [HttpPut]
+        [Route("/ImageProduct/{imageId}/update")]
+        public async Task<IActionResult> UpdateImage(int imageId, IFormFile file)
+        {
+            if (file == null)
+            {
+                return BadRequest("Không có tệp nào được chọn để cập nhật.");
+            }
+
+            try
+            {
+                var updatedImage = await _imageProduct.UpdateImage(imageId, file);
+                return Ok(updatedImage);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message); // Trả về Unauthorized với thông báo lỗi
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Có lỗi xảy ra: {ex.Message}");
+            }
+        }
+
         [HttpGet]
         [Route("GetImageProduct/{id}")]
         public async Task<IActionResult> GetImageProduct(int id)

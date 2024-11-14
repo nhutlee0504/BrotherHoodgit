@@ -1,10 +1,10 @@
 ﻿@page "/updatepost/{ProductId:int}"
 
 @using SanGiaoDich_BrotherHood.Shared.Models
+@using SanGiaoDich_BrotherHood.Shared.Dto
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
-@using SanGiaoDich_BrotherHood.Shared.Dto
 
 <h3>Cập nhật sản phẩm</h3>
 
@@ -34,12 +34,13 @@
             <option value="">Chọn loại sản phẩm</option>
             @foreach (var category in categories)
             {
-                <option value="@category.IDCategory" selected="@(category.IDCategory == ProductCategoryId ? "selected" : null)">
+                <option value="@category.IDCategory">
                     @category.NameCate
                 </option>
             }
         </select>
     </div>
+
 
     <!-- Mô tả sản phẩm -->
     <div class="form-group mb-3">
@@ -47,14 +48,37 @@
         <textarea @bind="Description" class="form-control" id="ProductDescription" rows="4"></textarea>
     </div>
 
-    <!-- Hiển thị hình ảnh từ thư mục với tên file cụ thể -->
+    <!-- Hình ảnh sản phẩm -->
     <div class="form-group mb-3">
-        <label>Hình ảnh:</label> <br />
-        <img src="@GetImage(ProductId)" class="img-fluid rounded-start" alt="@ProductName" style="width: 150px; height: 150px;" />
+        <label>Hình ảnh sản phẩm:</label>
+        <div class="d-flex flex-wrap">
+            @if (images != null && images.Any())
+            {
+                @foreach (var image in images)
+                {
+                    <div class="image-item m-2" style="position: relative;">
+                        <img src="/AnhSanPham/@image.Image" alt="Ảnh sản phẩm" style="width: 100px; height: 100px; object-fit: cover;" />
+                    </div>
+                }
+            }
+            else
+            {
+                <p>Không có hình ảnh cho sản phẩm này.</p>
+            }
+        </div>
     </div>
 
-    <!-- Nút cập nhật -->
+    <!-- Chọn ảnh mới từ file -->
+    <div class="form-group">
+        <label for="newImageFile">Chọn ảnh mới:</label>
+        <input type="file" id="newImageFile" @onchange="OnFileSelected" class="form-control" />
+    </div>
+
+    <button @onclick="UpdateImage" class="btn btn-primary">Cập nhật hình ảnh</button>
+
+    <!-- Nút cập nhật sản phẩm -->
     <button @onclick="UpdateProduct" class="btn btn-success">Cập nhật sản phẩm</button>
+
 </div>
 
 @if (!string.IsNullOrEmpty(errorMessage))
@@ -70,38 +94,37 @@
     private string Description { get; set; }
     private int ProductCategoryId { get; set; }
     private string errorMessage { get; set; }
+    private List<ImageProduct> images;
     private List<Category> categories = new List<Category>();
-    private Dictionary<int, string> productImages = new Dictionary<int, string>();
+    private IBrowserFile selectedFile;   // Lưu trữ ảnh mới chọn
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            await LoadCategories();
-
-            // Tải thông tin sản phẩm
+            await LoadCategories(); // Tải danh sách loại sản phẩm
             var product = await GetProductById(ProductId);
+
             if (product != null)
             {
                 ProductName = product.Name;
                 ProductPrice = product.Price;
                 ProductQuantity = product.Quantity;
-                ProductCategoryId = product.Category?.IDCategory ?? 0;
+                ProductCategoryId = product.Category?.IDCategory ?? 0; // Lấy loại sản phẩm của sản phẩm đã chọn
                 Description = product.Description;
-
-                // Gọi LoadImagesByIdProduct để lấy ảnh cho sản phẩm
-                await LoadImagesByIdProduct(ProductId);
+                images = await GetImagesByProductId(product.IDProduct);
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Không tìm thấy sản phẩm");
+                errorMessage = "Không tìm thấy sản phẩm";
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Lỗi khi tải thông tin sản phẩm: {ex.Message}");
+            errorMessage = $"Lỗi khi tải thông tin sản phẩm: {ex.Message}";
         }
     }
+
 
     private async Task<Product> GetProductById(int id)
     {
@@ -115,61 +138,38 @@
 
     private async Task LoadCategories()
     {
-        try
-        {
-            var categoryList = await HttpClient.GetFromJsonAsync<List<Category>>("api/category/GetCategories");
-            categories = categoryList ?? new List<Category>();
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", $"Không thể tải danh sách loại sản phẩm: {ex.Message}");
-        }
+        var categoryList = await HttpClient.GetFromJsonAsync<List<Category>>("api/category/GetCategories");
+        categories = categoryList ?? new List<Category>();
     }
 
-    private async Task LoadImagesByIdProduct(int id)
+    private async Task<List<ImageProduct>> GetImagesByProductId(int id)
     {
-        try
+        var response = await HttpClient.GetAsync($"api/ImageProduct/GetImageProduct/{id}");
+        if (response.IsSuccessStatusCode)
         {
-            var images = await HttpClient.GetFromJsonAsync<List<ImageProduct>>($"api/imageproduct/GetImageProduct/{id}");
-
-            // Lấy ảnh đầu tiên hoặc ảnh mặc định nếu không có
-            if (images != null && images.Count > 0)
-            {
-                var imageUrl = images.First().Image; // Lấy ảnh đầu tiên
-                productImages[id] = $"/AnhSanPham/{imageUrl}";
-            }
-            else
-            {
-                productImages[id] = "/images/defaultImg.png"; // Ảnh mặc định
-            }
+            return await response.Content.ReadFromJsonAsync<List<ImageProduct>>() ?? new List<ImageProduct>();
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine(ex.Message);
-            productImages[id] = "/images/defaultImg.png"; // Ảnh mặc định nếu có lỗi
+            errorMessage = "Không thể tải ảnh từ API: " + response.ReasonPhrase;
+            return new List<ImageProduct>();
         }
-    }
-
-    private string GetImage(int id)
-    {
-        return productImages.ContainsKey(id) ? productImages[id] : "/images/defaultImg.png";
     }
 
     private async Task UpdateProduct()
     {
         try
         {
-            var updatedProduct = new Product
+            var productDto = new ProductDto
                 {
-                    IDProduct = ProductId,
                     Name = ProductName,
                     Price = ProductPrice,
                     Quantity = ProductQuantity,
-                    Category = categories.FirstOrDefault(c => c.IDCategory == ProductCategoryId),
+                    CategoryId = ProductCategoryId,
                     Description = Description
                 };
 
-            var response = await HttpClient.PutAsJsonAsync($"api/product/UpdateProduct/{ProductId}", updatedProduct);
+            var response = await HttpClient.PutAsJsonAsync($"api/product/UpdateProduct/{ProductId}", productDto);
 
             if (response.IsSuccessStatusCode)
             {
@@ -177,13 +177,61 @@
             }
             else
             {
-                var errorMessage = await response.Content.ReadAsStringAsync();
-                await JSRuntime.InvokeVoidAsync("alert", $"Cập nhật không thành công: {errorMessage}");
+                errorMessage = $"Cập nhật không thành công: {await response.Content.ReadAsStringAsync()}";
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Lỗi khi cập nhật sản phẩm: {ex.Message}");
+            errorMessage = $"Lỗi khi cập nhật sản phẩm: {ex.Message}";
+        }
+    }
+
+    private void OnFileSelected(ChangeEventArgs e)
+    {
+        // Lấy giá trị của file từ input file
+        var fileInput = e.Value as IEnumerable<IBrowserFile>;
+        var file = fileInput?.FirstOrDefault();
+
+        if (file != null)
+        {
+            // Gán giá trị file cho selectedFile
+            selectedFile = file;
+        }
+        else
+        {
+            // Thông báo lỗi nếu không có file nào được chọn
+            errorMessage = "Vui lòng chọn ảnh mới.";
+        }
+    }
+
+    private async Task UpdateImage()
+    {
+        // Kiểm tra nếu có ảnh mới được chọn
+        if (selectedFile != null)
+        {
+            // Tạo formData để gửi file
+            var formData = new MultipartFormDataContent();
+            var fileContent = new StreamContent(selectedFile.OpenReadStream());
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+            formData.Add(fileContent, "file", selectedFile.Name);
+
+            // Gửi request cập nhật hình ảnh
+            var response = await HttpClient.PutAsync($"api/ImageProduct/UpdateImage/{ProductId}", formData);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Cập nhật thành công, làm mới lại danh sách hình ảnh
+                images = await GetImagesByProductId(ProductId);
+            }
+            else
+            {
+                errorMessage = "Cập nhật hình ảnh thất bại.";
+            }
+        }
+        else
+        {
+            errorMessage = "Vui lòng chọn ảnh mới.";
         }
     }
 }
+

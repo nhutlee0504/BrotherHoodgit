@@ -14,6 +14,7 @@ namespace API.Controllers
     public class ImageProductController : ControllerBase
     {
         private readonly IImageProduct _imageProduct;
+
         public ImageProductController(IImageProduct imageProduct)
         {
             _imageProduct = imageProduct;
@@ -32,7 +33,11 @@ namespace API.Controllers
                 var uploadedImages = await _imageProduct.UploadImages(files, productId);
                 return Ok(uploadedImages);
             }
-            catch (System.Exception ex)
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message); // Trả về Unauthorized với thông báo lỗi
+            }
+            catch (Exception ex)
             {
                 return BadRequest($"Có lỗi xảy ra: {ex.Message}");
             }
@@ -48,7 +53,34 @@ namespace API.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return Unauthorized(ex.Message); // Trả về Unauthorized với thông báo lỗi
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Có lỗi xảy ra: {ex.Message}");
+            }
+        }
+
+        [HttpPut("{imageId}/update")]
+        public async Task<IActionResult> UpdateImage(int imageId, IFormFile file)
+        {
+            if (file == null)
+            {
+                return BadRequest("Không có tệp nào được chọn để cập nhật.");
+            }
+
+            try
+            {
+                var updatedImage = await _imageProduct.UpdateImage(imageId, file);
+                return Ok(updatedImage);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message); // Trả về Unauthorized với thông báo lỗi
             }
             catch (KeyNotFoundException ex)
             {

@@ -12,6 +12,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public Task<IEnumerable<ImageProduct>> GetImages();
         public Task<IEnumerable<ImageProduct>> GetImageProducts(int id);
         public Task DeleteImage(int idProd, int idImage);
+        Task<ImageProduct> UpdateImage(int idImage, IFormFile file);
         Task<IEnumerable<ImageProduct>> UploadImages(List<IFormFile> files, int productId);
     }
 }
