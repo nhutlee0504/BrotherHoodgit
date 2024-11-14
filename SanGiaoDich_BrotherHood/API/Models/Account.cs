@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualBasic;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -8,7 +9,7 @@ namespace API.Models
 {
     public class Account
     {
-        [Key, Column(TypeName = "varchar(20)"), Required(ErrorMessage = "Vui lòng nhập tên tài khoản")]
+        [Key]
         public string UserName { get; set; }
 
         [Required(ErrorMessage = "Vui lòng nhập mật khẩu"), Column(TypeName = "varchar(100)"), MinLength(6, ErrorMessage = "Mật khẩu ít nhất 6 kí tự")]
@@ -21,6 +22,7 @@ namespace API.Models
         public string Email { get; set; }
 
         [Column(TypeName = "varchar(12)")]
+        [RegularExpression(@"^(0[3|5|7|8|9])([0-9]{8})$|^(02)([0-9]{8})$", ErrorMessage = "Số điện thoại không hợp lệ")]
         public string PhoneNumber { get; set; }
 
         [Column(TypeName = "nvarchar(6)")]
@@ -43,6 +45,10 @@ namespace API.Models
         public DateTime? TimeBanned { get; set; }
 
         public bool? IsDelete { get; set; }
+        public decimal? PreSystem { get; set; }
+        public bool? IsActived { get; set; }
+        //public int GoogleID { get; set; }
+
 
         public ICollection<Product> products { get; set; }
         public ICollection<Cart> carts { get; set; }
@@ -50,7 +56,6 @@ namespace API.Models
         public ICollection<Rating> ratings { get; set; }
         public ICollection<AddressDetail> addressDetails { get; set; }
         public ICollection<Bill> bills { get; set; }
-        public ICollection<Message> messageSend { get; set; }
-        public ICollection<Message> messagesReceive { get; set; }
+        public ICollection<Conversation> conversations { get; set; }
     }
 }

@@ -32,18 +32,21 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             return Ok(await category.GeCategory(IDCate));
         }
-
-        [HttpPost]
+        [HttpPost("AddCategory")]
         public async Task<ActionResult> AddCategory(Category cate)
         {
+        
             var ct = await category.AddCategory(new Category
             {
                 NameCate = cate.NameCate
             });
             if (ct == null)
-                return BadRequest();
-            return CreatedAtAction("AddCategory",ct);
+            {
+                return BadRequest("Không thể tạo loại mới.");
+            }
+            return CreatedAtAction(nameof(AddCategory), new { id = ct.IDCategory }, ct);
         }
+
 
         [HttpPut("IDCate")]
         public async Task<ActionResult> UpdateCategory(int IDCate, Category cate)

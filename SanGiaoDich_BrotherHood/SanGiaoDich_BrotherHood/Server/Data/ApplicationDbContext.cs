@@ -10,18 +10,7 @@ namespace SanGiaoDich_BrotherHood.Server.Data
         { }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Message>()
-                .HasOne(m => m.AccountSend)
-                .WithMany(a => a.messageSend)
-                .HasForeignKey(m => m.UserSend)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Message>()
-                .HasOne(m => m.AccountReceive)
-                .WithMany(a => a.messagesReceive)
-                .HasForeignKey(m => m.UserReceive)
-                .OnDelete(DeleteBehavior.Restrict);
-
+          
             modelBuilder.Entity<Account>(entity =>
             {
                 entity.Property(e => e.Birthday).IsRequired(false);
@@ -44,5 +33,8 @@ namespace SanGiaoDich_BrotherHood.Server.Data
         public DbSet<ImageProduct> ImageProducts { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<Rating> Ratings { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<Conversation> Conversations { get; set; }
+        public DbSet<Report> Reports { get; set; }
     }
 }

@@ -20,7 +20,7 @@ namespace API.Models
         public string Comment { get; set; }
 
         [Column(TypeName = "varchar(150)")]
-        public string Image {  get; set; }  
+        public string Image { get; set; }
 
         public Account Account { get; set; }
         public BillDetail BillDetail { get; set; }

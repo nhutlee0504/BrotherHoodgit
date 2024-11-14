@@ -11,6 +11,7 @@ namespace SanGiaoDich_BrotherHood.Shared.Dto
 		public string Phone { get; set; }
 		public string Gender { get; set; }
 		public string IdCard { get; set; }
+		public decimal? Presystem { get; set; }
 		public DateTime? Birthday { get; set; }
 		public string Introduce { get; set; }
 		public string Password { get; set; }

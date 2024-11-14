@@ -44,7 +44,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             }
 
             // Kiểm tra xem người dùng có phải là người đã mua sản phẩm không
-            if (bdt.Bill.UerName != userInfo.UserName)
+            if (bdt.Bill.UserName != userInfo.UserName)
             {
                 throw new InvalidOperationException("Bạn không thể đánh giá sản phẩm này vì bạn không phải là người đã mua.");
             }

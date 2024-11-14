@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SanGiaoDich_BrotherHood.Server.Data;
+using SanGiaoDich_BrotherHood.Server.Dto;
 using SanGiaoDich_BrotherHood.Shared.Models;
 using System;
 using System.Collections.Generic;
@@ -24,13 +25,14 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             _configuration = configuration;
         }
 
-        public async Task<Favorite> AddFavorite(int idProd)//Thêm sản phẩm vào danh sách yêu thích của người dùng
+        public async Task<Favorite> AddFavorite(int idProd)
         {
             var user = GetUserInfoFromClaims();
             var newFav = new Favorite
             {
                 UserName = user.UserName,
-                IDFavorite = idProd,
+                IDProduct = idProd,
+                CreatedDate = DateTime.Now
             };
             await _context.Favorites.AddAsync(newFav);
             await _context.SaveChangesAsync();

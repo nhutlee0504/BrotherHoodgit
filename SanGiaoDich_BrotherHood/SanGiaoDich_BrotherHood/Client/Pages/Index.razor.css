@@ -14,10 +14,11 @@
 .product-card {
     animation: fadeInUp 0.5s ease-in-out;
 }
+
 .heart {
     width: 15px;
     height: 15px;
-    background-color: gray; 
+    background-color: gray;
     position: relative;
     transform: rotate(-45deg);
     cursor: pointer;
@@ -28,7 +29,7 @@
     .heart::before,
     .heart::after {
         content: "";
-        width: 15px; 
+        width: 15px;
         height: 15px;
         background-color: gray;
         border-radius: 50%;
@@ -37,23 +38,24 @@
     }
 
     .heart::before {
-        top: -7.5px; 
+        top: -7.5px;
         left: 0;
     }
 
     .heart::after {
-        left: 7.5px; 
+        left: 7.5px;
         top: 0;
     }
 
     .heart.clicked {
-        background-color: red; 
+        background-color: red;
     }
 
         .heart.clicked::before,
         .heart.clicked::after {
-            background-color: red; 
+            background-color: red;
         }
+
 .banner-advertisement {
     position: relative;
 }
@@ -83,10 +85,12 @@
     transform: translateY(-20px); /* Di chuyển lên trên */
     transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out; /* Thêm hiệu ứng chuyển tiếp */
 }
+
 .fade-in {
     opacity: 1; /* Hiện khi lớp được thêm */
     transform: translateY(0); /* Về vị trí ban đầu */
 }
+
 .banner-title {
     font-size: 2.5rem;
     font-weight: bold;
@@ -110,13 +114,14 @@
         background: green;
         color: white;
     }
+
 .card {
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
     .card:hover {
         transform: translateY(-10px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); 
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
     }
 
 .card-body .badge {
@@ -128,7 +133,7 @@
 }
 
 .card-img-top {
-    transition: filter 0.4s ease; 
+    transition: filter 0.4s ease;
 }
 
     .card-img-top:hover {

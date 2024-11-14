@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Routing;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -21,7 +22,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             prod = prods;
         }
-
+        [AllowAnonymous]
         [HttpGet("GetAllProduct")]
         public async Task<IActionResult> GetAllProduct()
         {
@@ -99,8 +100,34 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 return StatusCode(500, "An error occurred while updating the product.");
             }
         }
+        [HttpPut("Accept/{id}")]
+        public async Task<IActionResult> Accept(int id)
+        {
 
-		[HttpGet]
+            try
+            {
+                var updatedProduct = await prod.AcceptProduct(id);
+                return Ok(updatedProduct);
+            }
+            catch (NotImplementedException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An error occurred while updating the product.");
+            }
+        }
+
+        [HttpGet]
         [Route("GetProductByNameAccount/{username}")]
 		public async Task<IActionResult> GetProductByNameAccount(string username)
 		{

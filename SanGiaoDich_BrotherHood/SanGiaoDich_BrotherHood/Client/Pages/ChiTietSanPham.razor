@@ -1,210 +1,140 @@
-﻿<link href="css/Breadbrum.css" rel="stylesheet" />
-@page "/ChiTietSanPham/{ProductId:int}"
+﻿@page "/ChiTietSanPham/{ProductId:int}"
 @using SanGiaoDich_BrotherHood.Shared.Models
+@using SanGiaoDich_BrotherHood.Shared.Dto
+@using System.Text.Json
+@using System.Text
 @inject HttpClient httpclient
+@inject IJSRuntime JSRuntime
 
 <div class="container">
-	<ul class="breadcrumb">
-		<li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
-		<li class="breadcrumb-item"><a href="#">Sản phẩm</a></li>
-		<li class="breadcrumb-item active"><a href="#">Chi tiết sản phẩm / @product?.Name</a></li>
-	</ul>
+    <ul class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="#">Sản phẩm</a></li>
+        <li class="breadcrumb-item active"><a href="#">Chi tiết sản phẩm / @product?.Name</a></li>
+    </ul>
 
-	<div class="row">
-		<div class="col-md-6">
-			@if (images != null && images.Any())
-			{
-				<!-- Ảnh lớn -->
-				<div class="row mb-4">
-					<div class="col-md-12">
-						<img src="/AnhSanPham/@images.First().Image" class="img-fluid" alt="Ảnh chính" style="border-radius: 15px; max-height: 400px; width: 100%; object-fit: cover;">
-					</div>
-				</div>
+    <div class="row">
+        <div class="col-md-6">
+            @if (images != null && images.Any())
+            {
+                <!-- Ảnh lớn -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <img src="/AnhSanPham/@images.First().Image" class="img-fluid" alt="Ảnh chính" style="border-radius: 15px; max-height: 400px; width: 100%; object-fit: cover;">
+                    </div>
+                </div>
 
-				<!-- Ảnh nhỏ -->
-				<div class="row">
-					@foreach (var item in images.Skip(1))
-					{
-						<div class="col-md-6 mb-2 d-flex">
-							<img src="/AnhSanPham/@item.Image" class="img-fluid flex-fill" alt="Ảnh phụ" style="border-radius: 15px; height: 150px; object-fit: cover;">
-						</div>
-					}
-				</div>
-			}
-			else
-			{
-				<div class="alert alert-warning" role="alert">
-					Không có hình ảnh cho sản phẩm này.
-				</div>
-			}
-		</div>
+                <!-- Ảnh nhỏ -->
+                <div class="row">
+                    @foreach (var item in images.Skip(1))
+                    {
+                        <div class="col-md-6 mb-2 d-flex">
+                            <img src="/AnhSanPham/@item.Image" class="img-fluid flex-fill" alt="Ảnh phụ" style="border-radius: 15px; height: 150px; object-fit: cover;">
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning" role="alert">
+                    Không có hình ảnh cho sản phẩm này.
+                </div>
+            }
+        </div>
 
+        <div class="col-md-6 shadow rounded">
+            <!-- Thông tin người bán -->
+            <div class="profile-card mb-3">
+                <div class="profile-avatar">
+                    <a href="ThongTinNguoiDung">
+                        <img src="/AnhAvatar/@user?.ImageAccount" alt="Người bán" class="img-fluid rounded-circle" style="max-width: 100px;" />
+                    </a>
 
+                </div>
+                <div class="profile-info">
+                    @if (user != null)
+                    {
+                        <div class="row align-items-center">
+                            <div class="col-9 col-md-8">
+                                <p class="mb-0">
+                                    <img src="/AnhAvatar/user.png" style="width:18px; margin-right: 5px;" />
+                                    <strong>@user.FullName</strong>
+                                </p>
+                            </div>
+                            <div class="col-3 col-md-4 d-flex justify-content-end">
+                                <span class="badge text-bg-success d-flex align-items-center" style="background-color: green; padding: 5px 10px;">
+                                    <img src="/AnhAvatar/king.png" style="width:18px; margin-right: 5px;" />
+                                    Thành viên
+                                </span>
+                            </div>
+                        </div>
+                    }
 
+                    <p>
+                        <i class="bi bi-bag"></i> Các sản phẩm đã bán: <strong>100</strong>
+                    </p>
+                    <p class="text-success mb-0">
+                        Đang hoạt động
+                    </p>
+                </div>
+            </div>
+            <!-- Checkbox để toggle trạng thái yêu thích -->
+            <input type="checkbox" checked="@(isFavorite)" @onchange="ToggleFavorite" />
+            <h3 style="font-weight:bolder">@product?.Name</h3>
+            <h4 class="text-success mb-2"><i class="bi bi-cash-coin"></i>@product?.Price.ToString("N0") VND</h4>
+            <p><strong>Loại sản phẩm:</strong> @categoryName</p>
+            <p><i class="bi bi-clock"></i> Đăng vào lúc: @(product?.StartDate.ToString("dd/MM/yyyy") ?? "Chưa xác định")</p>
 
-		<div class="col-md-6 shadow rounded">
-			<div class="profile-card mb-3">
-				<div class="profile-avatar">
-					<a href="ThongTinNguoiDung">
-						<img src="/AnhAvatar/@user?.ImageAccount" alt="Người bán" />
-					</a>
-				</div>
-				<div class="profile-info">
-					<div class="row align-items-center">
-						<div class="col-9 col-md-8">
-							<p class="mb-0">
-								<img src="/AnhAvatar/user.png" style="width:18px; margin-right: 5px;" />
-								<strong>@user?.FullName</strong>
-							</p>
-						</div>
-						<div class="col-3 col-md-4 d-flex justify-content-end">
-							<span class="badge text-bg-success d-flex align-items-center" style="background-color: green; padding: 5px 10px;">
-								<img src="/AnhAvatar/king.png" style="width:18px; margin-right: 5px;" />
-								Thành viên
-							</span>
-						</div>
-					</div>
-					<p><i class="bi bi-bag"></i> Các sản phẩm đã bán: <strong></strong></p>
-					<p class="text-success mb-0">Đang hoạt động</p>
-				</div>
-				<div class="top-0 end-0 p-2">
-					<input type="checkbox" id="favoriteCheckbox" @bind="isFavorite" style="display: none">
-					<label for="favoriteCheckbox" style="cursor: pointer;" @onclick="ToggleFavorite">
-						<i class="fa fa-heart" style="font-size: 1.5rem; color: @(isFavorite ? "green" : "grey");"></i>
-					</label>
-				</div>
-			</div>
+            <button class="btn btn-danger rounded-pill mb-2 w-100"><i class="bi bi-person-circle"></i> Liên hệ người bán</button>
+            <button class="btn btn-success rounded-pill mb-2 w-100"><i class="bi bi-telephone-forward"></i> Liên hệ qua 011*****</button>
+        </div>
+    </div>
 
-			<h3 style="font-weight:bolder">@product?.Name</h3>
-			<h4 class="text-success mb-2"><i class="bi bi-cash-coin"></i>@product?.Price.ToString("N0") VND</h4>
-			<p><strong>Loại sản phẩm:</strong> @categoryName</p>
-			<p><i class="bi bi-clock"></i> Đăng vào lúc: @(product?.StartDate?.ToString("dd/MM/yyyy") ?? "Chưa xác định")</p>
+    <!-- Mô tả sản phẩm -->
+    <div class="product-description card mt-4">
+        <div class="card-header text-white">
+            <h4 class="card-title">Mô tả sản phẩm</h4>
+        </div>
+        <div class="card-body">
+            <ul class="list-unstyled">
+                <li><i class="bi bi-check-circle"></i> <strong>Chất liệu:</strong> 100% cotton, mềm mại và thoáng khí.</li>
+                <li><i class="bi bi-check-circle"></i> <strong>Thiết kế:</strong> Cổ áo đứng lịch sự, tay dài dễ gấp lên dễ dàng.</li>
+                <li><i class="bi bi-check-circle"></i> <strong>Màu sắc:</strong> Trắng, xanh dương, xám.</li>
+                <li><i class="bi bi-check-circle"></i> <strong>Kích thước:</strong> S, M, L, XL.</li>
+                <li><i class="bi bi-check-circle"></i> <strong>Chất lượng:</strong> Dệt chắc chắn, không phai màu sau nhiều lần giặt.</li>
+            </ul>
+        </div>
+    </div>
 
-			<button class="btn btn-danger rounded-pill mb-2 w-100"><i class="bi bi-person-circle"></i> Liên hệ người bán</button>
-			<button class="btn btn-success rounded-pill mb-2 w-100"><i class="bi bi-telephone-forward"></i> Liên hệ qua 011*****</button>
-		</div>
-	</div>
+    <!-- Đánh giá sản phẩm -->
+    <div class="mt-4">
+        <h4 class="review-title">Đánh giá</h4>
+        <div class="row">
+            <!-- Your review cards logic can be placed here -->
+        </div>
+    </div>
 
-	<!-- Mô tả sản phẩm -->
-	<div class="product-description card mt-4">
-		<div class="card-header text-white">
-			<h4 class="card-title">Mô tả sản phẩm</h4>
-		</div>
-		<div class="card-body">
-			<ul class="list-unstyled">
-				<li><i class="bi bi-check-circle"></i> <strong>Chất liệu:</strong> 100% cotton, mềm mại và thoáng khí.</li>
-				<li><i class="bi bi-check-circle"></i> <strong>Thiết kế:</strong> Cổ áo đứng lịch sự, tay dài dễ gấp lên dễ dàng.</li>
-				<li><i class="bi bi-check-circle"></i> <strong>Màu sắc:</strong> Trắng, xanh dương, xám.</li>
-				<li><i class="bi bi-check-circle"></i> <strong>Kích thước:</strong> S, M, L, XL.</li>
-				<li><i class="bi bi-check-circle"></i> <strong>Chất lượng:</strong> Dệt chắc chắn, không phai màu sau nhiều lần giặt.</li>
-			</ul>
-		</div>
-	</div>
-
-	<!-- Đánh giá sản phẩm -->
-	<div class="mt-4">
-		<h4 class="review-title">Đánh giá</h4>
-		<div class="row">
-			<!-- Your review cards logic can be placed here -->
-		</div>
-	</div>
-
-	<!-- Sản phẩm liên quan -->
-	<div class="mt-4">
-		<h4 style="font-weight: bold; color: #28a745; border-bottom: 2px solid #28a745; padding-bottom: 10px; text-align: center;">
-			Sản phẩm liên quan
-		</h4>
-		<div class="row">
-			<!-- Your related products logic can be placed here -->
-		</div>
-	</div>
+    <!-- Sản phẩm liên quan -->
+    <div class="mt-4">
+        <h4 style="font-weight: bold; color: #28a745; border-bottom: 2px solid #28a745; padding-bottom: 10px; text-align: center;">
+            Sản phẩm liên quan
+        </h4>
+        <div class="row">
+            <!-- Your related products logic can be placed here -->
+        </div>
+    </div>
 </div>
 
 <style>
-	.old-price {
-		color: black;
-	}
+    .old-price {
+        color: black;
+    }
 
-	.new-price {
-		color: red;
-		font-weight: bold;
-	}
+    .new-price {
+        color: red;
+        font-weight: bold;
+    }
 </style>
 
 @code {
-	[Parameter] public int ProductId { get; set; }
-	private Product product;
-	private string categoryName;
-	private Account user;
-	private List<ImageProduct> images;
-	private string errorMessage;
-
-	protected override async Task OnInitializedAsync()
-	{
-		try
-		{
-			product = await GetProductById(ProductId);
-			if (product != null)
-			{
-				categoryName = await GetCategoryNameById(product.IDCategory);
-				user = await GetSellerByUsername(product.UserName);
-				images = await GetImagesByProductId(product.IDProduct);
-			}
-		}
-		catch (Exception ex)
-		{
-			errorMessage = ex.Message; // Ghi lại thông điệp lỗi
-		}
-	}
-
-
-	private async Task<Product> GetProductById(int id)
-	{
-		var response = await httpclient.GetAsync($"api/product/GetProductById/{id}");
-		if (response.IsSuccessStatusCode)
-		{
-			return await response.Content.ReadFromJsonAsync<Product>();
-		}
-		throw new Exception("Cannot fetch product data");
-	}
-
-	public async Task<string> GetCategoryNameById(int idCategory)
-	{
-		var response = await httpclient.GetAsync($"api/category/GetCategoryByID/{idCategory}");
-		if (response.IsSuccessStatusCode)
-		{
-			var category = await response.Content.ReadFromJsonAsync<Category>();
-			return category?.NameCate;
-		}
-		return null;
-	}
-
-	private async Task<Account> GetSellerByUsername(string username)
-	{
-		if (string.IsNullOrEmpty(username))
-		{
-			return null;
-		}
-		return await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
-	}
-	private async Task<List<ImageProduct>> GetImagesByProductId(int id)
-	{
-		var response = await httpclient.GetAsync($"api/ImageProduct/GetImageProduct/{id}");
-		if (response.IsSuccessStatusCode)
-		{
-			return await response.Content.ReadFromJsonAsync<List<ImageProduct>>() ?? new List<ImageProduct>();
-		}
-		else
-		{
-			errorMessage = "Không thể tải ảnh từ API: " + response.ReasonPhrase;
-			return new List<ImageProduct>(); // Trả về danh sách rỗng nếu có lỗi
-		}
-	}
-	private bool isFavorite = false;
-
-	private void ToggleFavorite()
-	{
-		isFavorite = !isFavorite; // Chuyển đổi trạng thái
-	}
-
 }

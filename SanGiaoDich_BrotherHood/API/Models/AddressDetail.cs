@@ -12,7 +12,7 @@ namespace API.Models
         public string ProvinceCity { get; set; }
 
         [Required(ErrorMessage = "Vui nhập Quận/Huyện"), Column(TypeName = "Nvarchar(50)")]
-        public string District {  get; set; }
+        public string District { get; set; }
 
         [Required(ErrorMessage = "Vui nhập Phường/Xã"), Column(TypeName = "Nvarchar(50)")]
         public string Wardcommune { get; set; }
@@ -20,7 +20,7 @@ namespace API.Models
         [Required(ErrorMessage = "Vui nhập địa chỉ cụ thể"), Column(TypeName = "Nvarchar(50)")]
         public string AdditionalDetail { get; set; }
 
-        [ForeignKey("Account"), Column(TypeName = "varchar(20)")]              
+        [ForeignKey("Account")]
         public string UserName { get; set; }
 
         public Account Account { get; set; }

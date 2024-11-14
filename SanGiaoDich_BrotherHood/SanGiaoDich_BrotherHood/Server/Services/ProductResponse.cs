@@ -27,13 +27,28 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             _configuration = configuration;
         }
 
-        public async Task<Product> AddProduct(ProductDto product)//Thêm sản phẩm mới
+        public async Task<Product> AddProduct(ProductDto product)
         {
             var user = GetUserInfoFromClaims();
+
             if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null)
             {
                 throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
             }
+            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
+
+            if (existingUser == null)
+            {
+                throw new InvalidOperationException("Người dùng không tồn tại");
+            }
+
+            if (existingUser.PreSystem < 5000)
+            {
+                throw new InvalidOperationException("Số dư không đủ để thực hiện thao tác này");
+            }
+            existingUser.PreSystem -= 5000;
+            _context.Accounts.Update(existingUser);
+
 
             var newProd = new Product
             {
@@ -45,8 +60,10 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 Status = "Đang chờ duyệt",
                 StartDate = DateTime.Now,
                 UserName = user.UserName,
-                // Add other properties as needed
-            };
+                CreatedDate = DateTime.Now,
+                EndDate = DateTime.Now.AddDays(7)
+
+        };
 
             await _context.Products.AddAsync(newProd);
             await _context.SaveChangesAsync();
@@ -162,7 +179,18 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             return existingProduct;
         }
 
-
+        public async Task<Product> AcceptProduct(int idproduct)
+        {
+            var existingProduct = await _context.Products.FirstOrDefaultAsync(x => x.IDProduct == idproduct);
+            if (existingProduct == null)
+            {
+                throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
+            }
+         
+            existingProduct.Status = "Đã duyệt";
+            _context.SaveChanges();
+            return existingProduct;
+        }
 
         //Phương thức ngooài
 
@@ -212,5 +240,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             }
             throw new UnauthorizedAccessException("Vui lòng đăng nhập vào hệ thống.");
         }
+
+  
     }
 }

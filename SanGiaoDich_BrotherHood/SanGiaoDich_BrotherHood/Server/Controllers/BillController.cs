@@ -52,7 +52,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 DateReceipt = bl.DateReceipt,
                 PaymentType = bl.PaymentType,
                 Status = bl.Status,
-                UerName = bl.UerName
+                UserName = bl.UserName
             });
             if (b == null)
                 return BadRequest();

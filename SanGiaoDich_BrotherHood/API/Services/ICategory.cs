@@ -9,9 +9,8 @@ namespace API.Services
     {
         public Task<IEnumerable<Category>> GetCategories();
         public Task<Category> GeCategory(int IDCate);
-        public Task<Category> AddCategory(string nameCategory);
+        public Task<Category> AddCategory(Category category);
         public Task<Category> UpdateCategory(int IDCate, Category category);
         public Task<Category> DeleteCategory(int IDCate);
-
     }
 }
