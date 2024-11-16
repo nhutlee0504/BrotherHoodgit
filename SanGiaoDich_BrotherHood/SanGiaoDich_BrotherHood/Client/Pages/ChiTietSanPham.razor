@@ -78,8 +78,11 @@
                     </p>
                 </div>
             </div>
-            <!-- Checkbox để toggle trạng thái yêu thích -->
-            <input type="checkbox" checked="@(isFavorite)" @onchange="ToggleFavorite" />
+            <!-- Thay thế checkbox bằng hình trái tim -->
+            <div class="favorite-heart" @onchange="ToggleFavorite">
+                <i class="fas fa-heart @((isFavorite) ? "heart-checked" : "heart-unchecked")" @onclick="ToggleFavorite"></i>
+            </div>
+
             <h3 style="font-weight:bolder">@product?.Name</h3>
             <h4 class="text-success mb-2"><i class="bi bi-cash-coin"></i>@product?.Price.ToString("N0") VND</h4>
             <p><strong>Loại sản phẩm:</strong> @categoryName</p>
@@ -96,13 +99,7 @@
             <h4 class="card-title">Mô tả sản phẩm</h4>
         </div>
         <div class="card-body">
-            <ul class="list-unstyled">
-                <li><i class="bi bi-check-circle"></i> <strong>Chất liệu:</strong> 100% cotton, mềm mại và thoáng khí.</li>
-                <li><i class="bi bi-check-circle"></i> <strong>Thiết kế:</strong> Cổ áo đứng lịch sự, tay dài dễ gấp lên dễ dàng.</li>
-                <li><i class="bi bi-check-circle"></i> <strong>Màu sắc:</strong> Trắng, xanh dương, xám.</li>
-                <li><i class="bi bi-check-circle"></i> <strong>Kích thước:</strong> S, M, L, XL.</li>
-                <li><i class="bi bi-check-circle"></i> <strong>Chất lượng:</strong> Dệt chắc chắn, không phai màu sau nhiều lần giặt.</li>
-            </ul>
+            <p></p>
         </div>
     </div>
 
@@ -134,6 +131,21 @@
         color: red;
         font-weight: bold;
     }
+
+    /* Thêm style cho trái tim */
+    .favorite-heart i {
+        font-size: 30px;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .heart-checked {
+        color: #28a745; /* Xanh lá khi đã yêu thích */
+    }
+
+    .heart-unchecked {
+        color: gray; /* Màu xám khi chưa yêu thích */
+    }
 </style>
 
 @code {
@@ -143,127 +155,149 @@
     private Account user;
     private List<ImageProduct> images;
     private string errorMessage;
-    private bool isFavorite = false;  // Trạng thái yêu thích của sản phẩm
+    private bool isFavorite = false; // Trạng thái yêu thích của sản phẩm
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            // Gọi đồng thời các API cần thiết
+            var tasks = new List<Task>
+            {
+                LoadProductDetails(),
+                LoadFavoriteStatus()
+            };
+
+            await Task.WhenAll(tasks);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
+        }
+    }
+
+    private async Task LoadProductDetails()
+    {
+        try
+        {
             product = await GetProductById(ProductId);
+
             if (product != null)
             {
-                categoryName = await GetCategoryNameById(product.IDCategory);
-                user = await GetSellerByUsername(product.UserName);
-                images = await GetImagesByProductId(product.IDProduct);
-            }
+                // Chỉ tải thêm dữ liệu khi sản phẩm tồn tại
+                var categoryTask = GetCategoryNameById(product.IDCategory);
+                var sellerTask = GetSellerByUsername(product.UserName);
+                var imagesTask = GetImagesByProductId(product.IDProduct);
 
-            // Kiểm tra token và lấy danh sách yêu thích nếu có
-            var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
-            if (!string.IsNullOrEmpty(token))
+                // Chạy song song các tác vụ
+                await Task.WhenAll(categoryTask, sellerTask, imagesTask);
+
+                categoryName = await categoryTask;
+                user = await sellerTask;
+                images = await imagesTask;
+            }
+            else
             {
-                await CheckFavoriteStatus();
+                errorMessage = "Không tìm thấy sản phẩm này.";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = ex.Message; // Ghi lại thông điệp lỗi
+            errorMessage = $"Lỗi khi tải chi tiết sản phẩm: {ex.Message}";
         }
     }
 
     private async Task<Product> GetProductById(int id)
     {
         var response = await httpclient.GetAsync($"api/product/GetProductById/{id}");
-        if (response.IsSuccessStatusCode)
-        {
-            return await response.Content.ReadFromJsonAsync<Product>();
-        }
-        throw new Exception("Cannot fetch product data");
+        return response.IsSuccessStatusCode
+            ? await response.Content.ReadFromJsonAsync<Product>()
+            : throw new Exception("Không thể lấy thông tin sản phẩm.");
     }
 
-    public async Task<string> GetCategoryNameById(int idCategory)
+    private async Task<string> GetCategoryNameById(int idCategory)
     {
         var response = await httpclient.GetAsync($"api/category/GetCategoryByID/{idCategory}");
-        if (response.IsSuccessStatusCode)
-        {
-            var category = await response.Content.ReadFromJsonAsync<Category>();
-            return category?.NameCate;
-        }
-        return null;
+        return response.IsSuccessStatusCode
+            ? (await response.Content.ReadFromJsonAsync<Category>())?.NameCate ?? "Không xác định"
+            : throw new Exception("Không thể lấy thông tin loại sản phẩm.");
     }
 
     private async Task<Account> GetSellerByUsername(string username)
     {
-        if (string.IsNullOrEmpty(username))
-        {
-            return null;
-        }
-        return await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
+        if (string.IsNullOrEmpty(username)) return null;
+
+        var response = await httpclient.GetAsync($"api/user/GetAccountInfoByName/{username}");
+        return response.IsSuccessStatusCode
+            ? await response.Content.ReadFromJsonAsync<Account>()
+            : throw new Exception("Không thể lấy thông tin người bán.");
     }
 
     private async Task<List<ImageProduct>> GetImagesByProductId(int id)
     {
         var response = await httpclient.GetAsync($"api/ImageProduct/GetImageProduct/{id}");
-        if (response.IsSuccessStatusCode)
+        return response.IsSuccessStatusCode
+            ? await response.Content.ReadFromJsonAsync<List<ImageProduct>>() ?? new List<ImageProduct>()
+            : new List<ImageProduct>();
+    }
+
+    private async Task LoadFavoriteStatus()
+    {
+        try
         {
-            return await response.Content.ReadFromJsonAsync<List<ImageProduct>>() ?? new List<ImageProduct>();
+            var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
+            if (!string.IsNullOrEmpty(token))
+            {
+                var response = await httpclient.GetAsync("api/favorite/GetFavoriteAccount");
+                if (response.IsSuccessStatusCode)
+                {
+                    var favoriteList = await response.Content.ReadFromJsonAsync<List<Product>>();
+                    isFavorite = favoriteList?.Any(fav => fav.IDProduct == ProductId) ?? false;
+                }
+            }
         }
-        else
+        catch
         {
-            errorMessage = "Không thể tải ảnh từ API: " + response.ReasonPhrase;
-            return new List<ImageProduct>(); // Trả về danh sách rỗng nếu có lỗi
+            // Không gây lỗi nếu không thể tải danh sách yêu thích
+            isFavorite = false;
         }
     }
 
-    private async Task CheckFavoriteStatus()
+    private async Task ToggleFavorite()
     {
-        // Gọi API để lấy danh sách sản phẩm yêu thích của người dùng
-        var response = await httpclient.GetAsync("api/favorite/GetFavoriteAccount");
-        if (response.IsSuccessStatusCode)
-        {
-            var favoriteList = await response.Content.ReadFromJsonAsync<List<Product>>();
-            // Kiểm tra nếu sản phẩm hiện tại có trong danh sách yêu thích
-            isFavorite = favoriteList.Any(fav => fav.IDProduct == ProductId);
-        }
-        else
-        {
-            // Nếu có lỗi khi lấy danh sách yêu thích
-            errorMessage = "Không thể lấy danh sách yêu thích.";
-        }
-    }
+        isFavorite = !isFavorite;
 
-    private async Task ToggleFavorite(ChangeEventArgs e)
-    {
-        isFavorite = (bool)e.Value;
-
-        var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
-        if (!string.IsNullOrEmpty(token))
+        try
         {
+            var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
+            if (string.IsNullOrEmpty(token))
+            {
+                errorMessage = "Bạn cần đăng nhập để thực hiện hành động này.";
+                return;
+            }
+
             if (isFavorite)
             {
                 var response = await httpclient.GetAsync($"api/favorite/AddFavorite/{ProductId}");
-
-                if (response.IsSuccessStatusCode)
+                if (!response.IsSuccessStatusCode)
                 {
-                    // Nếu thêm thành công, có thể xử lý hoặc thông báo
-                }
-                else
-                {
-                    // Xử lý lỗi nếu có (ví dụ, đăng nhập không thành công, lỗi server, etc.)
                     errorMessage = "Không thể thêm sản phẩm vào danh sách yêu thích.";
+                    isFavorite = false; // Quay lại trạng thái trước đó nếu lỗi
                 }
             }
             else
             {
-                // Gọi API để xóa sản phẩm khỏi danh sách yêu thích
-                await httpclient.DeleteAsync($"api/favorite/DeleteFavorite/{ProductId}");
+                var response = await httpclient.DeleteAsync($"api/favorite/DeleteFavorite/{ProductId}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    errorMessage = "Không thể xóa sản phẩm khỏi danh sách yêu thích.";
+                    isFavorite = true; // Quay lại trạng thái trước đó nếu lỗi
+                }
             }
         }
-        else
+        catch (Exception ex)
         {
-            // Nếu không có token, không thực hiện hành động gì
-            errorMessage = "Bạn cần đăng nhập để thực hiện hành động này.";
+            errorMessage = $"Lỗi khi cập nhật trạng thái yêu thích: {ex.Message}";
         }
     }
-
-
 }
