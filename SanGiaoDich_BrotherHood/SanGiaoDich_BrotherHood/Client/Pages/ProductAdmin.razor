@@ -149,7 +149,7 @@
             <tr>
                 <td>@product.Name</td>
                 <td class="text-center">@product.UserName</td>
-                <td class="text-center">@product.StartDate.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                <td class="text-center">@product.StartDate?.ToString("dd/MM/yyyy HH:mm:ss")</td>
                 <td class="text-center">@product.ProrityLevel</td>
                 <td class="text-center">@product.Status</td>
                 <td class="text-center">@product.AccountAccept</td>

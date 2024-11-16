@@ -61,6 +61,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 ProrityLevel = "Phổ thông",
                 CreatedDate = DateTime.Now,
                 UpdatedDate = DateTime.Now,
+                StartDate = DateTime.Now,
                 UserName = user.UserName,
                 AccountAccept = "Admin"
                 
