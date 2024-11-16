@@ -79,6 +79,17 @@
         <input type="number" @bind="ProductQuantity" class="form-control" placeholder="Nhập số lượng sản phẩm" id="ProductQuantity" />
     </div>
 
+    <div class="form-group mb-3">
+        <label for="ProrityLevel"><i class="fas fa-exclamation"></i> Mức độ ưu tiên:</label>
+        <select @bind="ProrityLevel" class="form-control" id="ProrityLevel">
+            <option value="">Chọn mức độ ưu tiên</option>
+            <option value="Phổ thông">Phổ thông</option>
+            <option value="Ưu tiên">Ưu tiên</option>
+        </select>
+    </div>
+
+
+
     <div class="form-group">
         <label for="ProductDescription"><i class="fas fa-info-circle"></i> Mô tả sản phẩm chi tiết:</label>
         <textarea @bind="Description" class="form-control" id="ProductDescription" rows="4" placeholder="Nhập mô tả chi tiết về sản phẩm..."></textarea>
@@ -110,6 +121,7 @@
     private int ProductQuantity { get; set; }
     private int ProductCategoryId { get; set; }
     private string Description { get; set; }
+    private string ProrityLevel { get; set; }
     private List<Category> categories = new List<Category>();
     private List<ImageFile> selectedFiles = new List<ImageFile> { null, null, null };
 
@@ -195,7 +207,8 @@
                     Price = ProductPrice,
                     Quantity = ProductQuantity,
                     CategoryId = ProductCategoryId,
-                    Description = Description
+                    Description = Description,
+                    ProrityLevel = ProrityLevel
                 };
 
             var response = await HttpClient.PostAsJsonAsync("api/product/AddProduct", productDto);

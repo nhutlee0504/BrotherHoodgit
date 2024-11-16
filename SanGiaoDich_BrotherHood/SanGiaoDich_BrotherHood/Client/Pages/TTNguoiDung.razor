@@ -5,9 +5,9 @@
 @using Microsoft.AspNetCore.Components.Forms
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
-<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+@inject IJSRuntime JSRuntime
+
+
 
 <style>
 	.modal-dialog {
@@ -281,8 +281,6 @@ else if (userAccount != null)
 						</div>
 					</div>
 				</div>
-
-
 				<!-- Order and Reputation Info -->
 				<div class="card shadow mb-3" style="border:none">
 					<div class="card-body">
@@ -298,24 +296,7 @@ else if (userAccount != null)
 						</p>
 					</div>
 				</div>
-
-				<!-- Payment Info with Icon -->
-				<div class="card shadow mb-3" style="border:none;">
-					<div class="card-body d-flex align-items-center justify-content-start">
-						<i class="fa-solid fa-wallet" style="font-size: 30px; margin-right: 15px;"></i> <!-- Icon for payment info -->
-						<div>
-							<p>Tổng số tiền đã nạp: 0</p>
-							<p>Tổng số tiền đã thanh toán: 0</p>
-						</div>
-					</div>
-				</div>
-
-
-
-
-
 			</div>
-
 			<!-- Right Panel: Product Listings -->
 			<div class="col-md-7">
 				<div class="d-flex justify-content-center">
@@ -357,6 +338,9 @@ else if (userAccount != null)
 											<i class="fa fa-user"></i> Người bán: @productList.UserName
 										</p>
 										<p class="card-text text-muted">
+											<i class=""></i>Mức độ: @productList.ProrityLevel
+										</p>
+										<p class="card-text text-muted">
 											<i class="fa fa-check-circle"></i> Trạng thái:
 											<span class="text-success">@productList.Status</span>
 										</p>
@@ -364,17 +348,25 @@ else if (userAccount != null)
 											<i class="fa fa-clock"></i> Thời gian đăng: @productList.StartDate.ToString()
 										</p>
 										<div class="d-flex justify-content-end">
-											<a href="/updatepost/@productList.IDProduct">
-
-												<button class="btn btn-warning me-2">
-													<i class="fa fa-edit"></i> Sửa
+											@if (productList.Status == "Đã duyệt")
+											{
+												@if (productList.ProrityLevel == "Phổ thông")
+												{
+													<button class="btn btn-info me-2" @onclick="() => UpgradePriorityLevel(productList.IDProduct)">
+														<i class="fa fa-arrow-up"></i> Nâng cấp
+													</button>
+												}
+												<a href="/updatepost/@productList.IDProduct">
+													<button class="btn btn-warning me-2">
+														<i class="fa fa-edit"></i> Sửa
+													</button>
+												</a>
+												<button class="btn btn-danger me-2" @onclick="() => DeleteProduct(productList.IDProduct)">
+													<i class="fa fa-trash"></i> Xóa
 												</button>
-											</a>
-											<button class="btn btn-danger me-2" @onclick="() => DeleteProduct(productList.IDProduct)">
-												<i class="fa fa-trash"></i> Xóa
-											</button>
-
+											}
 										</div>
+
 									</div>
 								</div>
 							</div>
@@ -423,27 +415,64 @@ else if (userAccount != null)
 	{
 		try
 		{
-			// Gọi API xóa sản phẩm
-			var response = await HttpClient.PostAsJsonAsync($"api/products/delete/{productId}", productId);
+			// Make a DELETE request to the API to delete the product
+			var response = await HttpClient.DeleteAsync($"api/product/DeleteProduct/{productId}");
+
 			if (response.IsSuccessStatusCode)
 			{
-				// Nếu xóa thành công, cập nhật trạng thái sản phẩm trong danh sách hiển thị
+				// If deletion is successful, find and update the product in the list
 				var productToDelete = userProducts.FirstOrDefault(p => p.IDProduct == productId);
 				if (productToDelete != null)
 				{
+					// Optionally, update the product status on the frontend
 					productToDelete.Status = "Đã xóa";
 				}
+				// Optionally, display a success message
+				await JSRuntime.InvokeVoidAsync("alert", "Sản phẩm đã được xóa thành công!");
 			}
 			else
 			{
-				// Xử lý nếu API trả về lỗi
+				// If there is an error from the API, display the error message
 				var errorResponse = await response.Content.ReadAsStringAsync();
-				Console.WriteLine($"Lỗi khi xóa sản phẩm: {errorResponse}");
+				await JSRuntime.InvokeVoidAsync("alert", $"Lỗi: {errorResponse}");
 			}
 		}
 		catch (Exception ex)
 		{
+			// Handle any exceptions that might occur during the delete operation
 			Console.WriteLine($"Lỗi xảy ra khi xóa sản phẩm: {ex.Message}");
+			await JSRuntime.InvokeVoidAsync("alert", "Đã xảy ra lỗi khi xóa sản phẩm.");
+		}
+	}
+
+	private async Task UpgradePriorityLevel(int productId)
+	{
+		try
+		{
+			// Gọi API nâng cấp mức độ sản phẩm
+			var response = await HttpClient.PutAsync($"api/product/UpgradeProrityLevel/{productId}", null);
+			if (response.IsSuccessStatusCode)
+			{
+				// Nếu nâng cấp thành công, cập nhật trạng thái sản phẩm trong giao diện
+				var productToUpdate = userProducts.FirstOrDefault(p => p.IDProduct == productId);
+				if (productToUpdate != null)
+				{
+					productToUpdate.ProrityLevel = "Ưu tiên";
+				}
+				await JSRuntime.InvokeVoidAsync("alert", "Sản phẩm đã được nâng cấp thành công!");
+			}
+			else
+			{
+				// Nếu API trả về lỗi
+				var errorResponse = await response.Content.ReadAsStringAsync();
+				Console.WriteLine($"Lỗi khi nâng cấp sản phẩm: {errorResponse}");
+				await JSRuntime.InvokeVoidAsync("alert", $"Lỗi: {errorResponse}");
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Lỗi xảy ra khi nâng cấp sản phẩm: {ex.Message}");
+			await JSRuntime.InvokeVoidAsync("alert", "Đã xảy ra lỗi khi nâng cấp sản phẩm.");
 		}
 	}
 }
@@ -454,12 +483,3 @@ else if (userAccount != null)
 
 	}
 </script>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
-
-
-	
-
-
-

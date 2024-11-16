@@ -42,15 +42,33 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 throw new InvalidOperationException("Người dùng không tồn tại");
             }
 
-            if (existingUser.PreSystem < 5000)
-            {
-                throw new InvalidOperationException("Số dư không đủ để thực hiện thao tác này");
-            }
-            existingUser.PreSystem -= 5000;
-            _context.Accounts.Update(existingUser);
+			// Xác định số tiền cần trừ dựa trên mức ưu tiên
+			int deductionAmount;
+			if (product.ProrityLevel == "Ưu tiên")
+			{
+				deductionAmount = 50000; // Mức trừ cho sản phẩm ưu tiên
+			}
+			else if (product.ProrityLevel == "Phổ thông")
+			{
+				deductionAmount = 25000; // Mức trừ cho sản phẩm phổ thông
+			}
+			else
+			{
+				throw new InvalidOperationException("Mức độ ưu tiên không hợp lệ");
+			}
+
+			// Kiểm tra số dư
+			if (existingUser.PreSystem < deductionAmount)
+			{
+				throw new InvalidOperationException("Số dư không đủ để thực hiện thao tác này");
+			}
+
+			// Trừ số dư
+			existingUser.PreSystem -= deductionAmount;
+			_context.Accounts.Update(existingUser);
 
 
-            var newProd = new Product
+			var newProd = new Product
             {
                 Name = product.Name,
                 Quantity = product.Quantity,
@@ -58,7 +76,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 Description = product.Description,
                 IDCategory = product.CategoryId,
                 Status = "Đang chờ duyệt",
-                ProrityLevel = "Phổ thông",
+                ProrityLevel = product.ProrityLevel,
                 CreatedDate = DateTime.Now,
                 UpdatedDate = DateTime.Now,
                 StartDate = DateTime.Now,
@@ -117,19 +135,19 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 		public async Task<Product> DeleteProductById(int id)//Xóa sản phẩm
         {
             var user = GetUserInfoFromClaims();
-            if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null || user.IDCard == null)
-            {
-                throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
-            }
+            //if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null || user.IDCard == null)
+            //{
+            //    throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
+            //}
             var product = await _context.Products.FirstOrDefaultAsync(x => x.IDProduct == id);
             if(product == null)
             {
                 throw new NotImplementedException("Không tìm thấy sản phẩm");
             }
-            if(product.UserName != user.UserName)
-            {
-                throw new UnauthorizedAccessException("Bạn không có quyền xóa sản phẩm này");
-            }
+            //if(product.UserName != user.UserName)
+            //{
+            //    throw new UnauthorizedAccessException("Bạn không có quyền xóa sản phẩm này");
+            //}
             product.Status = "Đã xóa";
             await _context.SaveChangesAsync();
             return product;
@@ -254,6 +272,44 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             throw new UnauthorizedAccessException("Vui lòng đăng nhập vào hệ thống.");
         }
 
-  
-    }
+		public async Task<Product> UpdateProrityLevel(int id)
+		{
+			var prodFind = await _context.Products.FindAsync(id);
+
+			if (prodFind == null)
+			{
+				throw new NotImplementedException("Không tìm thấy sản phẩm");
+			}
+
+			if (prodFind.ProrityLevel == "Ưu tiên")
+			{
+				throw new InvalidOperationException("Sản phẩm đã ở mức ưu tiên");
+			}
+
+			// Trừ tiền của người dùng
+			var user = GetUserInfoFromClaims();
+			var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
+
+			if (existingUser == null)
+			{
+				throw new InvalidOperationException("Người dùng không tồn tại");
+			}
+
+			const int upgradeCost = 50000; // Giá nâng cấp lên ưu tiên
+			if (existingUser.PreSystem < upgradeCost)
+			{
+				throw new InvalidOperationException("Số dư không đủ để nâng cấp sản phẩm");
+			}
+
+			existingUser.PreSystem -= upgradeCost;
+			_context.Accounts.Update(existingUser);
+
+			// Cập nhật mức độ ưu tiên
+			prodFind.ProrityLevel = "Ưu tiên";
+			prodFind.UpdatedDate = DateTime.Now;
+
+			await _context.SaveChangesAsync();
+			return prodFind;
+		}
+	}
 }

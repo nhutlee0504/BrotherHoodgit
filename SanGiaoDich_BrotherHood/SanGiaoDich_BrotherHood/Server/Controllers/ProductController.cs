@@ -173,7 +173,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 			}
 		}
 
-		[HttpPost("delete/{id}")]
+		[HttpDelete("DeleteProduct/{id}")]
 		public async Task<IActionResult> DeleteProduct(int id)
 		{
 			try
@@ -186,6 +186,34 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 				return StatusCode(500, "Đã xảy ra lỗi khi xóa sản phẩm.");
 			}
 		}
+
+		[HttpPut("UpgradeProrityLevel/{id}")]
+		public async Task<IActionResult> UpgradeProrityLevel(int id)
+		{
+			try
+			{
+				var upgradedProduct = await prod.UpdateProrityLevel(id);
+				return Ok(upgradedProduct);
+			}
+			catch (NotImplementedException ex)
+			{
+				return NotFound(ex.Message);
+			}
+			catch (InvalidOperationException ex)
+			{
+				return BadRequest(ex.Message);
+			}
+			catch (UnauthorizedAccessException ex)
+			{
+				return Forbid(ex.Message);
+			}
+			catch (Exception ex)
+			{
+				// Log the exception as needed
+				return StatusCode(500, "An error occurred while upgrading the product priority level.");
+			}
+		}
+
 
 	}
 }
