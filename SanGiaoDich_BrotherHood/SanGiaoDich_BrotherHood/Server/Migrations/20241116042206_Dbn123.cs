@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace SanGiaoDich_BrotherHood.Server.Migrations
 {
-    public partial class Adddb2 : Migration
+    public partial class Dbn123 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -109,6 +109,25 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     table.PrimaryKey("PK_Bills", x => x.IDBill);
                     table.ForeignKey(
                         name: "FK_Bills_Accounts_UserName",
+                        column: x => x.UserName,
+                        principalTable: "Accounts",
+                        principalColumn: "UserName",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Carts",
+                columns: table => new
+                {
+                    IDCart = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserName = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Carts", x => x.IDCart);
+                    table.ForeignKey(
+                        name: "FK_Carts_Accounts_UserName",
                         column: x => x.UserName,
                         principalTable: "Accounts",
                         principalColumn: "UserName",
@@ -228,29 +247,29 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Carts",
+                name: "CartItems",
                 columns: table => new
                 {
-                    IDCart = table.Column<int>(type: "int", nullable: false)
+                    CartItemID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserName = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    ProductIDProduct = table.Column<int>(type: "int", nullable: true)
+                    IDCart = table.Column<int>(type: "int", nullable: false),
+                    IDProduct = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Carts", x => x.IDCart);
+                    table.PrimaryKey("PK_CartItems", x => x.CartItemID);
                     table.ForeignKey(
-                        name: "FK_Carts_Accounts_UserName",
-                        column: x => x.UserName,
-                        principalTable: "Accounts",
-                        principalColumn: "UserName",
-                        onDelete: ReferentialAction.Restrict);
+                        name: "FK_CartItems_Carts_IDCart",
+                        column: x => x.IDCart,
+                        principalTable: "Carts",
+                        principalColumn: "IDCart",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Carts_Products_ProductIDProduct",
-                        column: x => x.ProductIDProduct,
+                        name: "FK_CartItems_Products_IDProduct",
+                        column: x => x.IDProduct,
                         principalTable: "Products",
                         principalColumn: "IDProduct",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -331,35 +350,6 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "CartItems",
-                columns: table => new
-                {
-                    CartItemID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    IDCart = table.Column<int>(type: "int", nullable: false),
-                    IDProduct = table.Column<int>(type: "int", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CartIDCart = table.Column<int>(type: "int", nullable: true),
-                    ProductIDProduct = table.Column<int>(type: "int", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CartItems", x => x.CartItemID);
-                    table.ForeignKey(
-                        name: "FK_CartItems_Carts_CartIDCart",
-                        column: x => x.CartIDCart,
-                        principalTable: "Carts",
-                        principalColumn: "IDCart",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_CartItems_Products_ProductIDProduct",
-                        column: x => x.ProductIDProduct,
-                        principalTable: "Products",
-                        principalColumn: "IDProduct",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
             migrationBuilder.CreateIndex(
                 name: "IX_AddressDetails_UserName",
                 table: "AddressDetails",
@@ -381,19 +371,14 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 column: "UserName");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CartItems_CartIDCart",
+                name: "IX_CartItems_IDCart",
                 table: "CartItems",
-                column: "CartIDCart");
+                column: "IDCart");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CartItems_ProductIDProduct",
+                name: "IX_CartItems_IDProduct",
                 table: "CartItems",
-                column: "ProductIDProduct");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Carts_ProductIDProduct",
-                table: "Carts",
-                column: "ProductIDProduct");
+                column: "IDProduct");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Carts_UserName",

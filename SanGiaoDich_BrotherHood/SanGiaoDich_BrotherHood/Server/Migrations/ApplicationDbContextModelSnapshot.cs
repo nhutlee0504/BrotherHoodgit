@@ -188,15 +188,10 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int?>("ProductIDProduct")
-                        .HasColumnType("int");
-
                     b.Property<string>("UserName")
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("IDCart");
-
-                    b.HasIndex("ProductIDProduct");
 
                     b.HasIndex("UserName");
 
@@ -210,26 +205,17 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int?>("CartIDCart")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("IDCart")
                         .HasColumnType("int");
 
                     b.Property<int>("IDProduct")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ProductIDProduct")
-                        .HasColumnType("int");
-
                     b.HasKey("CartItemID");
 
-                    b.HasIndex("CartIDCart");
+                    b.HasIndex("IDCart");
 
-                    b.HasIndex("ProductIDProduct");
+                    b.HasIndex("IDProduct");
 
                     b.ToTable("CartItems");
                 });
@@ -519,10 +505,6 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
 
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Cart", b =>
                 {
-                    b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Product", null)
-                        .WithMany("carts")
-                        .HasForeignKey("ProductIDProduct");
-
                     b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Account", "Account")
                         .WithMany("carts")
                         .HasForeignKey("UserName");
@@ -532,13 +514,21 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
 
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.CartItem", b =>
                 {
-                    b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Cart", null)
+                    b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Cart", "Cart")
                         .WithMany("cartitem")
-                        .HasForeignKey("CartIDCart");
+                        .HasForeignKey("IDCart")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Product", null)
+                    b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Product", "Product")
                         .WithMany("cartItem")
-                        .HasForeignKey("ProductIDProduct");
+                        .HasForeignKey("IDProduct")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cart");
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Conversation", b =>
@@ -670,8 +660,6 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.Navigation("billDetails");
 
                     b.Navigation("cartItem");
-
-                    b.Navigation("carts");
 
                     b.Navigation("favorites");
 
