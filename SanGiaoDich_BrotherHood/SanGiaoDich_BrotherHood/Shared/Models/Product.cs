@@ -42,6 +42,7 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         public DateTime CreatedDate { get; set; }
         public DateTime UpdatedDate { get; set; }
         public string AccountAccept {  get; set; }
+        public string? Reason { get; set; }
 
         [JsonIgnore] 
         public Account Account { get; set; }

@@ -19,38 +19,30 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        [Route("GetCategories")]
         public async Task<ActionResult> GetCategories()
         {
             return Ok(await category.GetCategories());
         }
 
-        [HttpGet]
-        [Route("GetCategoryByID/{IDCate}")]
+        [HttpGet("IDCate")]
         public async Task<ActionResult> GetCategoryByID(int IDCate)
         {
             return Ok(await category.GeCategory(IDCate));
         }
-        [HttpPost("AddCategory")]
-        public async Task<ActionResult> AddCategory(Category cate)
+
+        [HttpPost]
+        public async Task<ActionResult> AddCategory(string cate)
         {
-
-            var ct = await category.AddCategory(new Category
-            {
-                NameCate = cate.NameCate
-            });
+            var ct = await category.AddCategory(cate);
             if (ct == null)
-            {
-                return BadRequest("Không thể tạo loại mới.");
-            }
-            return CreatedAtAction(nameof(AddCategory), new { id = ct.IDCategory }, ct);
+                return BadRequest();
+            return CreatedAtAction("AddCategory",ct);
         }
-
 
         [HttpPut("IDCate")]
         public async Task<ActionResult> UpdateCategory(int IDCate, Category cate)
         {
-            return Ok(await category.UpdateCategory(IDCate, cate));
+            return Ok(await category.UpdateCategory(IDCate,cate));
         }
 
         [HttpDelete("IDCate")]

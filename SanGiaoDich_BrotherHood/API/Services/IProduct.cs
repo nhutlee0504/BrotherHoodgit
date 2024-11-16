@@ -17,6 +17,7 @@ namespace API.Services
         public Task<Product> AddProduct(ProductDto product);
         public Task<Product> UpdateProductById(int id, ProductDto product);
         public Task<Product> AcceptProduct(int idproduct);
+        public Task<Product> CancleProduct(int idproduct);
         public Task<Product> DeleteProductById(int id);
     }
 }

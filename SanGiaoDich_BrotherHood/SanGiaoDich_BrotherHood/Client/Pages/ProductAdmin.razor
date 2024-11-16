@@ -136,8 +136,10 @@
         <tr class="text-center">
             <th>Tên sản phẩm</th>
             <th>Người bán</th>
-            <th>Ngày tạo</th>
+            <th>Ngày đăng</th>
+            <th>Mức ưu tiên</th>
             <th>Trạng thái</th>
+            <th>Người kiểm duyệt</th>
             <th>Thao tác</th>
         </tr>
     </thead>
@@ -148,12 +150,14 @@
                 <td>@product.Name</td>
                 <td class="text-center">@product.UserName</td>
                 <td class="text-center">@product.StartDate.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                <td class="text-center">@product.ProrityLevel</td>
                 <td class="text-center">@product.Status</td>
+                <td class="text-center">@product.AccountAccept</td>
                 <td class="action-buttons text-center">
                     @if (product.Status == "Đang chờ duyệt")
                     {
                         <button class="btn btn-success btn-sm" @onclick="() => HanndleAccept(product.IDProduct)">Duyệt</button>
-                        <button class="btn btn-danger btn-sm me-1">Không duyệt</button>
+                        <button class="btn btn-danger btn-sm me-1"  @onclick="() => HandleCancle(product.IDProduct) ">Không duyệt</button>
                     }
                     else
                     {
@@ -196,6 +200,30 @@
         try
         {
             var response = await httpClient.PutAsJsonAsync<Product>($"api/Product/Accept/{productid}", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+
+                NavigationManager.NavigateTo("/admin/product", forceLoad: true);
+                Console.WriteLine($"Sản phẩm {productid} đã được duyệt.");
+            }
+            else
+            {
+
+                Console.WriteLine($"Lỗi khi duyệt sản phẩm {productid}: {response.ReasonPhrase}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Xử lý các lỗi khác và in ra thông báo lỗi
+            Console.WriteLine($"Lỗi khi duyệt sản phẩm: {ex.Message}");
+        }
+    }
+    private async Task HandleCancle(int productid)
+    {
+        try
+        {
+            var response = await httpClient.PutAsJsonAsync<Product>($"api/Product/Cancle/{productid}", null);
 
             if (response.IsSuccessStatusCode)
             {

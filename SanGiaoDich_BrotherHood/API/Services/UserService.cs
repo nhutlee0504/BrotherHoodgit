@@ -22,25 +22,28 @@ namespace API.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IConfiguration _configuration;
+        private readonly IConfiguration _configuration; // Thêm IConfiguration
         public UserService(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
         }
-        public async Task<Account> RegisterUser(RegisterDto registerDto)
+        public async Task<Account> RegisterUser(RegisterDto registerDto)//Tạo tài khoản ngươi dùng
         {
+            // Kiểm tra quy chuẩn mật khẩu
             if (!IsValidPassword(registerDto.Password))
             {
-                throw new ArgumentException("Mật khẩu phải có ít nhất 6 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt");
+                throw new ArgumentException("Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.");
             }
 
+            // Kiểm tra xem username đã tồn tại hay chưa
             var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == registerDto.UserName);
             if (existingUser != null)
             {
                 throw new ArgumentException("Tên người dùng đã tồn tại.");
             }
+            // Kiểm tra nếu mật khẩu và xác nhận mật khẩu không khớp
             if (registerDto.Password != registerDto.ConformPassword)
             {
                 throw new ArgumentException("Mật khẩu và xác nhận mật khẩu không khớp.");
@@ -51,26 +54,30 @@ namespace API.Services
                 Password = HashPassword(registerDto.Password),
                 IsDelete = false,
                 CreatedTime = DateTime.Now,
-                Role = "Người dùng",
-                PreSystem = 10000,
-                IsActived = true
+                Role = "Người dùng"
             };
             await _context.Accounts.AddAsync(newAdmin);
             await _context.SaveChangesAsync();
             return newAdmin;
         }
-        public async Task<string> LoginUser(LoginDto loginDto)
+        public async Task<string> LoginUser(LoginDto loginDto)//Đăng nhập thường
         {
-            var userInfo = await _context.Accounts
-        .FirstOrDefaultAsync(u => EF.Functions.Collate(u.UserName, "Latin1_General_BIN") == loginDto.UserName);
+            var userInfo = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == loginDto.UserName);
+            if (userInfo.Role != "Người dùng")
+            {
+                throw new UnauthorizedAccessException("Bạn không thể đăng nhập vào hệ thống");
+            }
             if (userInfo == null || !VerifyPassword(loginDto.Password, userInfo.Password))
             {
-                throw new UnauthorizedAccessException("Tên đăng nhập hoặc mật khẩu không đúng.");
+                throw new UnauthorizedAccessException("Email hoặc mật khẩu không đúng.");
             }
+            // Kiểm tra nếu tài khoản đã bị xóa
             if (userInfo.IsDelete == true)
             {
                 throw new UnauthorizedAccessException("Tài khoản này đã bị khóa vô thời hạn.");
             }
+
+            // Kiểm tra nếu tài khoản bị cấm
             if (userInfo.TimeBanned.HasValue && userInfo.TimeBanned > DateTime.UtcNow)
             {
                 var remainingDays = (userInfo.TimeBanned.Value - DateTime.UtcNow).TotalDays;
@@ -82,8 +89,10 @@ namespace API.Services
         }
         public async Task<Account> GetAccountInfo()//Lấy thông tin tài khoản đã đăng nhập vào hệ thống, bản thân
         {
+            // Lấy thông tin người dùng từ claims
             var userClaims = GetUserInfoFromClaims();
 
+            // Lấy thông tin người dùng từ cơ sở dữ liệu
             var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userClaims.UserName);
 
             if (user == null)
@@ -91,10 +100,11 @@ namespace API.Services
                 throw new UnauthorizedAccessException("Vui lòng đăng nhập vào hệ thống.");
             }
 
-            return user;
+            return user; // Trả về thông tin tài khoản
         }
-        public async Task<Account> GetAccountByUserName(string userName)
+        public async Task<Account> GetAccountByUserName(string userName)//Xem thông tin tài khoản người khác
         {
+            // Lấy thông tin người dùng từ cơ sở dữ liệu
             var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userName);
 
             if (user == null)
@@ -102,10 +112,11 @@ namespace API.Services
                 throw new NotImplementedException("Không tìm thấy người dùng.");
             }
 
-            return user;
+            return user; // Trả về thông tin tài khoản
         }
-        public async Task<Account> UpdateAccountInfo(InfoAccountDto infoAccountDto)
+        public async Task<Account> UpdateAccountInfo(InfoAccountDto infoAccountDto)//Cập nhật tài khoản
         {
+            // Lấy thông tin người dùng từ claims
             var userClaims = GetUserInfoFromClaims();
             var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userClaims.UserName);
 
@@ -113,10 +124,12 @@ namespace API.Services
             {
                 throw new UnauthorizedAccessException("Không tìm thấy người dùng.");
             }
+            // Kiểm tra số điện thoại
             if (!IsValidPhone(infoAccountDto.Phone))
             {
                 throw new ArgumentException("Số điện thoại không hợp lệ");
             }
+            // Cập nhật thông tin tài khoản
             user.FullName = infoAccountDto.FullName;
             user.Email = infoAccountDto.Email;
             user.PhoneNumber = infoAccountDto.Phone;
@@ -125,10 +138,11 @@ namespace API.Services
             user.Introduce = infoAccountDto.Introduce;
 
             await _context.SaveChangesAsync();
-            return user;
+            return user; // Trả về thông tin đã cập nhật
         }
         public async Task<Account> UpdateProfileImage(IFormFile imageFile = null)
         {
+            // Lấy thông tin người dùng từ claims
             var userClaims = GetUserInfoFromClaims();
             var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userClaims.UserName);
 
@@ -136,6 +150,8 @@ namespace API.Services
             {
                 throw new UnauthorizedAccessException("Không tìm thấy người dùng.");
             }
+
+            // Nếu có file hình ảnh, lưu vào thư mục và cập nhật tên ảnh
             if (imageFile != null && imageFile.Length > 0)
             {
                 var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "AnhAvatar");
@@ -143,20 +159,23 @@ namespace API.Services
                 {
                     Directory.CreateDirectory(uploadsFolder);
                 }
+
+                // Lưu tên file gốc
                 var originalFileName = Path.GetFileName(imageFile.FileName);
                 var filePath = Path.Combine(uploadsFolder, originalFileName);
+
+                // Lưu file vào thư mục
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await imageFile.CopyToAsync(stream);
                 }
 
-                user.ImageAccount = originalFileName;
+                user.ImageAccount = originalFileName; // Lưu tên ảnh vào cơ sở dữ liệu
             }
 
             await _context.SaveChangesAsync();
-            return user;
+            return user; // Trả về thông tin đã cập nhật
         }
-
         public async Task<Account> ChangePassword(string username, InfoAccountDto info)
         {
             if (!IsValidPassword(info.Password))
@@ -167,16 +186,11 @@ namespace API.Services
             return userFind;
         }
 
-        public async Task<IEnumerable<Account>> GetAllAccount()
-        {
-            var get = await _context.Accounts.ToListAsync();
-            if (get == null)
-                throw new NotImplementedException("Không tìm thấy danh sách");
-            return get;
-        }
+        //Phương thức ngoài
 
         private string GenerateJwtToken(Account user)
         {
+            // Kiểm tra người dùng không null
             if (user == null) throw new ArgumentNullException(nameof(user));
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
@@ -205,31 +219,31 @@ namespace API.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-        private string HashPassword(string password)
+        private string HashPassword(string password) // Băm mật khẩu
         {
             using (var sha256 = SHA256.Create())
             {
-
+                // Băm mật khẩu
                 byte[] inputBytes = Encoding.UTF8.GetBytes(password);
                 byte[] hashBytes = sha256.ComputeHash(inputBytes);
 
-
+                // Chỉ lấy 16 byte đầu tiên và chuyển đổi sang định dạng chuỗi hex
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < hashBytes.Length && i < 16; i++)
                 {
                     sb.Append(hashBytes[i].ToString("x2"));
                 }
-                return sb.ToString();
+                return sb.ToString(); // Trả về mật khẩu băm
             }
         }
-        private bool VerifyPassword(string password, string hashedPasswordWithSalt)
+        private bool VerifyPassword(string password, string hashedPasswordWithSalt) // Kiểm tra mật khẩu khi đăng nhập
         {
             using (SHA256 sha256 = SHA256.Create())
             {
                 byte[] inputBytes = Encoding.UTF8.GetBytes(password);
                 byte[] hashBytes = sha256.ComputeHash(inputBytes);
 
-
+                // Chỉ lấy 16 byte đầu tiên và chuyển đổi sang định dạng chuỗi hex
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < hashBytes.Length && i < 16; i++)
                 {
@@ -237,17 +251,17 @@ namespace API.Services
                 }
                 var hashedPassword = sb.ToString();
 
-
-                return hashedPasswordWithSalt == hashedPassword;
+                // So sánh mật khẩu đã băm với mật khẩu đã lưu trong cơ sở dữ liệu
+                return hashedPasswordWithSalt == hashedPassword; // So sánh trực tiếp
             }
         }
-        private bool IsValidPassword(string password)
+        private bool IsValidPassword(string password)//Bắt lỗi quy chuẩn password
         {
-            return password.Length >= 6 &&
-                   password.Any(char.IsUpper) &&
-                   password.Any(char.IsLower) &&
-                   password.Any(char.IsDigit) &&
-                   password.Any(ch => "!@#$%^&*()_-+=<>?/[]{}|~".Contains(ch));
+            return password.Length >= 6 && // Độ dài tối thiểu
+                   password.Any(char.IsUpper) && // Có ít nhất một chữ hoa
+                   password.Any(char.IsLower) && // Có ít nhất một chữ thường
+                   password.Any(char.IsDigit) && // Có ít nhất một số
+                   password.Any(ch => "!@#$%^&*()_-+=<>?/[]{}|~".Contains(ch)); // Có ít nhất một ký tự đặc biệt
         }
         public bool IsValidPhone(string phone)//Bắt lỗi số điện thoại
         {

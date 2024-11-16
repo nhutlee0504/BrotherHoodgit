@@ -206,8 +206,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 return BadRequest(new { message = "Không thể lấy email từ tài khoản Google." });
             }
 
-            var userName = email.Contains("@") ? email.Split('@')[0] : email;
-            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userName);
+            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.Email == email);
 
             string token;
 
@@ -219,14 +218,12 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             {
                 var newUser = new Account
                 {
-                    UserName = userName,
+                    UserName = email.Substring(0, 5),
                     Email = email,
                     Password = "default-password",
                     CreatedTime = DateTime.Now,
                     Role = "Người dùng",
-                    IsDelete = false,
-                    PreSystem = 10000,
-                    IsActived = true
+                    IsDelete = false
                 };
 
                 _context.Accounts.Add(newUser);
@@ -323,9 +320,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 return BadRequest(new { message = "Không thể lấy email từ tài khoản Facebook." });
             }
 
-            var userName = email.Contains("@") ? email.Split('@')[0] : email;
-
-            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userName);
+            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.Email == email);
 
             string token;
 
@@ -337,14 +332,12 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             {
                 var newUser = new Account
                 {
-                    UserName = userName,
+                    UserName = email.Substring(0, 5),
                     Email = email,
                     Password = "default-password",
                     CreatedTime = DateTime.Now,
                     Role = "Người dùng",
-                    IsDelete = false,
-                    PreSystem = 10000,
-                    IsActived = true,
+                    IsDelete = false
                 };
 
                 _context.Accounts.Add(newUser);

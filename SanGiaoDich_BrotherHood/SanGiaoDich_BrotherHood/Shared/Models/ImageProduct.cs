@@ -13,7 +13,7 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         public string Image { get; set; }
         public bool IsPrimary { get; set; }
         public DateTime CreatedDate { get; set; }
-
+        public bool IsDelete {  get; set; }
 
         [ForeignKey("Product")]
         public int IDProduct { get; set; }

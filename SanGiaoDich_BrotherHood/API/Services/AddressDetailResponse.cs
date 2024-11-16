@@ -57,8 +57,8 @@ namespace API.Services
             try
             {
                 var address = await _context.AddressDetails.FirstOrDefaultAsync(x => x.IDAddress == IDAddress);
-                if (address == null)
-                    return null;
+                if(address == null)
+                    return null;    
                 return address;
             }
             catch (System.Exception)
@@ -91,7 +91,7 @@ namespace API.Services
                 addr.Wardcommune = address.Wardcommune;
                 addr.AdditionalDetail = address.AdditionalDetail;
                 addr.UserName = address.UserName;
-                _context.AddressDetails.Update(addr);
+                _context.AddressDetails.Update(addr);   
                 await _context.SaveChangesAsync();
                 return addr;
             }

@@ -28,7 +28,7 @@ namespace API.Services
             _configuration = configuration;
         }
 
-        public async Task<Rating> AddRating(int billDetailId, int star, string comment, IFormFile image)
+        public async Task<Rating> AddRating(int billDetailId, int star, string comment, IFormFile image)//Thêm đánh giá
         {
             var userInfo = GetUserInfoFromClaims(); // Lấy thông tin người dùng
 
@@ -74,7 +74,7 @@ namespace API.Services
         }
 
 
-        public async Task<IEnumerable<RatingDto>> GetRatings(int productId)
+        public async Task<IEnumerable<RatingDto>> GetRatings(int productId)//Lấy tất cả đánh giá
         {
             return await _context.Ratings
                 .Include(r => r.Account)

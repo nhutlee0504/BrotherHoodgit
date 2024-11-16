@@ -478,8 +478,7 @@
         {
             // Thiết lập token cho yêu cầu HTTP
             http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-            await LoadAccountInfo();
-        }
+            await LoadAccountInfo();        }
         else
         {
             isLoading = false; // Không cần tải thông tin tài khoản
@@ -537,4 +536,4 @@
         accountInfo = null; // Đặt lại thông tin tài khoản
         NavigationManager.NavigateTo("/", forceLoad: true);
     }
-}
+}1
