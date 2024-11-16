@@ -147,5 +147,19 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 			}
 		}
 
+		[HttpPost("delete/{id}")]
+		public async Task<IActionResult> DeleteProduct(int id)
+		{
+			try
+			{
+				var deletedProduct = await prod.DeleteProductById(id);
+				return Ok(deletedProduct);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, "Đã xảy ra lỗi khi xóa sản phẩm.");
+			}
+		}
+
 	}
 }
