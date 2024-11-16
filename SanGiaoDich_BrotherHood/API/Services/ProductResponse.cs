@@ -25,29 +25,29 @@ namespace API.Services
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
         }
-        public async Task<Product> AcceptProduct(int idproduct)
-        {
-            var existingProduct = await _context.Products.FirstOrDefaultAsync(x => x.IDProduct == idproduct);
-            if (existingProduct == null)
-            {
-                throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
-            }
-           
-            existingProduct.Status = "Đã duyệt";
-            _context.SaveChanges();
-            return existingProduct;
-        }
-        public async Task<Product> AddProduct(ProductDto product)//Thêm sản phẩm mới
+
+        public async Task<Product> AddProduct(ProductDto product)
         {
             var user = GetUserInfoFromClaims();
-            //if(user.role != "người dùng")
-            //{
-            //    throw new unauthorizedaccessexception("bạn không thể thực hiện chức năng này");
-            //}
+
             if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null)
             {
                 throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
             }
+            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
+
+            if (existingUser == null)
+            {
+                throw new InvalidOperationException("Người dùng không tồn tại");
+            }
+
+            if (existingUser.PreSystem < 5000)
+            {
+                throw new InvalidOperationException("Số dư không đủ để thực hiện thao tác này");
+            }
+            existingUser.PreSystem -= 5000;
+            _context.Accounts.Update(existingUser);
+
 
             var newProd = new Product
             {
@@ -57,12 +57,13 @@ namespace API.Services
                 Description = product.Description,
                 IDCategory = product.CategoryId,
                 Status = "Đang chờ duyệt",
-                UserName = user.UserName,
                 StartDate = DateTime.Now,
-                // Add other properties as needed
+                UserName = user.UserName,
+                CreatedDate = DateTime.Now,
+                EndDate = DateTime.Now.AddDays(7)
+
             };
 
-            // Save product to the database first
             await _context.Products.AddAsync(newProd);
             await _context.SaveChangesAsync();
 
@@ -90,14 +91,24 @@ namespace API.Services
             return getP;
         }
 
-        public async Task<IEnumerable<Product>> GetProductByNameAccount(string username)//Lấy danh sách sản phẩm theo tên người muốn xem
+        public async Task<IEnumerable<Product>> GetProductByNameAccount(string username)
         {
-            var getP = await _context.Products.Where(x => x.UserName == username).ToListAsync();
-            if (getP == null)
+            var products = await _context.Products
+                .Include(p => p.imageProducts) // Bao gồm thông tin hình ảnh
+                .Include(p => p.Category) // Bao gồm thông tin danh mục
+                .Where(p => p.UserName == username)
+                .ToListAsync();
+
+            return products.Select(p => new Product
             {
-                throw new NotImplementedException("Không có sản phẩm hoặc không tìm thấy sản phẩm của bạn");
-            }
-            return getP;
+                Name = p.Name,
+                Price = p.Price,
+                UserName = p.UserName,
+                Status = p.Status,
+                StartDate = p.StartDate,
+                imageProducts = p.imageProducts ?? new List<ImageProduct>(), // Đảm bảo không null
+                IDCategory = p.IDCategory // Lấy thông tin danh mục
+            }).ToList();
         }
 
         public async Task<Product> DeleteProductById(int id)//Xóa sản phẩm
@@ -108,11 +119,11 @@ namespace API.Services
                 throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
             }
             var product = await _context.Products.FirstOrDefaultAsync(x => x.IDProduct == id);
-            if(product == null)
+            if (product == null)
             {
                 throw new NotImplementedException("Không tìm thấy sản phẩm");
             }
-            if(product.UserName != user.UserName)
+            if (product.UserName != user.UserName)
             {
                 throw new UnauthorizedAccessException("Bạn không có quyền xóa sản phẩm này");
             }
@@ -124,7 +135,7 @@ namespace API.Services
         public async Task<Product> GetProductById(int id) // Xem chi tiết sản phẩm
         {
             var product = await _context.Products
-                .Include(p => p.imageProducts) // Use the correct property name without commas
+                .Include(p => p.imageProducts)
                 .FirstOrDefaultAsync(x => x.IDProduct == id);
 
             if (product == null)
@@ -138,7 +149,7 @@ namespace API.Services
         public async Task<IEnumerable<Product>> GetProductByName(string name)//Tìm sản phẩm theo tên
         {
             var GetName = await _context.Products.Where(x => x.Name.Contains(name)).ToListAsync();
-            if(GetName == null)
+            if (GetName == null)
             {
                 throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
             }
@@ -153,7 +164,7 @@ namespace API.Services
             {
                 throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
             }
-            if(existingProduct.UserName != user.UserName)
+            if (existingProduct.UserName != user.UserName)
             {
                 throw new UnauthorizedAccessException("Bạn không có quyền thay đổi thông tin sản phẩm");
             }
@@ -167,7 +178,18 @@ namespace API.Services
             return existingProduct;
         }
 
+        public async Task<Product> AcceptProduct(int idproduct)
+        {
+            var existingProduct = await _context.Products.FirstOrDefaultAsync(x => x.IDProduct == idproduct);
+            if (existingProduct == null)
+            {
+                throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
+            }
 
+            existingProduct.Status = "Đã duyệt";
+            _context.SaveChanges();
+            return existingProduct;
+        }
 
         //Phương thức ngooài
 
