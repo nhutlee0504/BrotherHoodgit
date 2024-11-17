@@ -34,6 +34,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         }
 
         [HttpPost]
+        [Route("AddAddress")]
         public async Task<ActionResult> AddAddress(AddressDetail addressDetail)
         {
             var ar = await address.AddAddress(new AddressDetail
