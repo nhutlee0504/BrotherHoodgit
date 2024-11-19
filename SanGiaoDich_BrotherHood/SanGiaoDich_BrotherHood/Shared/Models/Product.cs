@@ -34,13 +34,13 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         public string UserName { get; set; }
 
         [Column(TypeName = "datetime")]
-        public DateTime StartDate { get; set; }
+        public DateTime? StartDate { get; set; }
 
         [Column(TypeName = "date")]
         public DateTime? EndDate { get; set; }
-        public string ProrityLevel { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public DateTime UpdatedDate { get; set; }
+        public string? ProrityLevel { get; set; }
+        public DateTime? CreatedDate { get; set; }
+        public DateTime? UpdatedDate { get; set; }
         public string AccountAccept {  get; set; }
         public string? Reason { get; set; }
 

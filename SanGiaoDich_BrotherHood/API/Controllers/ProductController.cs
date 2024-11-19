@@ -10,122 +10,104 @@ using System.Threading.Tasks;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ProductController : ControllerBase
-    {
-        private IProduct prod;
-        public ProductController(IProduct prods)
-        {
-            prod = prods;
-        }
+	[Route("api/[controller]")]
+	[ApiController]
+	public class ProductController : ControllerBase
+	{
+		private readonly IProduct prod;
 
-        [HttpGet]
-        public async Task<IActionResult> GetAllProduct()
-        {
-            try
-            {
-                var products = await prod.GetAllProductsAsync();
-                return Ok(products);
-            }
-            catch (NotImplementedException ex)
-            {
+		public ProductController(IProduct prods)
+		{
+			prod = prods;
+		}
 
-                return BadRequest(ex.Message);
-            }
-        }
+		[HttpGet]
+		public async Task<IActionResult> GetAllProduct()
+		{
+			try
+			{
+				var products = await prod.GetAllProductsAsync();
+				return Ok(products);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, "Đã xảy ra lỗi khi lấy danh sách sản phẩm.");
+			}
+		}
 
-        [HttpGet("GetProductId")]
-        public async Task<IActionResult> GetProductById(int id)
-        {
-            try
-            {
-                return Ok(await prod.GetProductById(id));
-            }
-            catch (NotImplementedException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
+		[HttpGet("GetProductId")]
+		public async Task<IActionResult> GetProductById(int id)
+		{
+			try
+			{
+				var product = await prod.GetProductById(id);
+				if (product == null || product.Status == "Đã xóa")
+				{
+					return NotFound("Sản phẩm không tồn tại hoặc đã bị xóa.");
+				}
+				return Ok(product);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, "Đã xảy ra lỗi khi lấy sản phẩm.");
+			}
+		}
 
-        [HttpGet("name")]
-        public async Task<IEnumerable<Product>> GetProductByName(string name)
-        {
-            return await prod.GetProductByName(name);
-        }
+		[HttpGet("name")]
+		public async Task<IActionResult> GetProductByName(string name)
+		{
+			try
+			{
+				var products = await prod.GetProductByName(name);
+				return Ok(products.Where(p => p.Status != "Đã xóa"));
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, "Đã xảy ra lỗi khi lấy sản phẩm theo tên.");
+			}
+		}
 
-        [HttpPost("AddProduct")]
-        public async Task<IActionResult> AddProduct([FromForm] ProductDto productDto)
-        {
-            try
-            {
-                var product = await prod.AddProduct(productDto);
-                return Ok(product);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                // Log the exception as needed
-                return BadRequest(ex.Message);
-            }
-        }
-        [HttpPut("Accept/{id}")]
-        public async Task<IActionResult> Accept(int id)
-        {
+		[HttpPost("AddProduct")]
+		public async Task<IActionResult> AddProduct([FromForm] ProductDto productDto)
+		{
+			try
+			{
+				var product = await prod.AddProduct(productDto);
+				return Ok(product);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, "Đã xảy ra lỗi khi thêm sản phẩm.");
+			}
+		}
 
-            try
-            {
-                var updatedProduct = await prod.AcceptProduct(id);
-                return Ok(updatedProduct);
-            }
-            catch (NotImplementedException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An error occurred while updating the product.");
-            }
-        }
-        [HttpPut("{id}")] // Specify that {id} is a route parameter for the update method
-        public async Task<IActionResult> UpdateProductById(int id, [FromForm] ProductDto productDto)//Cập nhật product
-        {
+		[HttpPut("Accept/{id}")]
+		public async Task<IActionResult> Accept(int id)
+		{
+			try
+			{
+				var updatedProduct = await prod.AcceptProduct(id);
+				return Ok(updatedProduct);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, "Đã xảy ra lỗi khi cập nhật sản phẩm.");
+			}
+		}
 
-            try
-            {
-                var updatedProduct = await prod.UpdateProductById(id, productDto);
-                return Ok(updatedProduct);
-            }
-            catch (NotImplementedException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                // Log the exception as needed
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                // Log the exception as needed
-                return StatusCode(500, "An error occurred while updating the product.");
-            }
-        }
+		[HttpPut("{id}")]
+		public async Task<IActionResult> UpdateProductById(int id, [FromForm] ProductDto productDto)
+		{
+			try
+			{
+				var updatedProduct = await prod.UpdateProductById(id, productDto);
+				return Ok(updatedProduct);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, "Đã xảy ra lỗi khi cập nhật sản phẩm.");
+			}
+		}
 
 		[HttpGet("GetProductByNameAccount/{username}")]
 		public async Task<IActionResult> GetProductByNameAccount(string username)
@@ -133,22 +115,26 @@ namespace API.Controllers
 			try
 			{
 				var products = await prod.GetProductByNameAccount(username);
-				if (products == null || !products.Any())
-				{
-					return NotFound("Không có sản phẩm hoặc không tìm thấy sản phẩm của bạn");
-				}
-				return Ok(products);
-			}
-			catch (NotImplementedException ex)
-			{
-				return BadRequest(ex.Message);
+				return Ok(products.Where(p => p.Status != "Đã xóa"));
 			}
 			catch (Exception ex)
 			{
-				// Log the exception as needed
-				return StatusCode(500, "An error occurred while retrieving the products.");
+				return StatusCode(500, "Đã xảy ra lỗi khi lấy sản phẩm theo tài khoản.");
 			}
 		}
 
+		[HttpPost("delete/{id}")]
+		public async Task<IActionResult> DeleteProduct(int id)
+		{
+			try
+			{
+				var deletedProduct = await prod.DeleteProductById(id);
+				return Ok(deletedProduct);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, "Đã xảy ra lỗi khi xóa sản phẩm.");
+			}
+		}
 	}
 }
