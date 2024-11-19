@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace API.Models
 {
@@ -29,20 +30,38 @@ namespace API.Models
         [Column(TypeName = "nvarchar(50)")]
         public string Status { get; set; }
 
-        [ForeignKey("Account"), Column(TypeName = "varchar(20)")]
+        [ForeignKey("Account")]
         public string UserName { get; set; }
 
-        [Column(TypeName = "date")]
-        public DateTime? StartDate { get; set; }
+        [Column(TypeName = "datetime")]
+        public DateTime StartDate { get; set; }
 
         [Column(TypeName = "date")]
         public DateTime? EndDate { get; set; }
+        public string ProrityLevel { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public DateTime UpdatedDate { get; set; }
+        public string AccountAccept { get; set; }
 
+        [JsonIgnore]
         public Account Account { get; set; }
+
+        [JsonIgnore]
         public ICollection<Cart> carts { get; set; }
+
+        [JsonIgnore]
         public ICollection<Favorite> favorites { get; set; }
+
+        [JsonIgnore]
         public ICollection<BillDetail> billDetails { get; set; }
+
+        [JsonIgnore]
         public ICollection<ImageProduct> imageProducts { get; set; }
+
+        [JsonIgnore]
+        public ICollection<CartItem> cartItem { get; set; }
+
+        [JsonIgnore]
         public Category Category { get; set; }
     }
 }

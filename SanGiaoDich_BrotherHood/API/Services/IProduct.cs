@@ -15,8 +15,8 @@ namespace API.Services
         public Task<Product> GetProductById(int id);
         public Task<IEnumerable<Product>> GetProductByName(string name);
         public Task<Product> AddProduct(ProductDto product);
+        public Task<Product> UpdateProductById(int id, ProductDto product);
         public Task<Product> AcceptProduct(int idproduct);
-        Task<Product> UpdateProductById(int id, ProductDto product);
-        public Task <Product> DeleteProductById(int id);
+        public Task<Product> DeleteProductById(int id);
     }
 }

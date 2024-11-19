@@ -46,8 +46,6 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         [JsonIgnore] 
         public Account Account { get; set; }
 
-        [JsonIgnore] 
-        public ICollection<Cart> carts { get; set; }
 
         [JsonIgnore]
         public ICollection<Favorite> favorites { get; set; }

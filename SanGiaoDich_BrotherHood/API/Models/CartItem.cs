@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 
-namespace SanGiaoDich_BrotherHood.Shared.Models
+namespace API.Models
 {
     public class CartItem
     {
@@ -18,6 +14,5 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         [ForeignKey("Product")]
         public int IDProduct { get; set; }
         public DateTime CreatedDate { get; set; }
-        
     }
 }

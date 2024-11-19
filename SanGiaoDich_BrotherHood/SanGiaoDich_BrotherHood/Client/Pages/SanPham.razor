@@ -124,7 +124,8 @@
                             {
                                 <li>
                                     <a class="dropdown-item" href="#">
-                                        <input type="checkbox" class="form-check-input" value="@x.IDCategory" @onchange="@(e => FilterByCategories(x.IDCategory, (bool)((ChangeEventArgs)e).Value))">
+                                        <input class="form-check-input" type="checkbox" value="@x.IDCategory" id="@x.IDCategory"
+                                               @onchange="@(e => FilterByCategories(x.IDCategory, (bool)((ChangeEventArgs)e).Value))">
                                         @x.NameCate
                                     </a>
                                 </li>
@@ -132,19 +133,7 @@
                         }
                     </ul>
                 </div>
-                <h5 class="mb-3">Loại</h5>
-                @if (categories != null)
-                {
-                    foreach (var x in categories)
-                    {
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="@x.IDCategory" id="@x.IDCategory"
-                                   @onchange="@(e => FilterByCategories(x.IDCategory, (bool)((ChangeEventArgs)e).Value))">
-                            <label class="form-check-label" for="aoCheck">@x.NameCate</label>
-                        </div>
-                    }
-                }
-
+              
                 <!-- Gợi ý giá -->
                 <h6 class="text-muted">Gợi ý mức giá:</h6>
                 <div class="mb-3">
@@ -167,19 +156,11 @@
                         <i class="fas fa-sort"></i> Sắp xếp theo
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="sapXepDropdown">
-                        <li><a class="dropdown-item" href="#"><input type="radio" name="sortOrder" value="priceLowToHigh" @onchange="@(e=>SortOrder("priceLowToHigh"))"> Giá tăng dần</a></li>
-                        <li><a class="dropdown-item" href="#"><input type="radio" name="sortOrder" value="priceHighToLow" @onchange="@(e=>SortOrder("priceHighToLow"))"> Giá giảm dần</a></li>
+                        <li><a class="dropdown-item" href="#">  <input class="form-check-input" type="radio" name="sortOrder" id="giaTangDan" value="priceLowToHigh" @onchange="@(e=>SortOrder("priceLowToHigh"))"> Giá tăng dần</a></li>
+                        <li><a class="dropdown-item" href="#"> <input class="form-check-input" type="radio" name="sortOrder" id="giaGiamDan" value="priceHighToLow" @onchange="@(e=>SortOrder("priceHighToLow"))"> Giá giảm dần</a></li>
                     </ul>
                 </div>
-                <h5 class="mt-4">Sắp xếp</h5>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="sortOrder" id="giaTangDan" value="priceLowToHigh" @onchange="@(e=>SortOrder("priceLowToHigh"))">
-                    <label class="form-check-label" for="giaTangDan">Giá tăng dần</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="sortOrder" id="giaGiamDan" value="priceHighToLow" @onchange="@(e=>SortOrder("priceHighToLow"))">
-                    <label class="form-check-label" for="giaGiamDan">Giá giảm dần</label>
-                </div>
+
 
                 <button class="btn btn-success w-100" style="border-radius: 15px; height: 35px;">
                     <i class="fas fa-filter"></i> Lọc

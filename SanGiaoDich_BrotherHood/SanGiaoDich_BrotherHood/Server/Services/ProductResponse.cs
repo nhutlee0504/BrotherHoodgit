@@ -31,10 +31,11 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         {
             var user = GetUserInfoFromClaims();
 
-            if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null)
+            if (string.IsNullOrEmpty(user.UserName) || string.IsNullOrEmpty(user.Email) || string.IsNullOrEmpty(user.FullName) || string.IsNullOrEmpty(user.PhoneNumber))
             {
-                throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
+                throw new InvalidOperationException("Thông tin người dùng là bắt buộc");
             }
+
             var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
 
             if (existingUser == null)
@@ -46,9 +47,9 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             {
                 throw new InvalidOperationException("Số dư không đủ để thực hiện thao tác này");
             }
+
             existingUser.PreSystem -= 5000;
             _context.Accounts.Update(existingUser);
-
 
             var newProd = new Product
             {
@@ -60,12 +61,11 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 Status = "Đang chờ duyệt",
                 StartDate = DateTime.Now,
                 ProrityLevel = "Phổ thông",
-                EndDate = DateTime.Now,
                 CreatedDate = DateTime.Now,
                 UpdatedDate = DateTime.Now,
                 UserName = user.UserName,
-                AccountAccept = "Admin"
-                
+                AccountAccept = "Admin",
+                EndDate = DateTime.Now.AddDays(7)
             };
 
             await _context.Products.AddAsync(newProd);
@@ -73,6 +73,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
             return newProd;
         }
+
 
         public async Task<IEnumerable<Product>> GetAllProductsAsync()//Lấy tất cả sản phẩm
         {

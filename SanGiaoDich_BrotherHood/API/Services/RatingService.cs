@@ -28,7 +28,7 @@ namespace API.Services
             _configuration = configuration;
         }
 
-        public async Task<Rating> AddRating(int billDetailId, int star, string comment, IFormFile image)//Thêm đánh giá
+        public async Task<Rating> AddRating(int billDetailId, int star, string comment, IFormFile image)
         {
             var userInfo = GetUserInfoFromClaims(); // Lấy thông tin người dùng
 
@@ -43,7 +43,7 @@ namespace API.Services
             }
 
             // Kiểm tra xem người dùng có phải là người đã mua sản phẩm không
-            if (bdt.Bill.UerName != userInfo.UserName)
+            if (bdt.Bill.UserName != userInfo.UserName)
             {
                 throw new InvalidOperationException("Bạn không thể đánh giá sản phẩm này vì bạn không phải là người đã mua.");
             }
@@ -74,7 +74,7 @@ namespace API.Services
         }
 
 
-        public async Task<IEnumerable<RatingDto>> GetRatings(int productId)//Lấy tất cả đánh giá
+        public async Task<IEnumerable<RatingDto>> GetRatings(int productId)
         {
             return await _context.Ratings
                 .Include(r => r.Account)
