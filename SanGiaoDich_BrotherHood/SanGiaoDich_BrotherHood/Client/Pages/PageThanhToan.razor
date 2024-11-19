@@ -1,8 +1,24 @@
 ﻿@page "/PageThanhToan"
+@using System.Text.Json
+@inject IJSRuntime jsruntime
+
 
 @code {
+    private List<PageGioHang.CartItemDto> selectedCartItems;
 
+    protected override async Task OnInitializedAsync()
+    {
+        // Lấy thông tin các sản phẩm đã chọn từ local storage
+        var selectedItemsJson = await jsruntime.InvokeAsync<string>("localStorage.getItem", "selectedCartItems");
+
+        if (!string.IsNullOrEmpty(selectedItemsJson))
+        {
+            selectedCartItems = JsonSerializer.Deserialize<List<PageGioHang.CartItemDto>>(selectedItemsJson);
+        }
+    }
 }
+
+
 <style>
     .checkout-container {
         background-color: #f8f9fa;
@@ -151,36 +167,33 @@
                 <!-- Product Container -->
                 <div class="product-container bg-white p-4 rounded shadow-sm mb-4">
                     <!-- Product Item -->
-                    <div class="product-item mb-3 d-flex align-items-center border-bottom pb-3">
-                        <img src="https://shopdunk.com/images/thumbs/0029155_iphone-16-pro-max-256gb_240.png" alt="Product 1" class="img-fluid rounded" style="max-width: 90px; margin-right: 15px;">
-                        <div class="product-details">
-                            <span class="product-name" style="font-weight:bolder">iPhone 16 Pro Max</span>
-                            <div class="product-price-quantity d-flex align-items-center mt-2">
-                                <i class="fas fa-tag text-success mr-2"></i>
-                                <span class="product-price">Giá: 140.000 VND</span>
+                    @if (selectedCartItems != null && selectedCartItems.Any())
+                    {
+                        @foreach (var item in selectedCartItems)
+                        {
+                            <div class="product-item mb-3 d-flex align-items-center border-bottom pb-3">
+                                <img src="/AnhSanPham/@item.FirstImageUrl" alt="Product Image" class="img-fluid rounded" style="max-width: 90px; margin-right: 15px;">
+                                <div class="product-details">
+                                    <span class="product-name" style="font-weight: bolder;">@item.Product.Name</span>
+                                    <div class="product-price-quantity d-flex align-items-center mt-2">
+                                        <i class="fas fa-tag text-success mr-2"></i>
+                                        <span class="product-price">Giá: @($"{item.Product.Price:N0} VNĐ")</span>
+                                    </div>
+                                    <div class="product-quantity d-flex align-items-center mt-2">
+                                        <i class="fas fa-box text-success mr-2"></i>
+                                        <span>Số lượng: @item.Quantity</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="product-quantity d-flex align-items-center mt-2">
-                                <i class="fas fa-box text-success mr-2"></i>
-                                <span>Số lượng: 2</span>
-                            </div>
-                        </div>
-                    </div>
+                        }
 
-                    <!-- Another Product Item -->
-                    <div class="product-item mb-3 d-flex align-items-center pt-3">
-                        <img src="https://shopdunk.com/images/thumbs/0029837_iphone-16-128gb_240.png" alt="Product 2" class="img-fluid rounded" style="max-width: 90px; margin-right: 15px;">
-                        <div class="product-details">
-                            <span class="product-name font-weight-bold " style="font-weight:bolder">iPhone 16</span>
-                            <div class="product-price-quantity d-flex align-items-center mt-2">
-                                <i class="fas fa-tag text-success mr-2"></i>
-                                <span class="product-price">Giá: 140.000 VND</span>
-                            </div>
-                            <div class="product-quantity d-flex align-items-center mt-2">
-                                <i class="fas fa-box text-success mr-2"></i>
-                                <span>Số lượng: 2</span>
-                            </div>
-                        </div>
-                    </div>
+                        @* <h4>Tổng cộng: @selectedCartItems.Sum(i => i.Quantity * i.Price).ToString("C")</h4> *@
+                    }
+                    else
+                    {
+                        <p>Không có sản phẩm nào được chọn để thanh toán.</p>
+                    }
+
                 </div>
 
                 <div class="seller-info-total-amount mt-4">

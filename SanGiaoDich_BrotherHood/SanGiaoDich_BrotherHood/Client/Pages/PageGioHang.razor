@@ -1,8 +1,240 @@
 ﻿@page "/PageGioHang"
+@using SanGiaoDich_BrotherHood.Shared.Models
+@using System.Text.Json
+@inject HttpClient http
+@inject NavigationManager navigation
+@inject IJSRuntime jsruntime
 
 @code {
+    private List<CartItemDto> cartItemDtos;
+    private bool isLoading = true;
+    private string errorMessage;
+    private string userName;
+    private bool IsLoggedIn { get; set; } = false;
+    private decimal selectedTotal;
 
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckTokenAndLoadAccountInfo();
+    }
+
+    private async Task CheckTokenAndLoadAccountInfo()
+    {
+        var token = await jsruntime.InvokeAsync<string>("localStorage.getItem", "token");
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            await LoadAccountInfo();
+        }
+        else
+        {
+            navigation.NavigateTo("/login");
+        }
+    }
+
+    private async Task LoadAccountInfo()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var response = await http.GetAsync("api/User/GetMyInfo");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var accountInfo = await response.Content.ReadFromJsonAsync<AccountInfoDto>();
+                IsLoggedIn = true;
+                userName = accountInfo.UserName;
+                await LoadCartItems();
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                IsLoggedIn = false;
+                navigation.NavigateTo("/login");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Có lỗi xảy ra: " + ex.Message;
+            IsLoggedIn = false;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadCartItems()
+    {
+        if (IsLoggedIn && !string.IsNullOrEmpty(userName))
+        {
+            var response = await http.GetAsync($"api/Cart/GetCartsByUserName/{userName}");
+            if (response.IsSuccessStatusCode)
+            {
+                cartItemDtos = await response.Content.ReadFromJsonAsync<List<CartItemDto>>();
+
+                // Lấy thông tin sản phẩm, tên danh mục và ảnh đầu tiên cho từng mục trong giỏ hàng
+                foreach (var item in cartItemDtos)
+                {
+                    item.Product = await GetProductById(item.IdProduct);
+                    item.CategoryName = await GetCategoryNameById(item.Product.IDCategory);
+
+                    // Lấy danh sách ảnh và gán ảnh đầu tiên (nếu có) vào FirstImageUrl
+                    var images = await GetImagesByProductId(item.IdProduct);
+                    item.FirstImageUrl = images.FirstOrDefault()?.Image; // Gán URL của ảnh đầu tiên
+                }
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+            }
+        }
+
+    }
+
+    private void UpdateSelectedTotal()
+    {
+        selectedTotal = cartItemDtos
+            ?.Where(item => item.IsSelected)
+            .Sum(item => item.Product.Price) ?? 0;
+    }
+
+    private void ToggleSelectAll(bool isSelected)
+    {
+        foreach (var item in cartItemDtos)
+        {
+            item.IsSelected = isSelected;
+        }
+        UpdateSelectedTotal();
+    }
+
+    private void OnItemSelectionChanged(bool isSelected, CartItemDto cartItem)
+    {
+        cartItem.IsSelected = isSelected;
+        UpdateSelectedTotal();
+    }
+
+    private async Task ProcessPayment()
+    {
+        // Lọc chỉ các sản phẩm đã chọn
+        var selectedItems = cartItemDtos.Where(item => item.IsSelected).ToList();
+
+        if (selectedItems.Any())
+        {
+            // Xóa thông báo lỗi nếu có sản phẩm được chọn
+            errorMessage = string.Empty;
+
+            // Lưu các sản phẩm đã chọn vào local storage
+            await jsruntime.InvokeVoidAsync("localStorage.setItem", "selectedCartItems", JsonSerializer.Serialize(selectedItems));
+
+            // Điều hướng đến trang thanh toán
+            navigation.NavigateTo("/PageThanhToan");
+        }
+        else
+        {
+            errorMessage = "Vui lòng chọn ít nhất một sản phẩm để thanh toán.";
+        }
+    }
+
+    private void OnItemSelectionChanged(ChangeEventArgs e)
+    {
+        // Kiểm tra xem có sản phẩm nào được chọn hay không
+        if (cartItemDtos.Any(item => item.IsSelected))
+        {
+            errorMessage = string.Empty; // Xóa thông báo lỗi khi có ít nhất một sản phẩm được chọn
+        }
+    }
+
+    private async Task RemoveItem(CartItemDto item)
+    {
+        try
+        {
+            // Gọi API để xóa sản phẩm khỏi cơ sở dữ liệu dựa trên IDCart
+            var response = await http.DeleteAsync($"api/Cart/IDCart?IDCart={item.IdCart}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Xóa sản phẩm khỏi danh sách giỏ hàng trong ứng dụng
+                cartItemDtos.Remove(item);
+                UpdateSelectedTotal(); // Cập nhật lại tổng số tiền sau khi xóa sản phẩm
+            }
+            else
+            {
+                errorMessage = "Không thể xóa sản phẩm: " + await response.Content.ReadAsStringAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Lỗi khi xóa sản phẩm: " + ex.Message;
+        }
+    }
+
+    public class CartItemDto
+    {
+        public int IdCart { get; set; }
+        public int IdProduct { get; set; }
+        public int Quantity { get; set; }
+        public bool IsSelected { get; set; }
+        public Product Product { get; set; } // Thông tin chi tiết sản phẩm
+        public string CategoryName { get; set; } // Tên loại sản phẩm
+        public string FirstImageUrl { get; set; } // URL của ảnh đầu tiên của sản phẩm
+    }
+
+    private class AccountInfoDto
+    {
+        public string UserName { get; set; }
+        public string FullName { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Gender { get; set; }
+        public DateTime? Birthday { get; set; }
+        public string ImageAccount { get; set; }
+    }
+
+    private Product product;
+    private string categoryName;
+    private List<ImageProduct> images;
+
+    private async Task<Product> GetProductById(int id)
+    {
+        var response = await http.GetAsync($"api/product/GetProductById/{id}");
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<Product>();
+        }
+        throw new Exception("Cannot fetch product data");
+    }
+
+    public async Task<string> GetCategoryNameById(int idCategory)
+    {
+        var response = await http.GetAsync($"api/category/GetCategoryByID/{idCategory}");
+        if (response.IsSuccessStatusCode)
+        {
+            var category = await response.Content.ReadFromJsonAsync<Category>();
+            return category?.NameCate;
+        }
+        return null;
+    }
+
+    private async Task<List<ImageProduct>> GetImagesByProductId(int id)
+    {
+        var response = await http.GetAsync($"api/ImageProduct/GetImageProduct/{id}");
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<List<ImageProduct>>() ?? new List<ImageProduct>();
+        }
+        else
+        {
+            errorMessage = "Không thể tải ảnh từ API: " + response.ReasonPhrase;
+            return new List<ImageProduct>(); // Trả về danh sách rỗng nếu có lỗi
+        }
+    }
 }
+
+
 
 <style>
     .cart-container {
@@ -243,116 +475,6 @@
     </ul>
 </div>
 
-<div class="row mb-5">
-    <div class="col-1 col-md-1"></div>
-    <div class="col-10 col-md-10">
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th class="text-center align-middle" style="width:50px">
-                            <div class="checkbox-wrapper-30 text-center">
-                                <span class="checkbox">
-                                    <input type="checkbox">
-                                    <svg>
-                                        <use xlink:href="#checkbox-30" class="checkbox"></use>
-                                    </svg>
-                                </span>
-                            </div>
-                        </th>
-                        <th scope="col" class="text-center">Tên sản phẩm</th>
-                        <th scope="col" class="text-center">Giá</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Cửa hàng 1 -->
-                    <tr>
-                        <th colspan="4" class="text-left font-weight-bold">Cửa hàng: Nguyễn Văn A</th>
-                    </tr>
-                    <tr>
-                        <th class="align-middle">
-                            <div class="checkbox-wrapper-30 text-center">
-                                <span class="checkbox">
-                                    <input type="checkbox">
-                                    <svg>
-                                        <use xlink:href="#checkbox-30" class="checkbox"></use>
-                                    </svg>
-                                </span>
-                            </div>
-                        </th>
-                        <td>
-                            <div class="row">
-                                <div class="col-md-4 d-flex justify-content-center">
-                                    <img src="/AnhSanPham/t-shirt.webp" style="width:100px;" />
-                                </div>
-                                <div class="col-md-8">
-                                    <h4 class="m-0" style="font-weight:bolder">Áo tuyển thủ Zeus (Size S)</h4>
-                                    <p class="m-0"><strong>Loại:</strong> <img src="/AnhGiaoDien/fashion.png" style="width:20px" /></p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="align-middle text-center">
-                            <div style="color:green; font-weight:bolder">1.229.000 VND</div>
-                        </td>
-                        <td class="align-middle text-center"><i class="bi bi-trash3-fill text-danger"></i></td>
-                    </tr>
-
-                    <tr>
-                        <th class="align-middle">
-                            <div class="checkbox-wrapper-30 text-center">
-                                <span class="checkbox">
-                                    <input type="checkbox">
-                                    <svg>
-                                        <use xlink:href="#checkbox-30" class="checkbox"></use>
-                                    </svg>
-                                </span>
-                            </div>
-                        </th>
-                        <td>
-                            <div class="row">
-                                <div class="col-md-4 d-flex justify-content-center">
-                                    <img src="/AnhSanPham/t-shirt.webp" style="width:100px;" />
-                                </div>
-                                <div class="col-md-8">
-                                    <h4 class="m-0" style="font-weight:bolder">Áo tuyển thủ Zeus (Size M)</h4>
-                                    <p class="m-0"><strong>Loại:</strong> <img src="/AnhGiaoDien/fashion.png" style="width:20px" /></p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="align-middle text-center">
-                            <div style="color:green; font-weight:bolder">1.299.000 VND</div>
-                        </td>
-                        <td class="align-middle text-center"><i class="bi bi-trash3-fill text-danger"></i></td>
-                    </tr>
-
-                   
-                 
-                </tbody>
-                <!-- Hàng thanh toán -->
-                <tfoot>
-                    <tr>
-                        <td colspan="3" class="text-right font-weight-bold">Tổng tiền cửa hàng:</td>
-                        <td class="text-center font-weight-bold">2.528.000 VND</td>
-                        <td></td>
-                    </tr>
-                </tfoot>
-               
-            </table>
-            <!-- Nút thanh toán -->
-            <div class="text-end mt-3">
-                <button class="btn btn-success" onclick="processPayment()">
-                    <i class="bi bi-check-circle-fill"></i> Thanh toán
-                </button>
-            </div>
-
-        </div>
-    </div>
-    <div class="col-1 col-md-1"></div>
-</div>
-
-
-
 <div class="row mt-2">
     <div class="col-1 col-md-1"></div>
     <div class="col-10 col-md-10">
@@ -363,7 +485,7 @@
                         <th class="text-center align-middle" style="width:50px">
                             <div class="checkbox-wrapper-30 text-center">
                                 <span class="checkbox">
-                                    <input type="checkbox" id="selectAll">
+                                    <input type="checkbox" @onchange="(e) => ToggleSelectAll((bool)e.Value)">
                                     <svg>
                                         <use xlink:href="#checkbox-30" class="checkbox"></use>
                                     </svg>
@@ -386,48 +508,70 @@
                     <tr>
                         <th colspan="5" class="text-left font-weight-bold">Cửa hàng: Trần Văn B</th>
                     </tr>
-                    <tr>
-                        <th class="align-middle">
-                            <div class="checkbox-wrapper-30 text-center">
-                                <span class="checkbox">
-                                    <input type="checkbox" class="product-checkbox">
-                                    <svg>
-                                        <use xlink:href="#checkbox-30" class="checkbox"></use>
-                                    </svg>
-                                </span>
-                            </div>
-                        </th>
-                        <td>
-                            <div class="row">
-                                <div class="col-md-4 d-flex justify-content-center">
-                                    <img src="/AnhSanPham/t-shirt.webp" style="width:100px;" />
-                                </div>
-                                <div class="col-md-8">
-                                    <h4 class="m-0" style="font-weight:bolder">Áo sơ mi công sở (Size L)</h4>
-                                    <p class="m-0"><strong>Loại:</strong> <img src="/AnhGiaoDien/business.png" style="width:20px" /></p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="align-middle text-center">
-                            <div style="color:green; font-weight:bolder">899.000 VND</div>
-                        </td>
-                       
-                        <td class="align-middle text-center">
-                            <i class="bi bi-trash3-fill text-danger" onclick="confirmDelete(this)"></i>
-                        </td>
-                    </tr>
+                    @if (cartItemDtos != null && cartItemDtos.Any())
+                    {
+                        foreach (var cartItem in cartItemDtos)
+                        {
+                            <tr>
+                                <th class="align-middle">
+                                    <div class="checkbox-wrapper-30 text-center">
+                                        <span class="checkbox">
+                                            <input type="checkbox" checked="@cartItem.IsSelected" @onchange="(e) => OnItemSelectionChanged((bool)e.Value, cartItem)">
+                                            <svg>
+                                                <use xlink:href="#checkbox-30" class="checkbox"></use>
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </th>
+                                <td>
+                                    <div class="row">
+                                        <div class="col-md-4 d-flex justify-content-center">
+                                            <!-- Hiển thị hình ảnh sản phẩm -->
+                                            <img src="/AnhSanPham/@cartItem.FirstImageUrl" alt="Product Image" style="width:100px;" />
+                                        </div>
+                                        <div class="col-md-8">
+                                            <!-- Hiển thị tên và loại sản phẩm -->
+                                            <h4 class="m-0" style="font-weight:bolder">@cartItem.Product.Name</h4>
+                                            <p class="m-0"><strong>Loại:</strong>@cartItem.CategoryName</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <!-- Hiển thị giá sản phẩm -->
+                                <td class="align-middle text-center">
+                                    <div style="color:green; font-weight:bolder">@($"{cartItem.Product.Price:N0} VNĐ")</div>
+                                </td>
+                                <!-- Remove Icon -->
+                                <td class="align-middle text-center">
+                                    <i class="bi bi-trash3-fill text-danger" style="cursor:pointer;" @onclick="async () => await RemoveItem(cartItem)"></i>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center">Không có sản phẩm nào trong giỏ hàng.</td>
+                        </tr>
+                    }
+
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="3" class="text-right font-weight-bold">Tổng tiền cửa hàng:</td>
-                        <td class="text-center font-weight-bold">899.000 VND</td>
+                        <td colspan="2" class="text-right font-weight-bold">Tổng tiền cửa hàng:</td>
+                        <td class="text-center font-weight-bold">@($"{selectedTotal:N0} VNĐ")</td>
                         <td></td>
                     </tr>
                 </tfoot>
             </table>
             <!-- Nút thanh toán -->
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger" role="alert">
+                    @errorMessage
+                </div>
+            }
             <div class="text-end mt-3">
-                <button class="btn btn-success" onclick="processPayment()">
+                <button class="btn btn-success" @onclick="ProcessPayment">
                     <i class="bi bi-check-circle-fill"></i> Thanh toán
                 </button>
             </div>
@@ -436,9 +580,6 @@
     </div>
     <div class="col-1 col-md-1"></div>
 </div>
-
-
-
 
 <div class="related-products">
     <h2>Sản phẩm liên quan</h2>

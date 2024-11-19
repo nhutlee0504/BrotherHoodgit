@@ -50,7 +50,7 @@ namespace API.Controllers
         }
 
         [HttpGet("GetMyInfo")]
-        public async Task<IActionResult> GetAccountInfo()//Lấy thông tim bản thân
+        public async Task<IActionResult> GetAccountInfo()//Lấy thông tin bản thân
         {
             try
             {

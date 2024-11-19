@@ -19,7 +19,8 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             this.cart = cart;
         }
 
-        [HttpGet("userName")]
+        [HttpGet]
+        [Route("GetCartsByUserName/{userName}")]
         public async Task<ActionResult> GetCartsByUserName(string userName)
         {
             return Ok(await cart.GetCartsByUserName(userName));
