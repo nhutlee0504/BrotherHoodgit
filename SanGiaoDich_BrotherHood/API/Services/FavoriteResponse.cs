@@ -31,6 +31,7 @@ namespace API.Services
             {
                 UserName = user.UserName,
                 IDFavorite = idProd,
+                IDProduct = idProd,
                 CreatedDate = DateTime.Now
             };
             await _context.Favorites.AddAsync(newFav);

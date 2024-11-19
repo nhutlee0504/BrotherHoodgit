@@ -57,10 +57,11 @@ namespace API.Services
                 Description = product.Description,
                 IDCategory = product.CategoryId,
                 Status = "Đang chờ duyệt",
-                StartDate = DateTime.Now,
-                UserName = user.UserName,
+                ProrityLevel = "Phổ thông",
                 CreatedDate = DateTime.Now,
-                EndDate = DateTime.Now.AddDays(7)
+                UpdatedDate = DateTime.Now,
+                UserName = user.UserName,
+                AccountAccept = "Admin"
 
             };
 
@@ -190,7 +191,18 @@ namespace API.Services
             _context.SaveChanges();
             return existingProduct;
         }
+        public async Task<Product> CancleProduct(int idproduct)
+        {
+            var existingProduct = await _context.Products.FirstOrDefaultAsync(x => x.IDProduct == idproduct);
+            if (existingProduct == null)
+            {
+                throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
+            }
 
+            existingProduct.Status = "Đã hủy";
+            _context.SaveChanges();
+            return existingProduct;
+        }
         //Phương thức ngooài
 
         private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()

@@ -43,13 +43,18 @@ namespace API.Models
         public DateTime UpdatedDate { get; set; }
         public string AccountAccept { get; set; }
 
+        public string? Reason { get; set; }
+
+
         [JsonIgnore]
         public Account Account { get; set; }
 
         [JsonIgnore]
+
         public ICollection<Cart> carts { get; set; }
 
         [JsonIgnore]
+
         public ICollection<Favorite> favorites { get; set; }
 
         [JsonIgnore]

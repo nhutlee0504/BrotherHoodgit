@@ -114,6 +114,10 @@ namespace SanGiaoDich_BrotherHood.Server
             services.AddScoped<IBillDetail, BillDetailResponse>();
             services.AddScoped<ICart, CartResponse>();
             services.AddScoped<ICategory, CategoryResponse>();
+            services.AddHttpClient();
+
+            // Đăng ký các dịch vụ của bạn (ví dụ: ESMSService)
+            services.AddSingleton<ESMSService>();
 
             // CORS policy
             services.AddCors(options =>
