@@ -19,21 +19,20 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             this.bill = bill;
         }
 
-        [HttpGet]
-        public async Task<ActionResult> GetBills()
+        [HttpGet("GetBill")]
+        public async Task<IActionResult> GetBills()
         {
             return Ok(await bill.GetBills());
         }
 
-        [HttpGet]
-        [Route("GetBillsByUserName/{username}")]
-        public async Task<ActionResult> GetBillsByUserName(string userName)
+        [HttpGet("GetBillsByUserName/{userName}")]
+        public async Task<IActionResult> GetBillsByUserName(string userName)
         {
             return Ok(await bill.GetBillsByUserName(userName));
         }
 
-        [HttpGet("IDBill")]
-        public async Task<ActionResult> GetBillsByIDBill(int IDBill)
+        [HttpGet("GetBillsByIDBill/{IDBill}")]
+        public async Task<IActionResult> GetBillsByIDBill(int IDBill)
         {
             return Ok(await bill.GetBillByIDBill(IDBill));
         }

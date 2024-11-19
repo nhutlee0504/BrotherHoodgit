@@ -35,6 +35,8 @@ namespace SanGiaoDich_BrotherHood.Server
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
+            services.AddHttpClient();
+
             // Swagger configuration
             services.AddSwaggerGen(c =>
             {
