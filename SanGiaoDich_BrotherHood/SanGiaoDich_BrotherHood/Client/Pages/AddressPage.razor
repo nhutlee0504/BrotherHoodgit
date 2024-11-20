@@ -19,39 +19,41 @@
         <a href="/addaddress" class="btn btn-success">Thêm địa chỉ</a>
     </div>
 
-    <div class="row">
-        <table class="table table-striped table-bordered">
-            <tbody>
-                @if (addresses != null)
-                {
-                    foreach (var x in addresses)
+    <div class="row d-flex justify-content-center">
+       <div class=" col-md-9">
+            <table class="table table-striped table-bordered">
+                <tbody>
+                    @if (addresses != null)
                     {
-                        <tr>
-                            <td>@x.AdditionalDetail, @x.Wardcommune, @x.District, @x.ProvinceCity</td>
-                            <td>
-                                <a href="/addaddress" class="btn btn-warning">Cập nhật</a>
-                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                                    Xóa
-                                </button>
-                                <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-body">
-                                                Bạn có chắc chắn xóa không?
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                                <button type="button" class="btn btn-danger" @onclick="() => Delete(x.IDAddress)">Xóa</button>
+                        foreach (var x in addresses)
+                        {
+                            <tr>
+                                <td>@x.AdditionalDetail, @x.Wardcommune, @x.District, @x.ProvinceCity</td>
+                                <td>
+                                    <a href="/updateaddress/@x.IDAddress" class="btn btn-warning">Cập nhật</a>
+                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                        Xóa
+                                    </button>
+                                    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-body">
+                                                    Bạn có chắc chắn xóa không?
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                    <button type="button" class="btn btn-danger" @onclick="() => Delete(x.IDAddress)">Xóa</button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
+                        }
                     }
-                }
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+       </div>
     </div>
 </div>
 
