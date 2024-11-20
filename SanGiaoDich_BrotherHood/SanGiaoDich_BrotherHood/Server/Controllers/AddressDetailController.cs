@@ -50,13 +50,13 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             return CreatedAtAction("AddAddress", ar);
         }
 
-        [HttpPut("IDAdress")]
+        [HttpPut("{IDAddress}")]
         public async Task<ActionResult> UpdateAddress(int IDAddress, AddressDetail addressDetail)
         {
             return Ok(await address.UpdateAddress(IDAddress, addressDetail));
         }
 
-        [HttpDelete("IDAdress")]
+        [HttpDelete("{IDAddress}")]
         public async Task<ActionResult> DeleteAddress(int IDAddress)
         {
             var ar = await address.DeleteAddress(IDAddress);

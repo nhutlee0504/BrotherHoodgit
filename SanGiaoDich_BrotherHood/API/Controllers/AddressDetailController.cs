@@ -32,6 +32,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [Route("AddAddress")]
         public async Task<ActionResult> AddAddress(AddressDetail addressDetail)
         {
             var ar = await address.AddAddress(new AddressDetail
@@ -47,13 +48,13 @@ namespace API.Controllers
             return CreatedAtAction("AddAddress", ar);
         }
 
-        [HttpPut("IDAdress")]
+        [HttpPut("{IDAddress}")]
         public async Task<ActionResult> UpdateAddress(int IDAddress, AddressDetail addressDetail)
         {
             return Ok(await address.UpdateAddress(IDAddress, addressDetail));
         }
 
-        [HttpDelete("IDAdress")]
+        [HttpDelete("{IDAddress}")]
         public async Task<ActionResult> DeleteAddress(int IDAddress)
         {
             var ar = await address.DeleteAddress(IDAddress);

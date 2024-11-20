@@ -52,7 +52,7 @@
                 <ValidationMessage For="()=> address.AdditionalDetail"></ValidationMessage>
 
                 <div class="d-flex justify-content-center">
-                    <button type="submit" class="btn btn-success mt-3 btn-block mb-5">Lưu</button>
+                    <button type="submit" class="btn btn-success mt-3 w-50 mb-5">Lưu</button>
                 </div>
             </EditForm>
         </div>
@@ -114,7 +114,7 @@
                 StateHasChanged();
                 await Task.Delay(2000);
                 successMessage = null;
-                navigation.NavigateTo("/");
+                navigation.NavigateTo("/address");
             }
             else
             {
