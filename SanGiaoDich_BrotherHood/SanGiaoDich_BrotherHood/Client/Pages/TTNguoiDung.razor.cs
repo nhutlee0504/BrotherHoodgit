@@ -133,30 +133,65 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			}
 		}
 
+        private Dictionary<string, string> fieldErrors = new Dictionary<string, string>();
+        private async Task UpdateAccountInfo()
+        {
+            // Reset lỗi
+            fieldErrors.Clear();
 
-		private async Task UpdateAccountInfo()
-		{
-			try
-			{
-				var response = await HttpClient.PutAsJsonAsync("api/user/UpdateAccountInfo", infoAccountDto);
-				if (response.IsSuccessStatusCode)
-				{
-					var updatedUser = await response.Content.ReadFromJsonAsync<Account>();
-					userAccount = updatedUser; // Update local user account with the new information
-					errorMessage = null; // Clear error message
-					NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
-				}
-				else
-				{
-					errorMessage = "Cập nhật thông tin không thành công.";
-				}
-			}
-			catch (Exception ex)
-			{
-				errorMessage = "Lỗi xảy ra: " + ex.Message;
-			}
-		}
-		private async Task UploadFile()
+            // Kiểm tra họ tên
+            if (string.IsNullOrWhiteSpace(infoAccountDto.FullName))
+            {
+                fieldErrors["FullName"] = "Họ tên không được để trống.";
+            }
+
+            // Kiểm tra email
+            if (string.IsNullOrWhiteSpace(infoAccountDto.Email) || !IsValidEmail(infoAccountDto.Email))
+            {
+                fieldErrors["Email"] = "Email không hợp lệ.";
+            }
+
+            // Kiểm tra số điện thoại
+            if (string.IsNullOrWhiteSpace(infoAccountDto.Phone) || !IsValidPhoneNumber(infoAccountDto.Phone))
+            {
+                fieldErrors["Phone"] = "Số điện thoại không hợp lệ. Vui lòng nhập số di động Việt Nam (10 chữ số).";
+            }
+
+            // Kiểm tra ngày sinh
+            if (!infoAccountDto.Birthday.HasValue || !IsAgeValid(infoAccountDto.Birthday.Value))
+            {
+                fieldErrors["Birthday"] = "Người dùng phải trên 18 tuổi.";
+            }
+
+            // Nếu có lỗi, dừng lại và không thực hiện API call
+            if (fieldErrors.Count > 0)
+            {
+                return;
+            }
+
+            try
+            {
+                var response = await HttpClient.PutAsJsonAsync("api/user/UpdateAccountInfo", infoAccountDto);
+                if (response.IsSuccessStatusCode)
+                {
+                    var updatedUser = await response.Content.ReadFromJsonAsync<Account>();
+                    userAccount = updatedUser;
+                    fieldErrors.Clear();
+                    NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+                }
+                else
+                {
+                    var errorDetails = await response.Content.ReadAsStringAsync();
+                    fieldErrors["General"] = $"Cập nhật không thành công. Chi tiết: {errorDetails}";
+                }
+            }
+            catch (Exception ex)
+            {
+                fieldErrors["General"] = $"Đã xảy ra lỗi trong quá trình cập nhật: {ex.Message}";
+            }
+        }
+
+        private async Task UploadFile()
 		{
 			if (selectedFile != null)
 			{
@@ -186,5 +221,29 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				}
 			}
 		}
-	}
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        private bool IsValidPhoneNumber(string phoneNumber)
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(phoneNumber, @"^(0[3|5|7|8|9])+([0-9]{8})$");
+        }
+        private bool IsAgeValid(DateTime birthday)
+        {
+            var today = DateTime.Today;
+            var age = today.Year - birthday.Year;
+            if (birthday.Date > today.AddYears(-age)) age--;
+            return age >= 18;
+        }
+
+    }
 }

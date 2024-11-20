@@ -114,10 +114,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             {
                 throw new UnauthorizedAccessException("Không tìm thấy người dùng.");
             }
-            if (!IsValidPhone(infoAccountDto.Phone))
-            {
-                throw new ArgumentException("Số điện thoại không hợp lệ");
-            }
             user.FullName = infoAccountDto.FullName;
             user.Email = infoAccountDto.Email;
             user.PhoneNumber = infoAccountDto.Phone;
