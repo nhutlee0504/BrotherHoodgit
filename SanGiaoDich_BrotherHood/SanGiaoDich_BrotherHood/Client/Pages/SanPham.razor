@@ -3,6 +3,7 @@
 @using SanGiaoDich_BrotherHood.Shared.Models
 @inject NavigationManager navigation
 @inject HttpClient http
+@inject NavigationManager NavigationManager
 
 @code {
     // Thêm các biến và phương thức cần thiết ở đây
@@ -106,7 +107,9 @@
                         <span class="input-group-text" style=" background-color: #f8f9fa; border: 1px solid #ced4da;">
                             <i class="fas fa-search text-success"></i>
                         </span>
-                        <input type="text" class="form-control" placeholder="Tìm kiếm sản phẩm" style=" height: 35px; border: 1px solid #ced4da;">
+                        <input type="text" class="form-control" placeholder="Tìm kiếm sản phẩm"
+                               style="height: 35px; border: 1px solid #ced4da;"
+                               @bind="searchQuery" @oninput="OnSearchChanged">
                     </div>
                 </div>
 

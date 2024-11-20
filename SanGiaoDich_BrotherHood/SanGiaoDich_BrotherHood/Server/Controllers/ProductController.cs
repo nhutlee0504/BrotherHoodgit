@@ -45,7 +45,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             return await prod.GetProductById(id);
         }
 
-        [HttpGet("name")]
+        [HttpGet("GetProductByName/{name}")]
         public async Task<IEnumerable<Product>> GetProductByName(string name)
         {
             return await prod.GetProductByName(name);
