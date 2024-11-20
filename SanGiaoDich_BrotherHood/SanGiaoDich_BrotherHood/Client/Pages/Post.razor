@@ -24,6 +24,25 @@
 <h4>Thông tin sản phẩm</h4>
 
 <div class="container">
+    <!-- Modal for image error -->
+    <div class="modal fade show" style="@(!string.IsNullOrEmpty(ImageError) ? "display: block;" : "display: none;")" tabindex="-1" aria-labelledby="imageErrorModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageErrorModalLabel">Lỗi hình ảnh</h5>
+                    <button type="button" class="btn-close" @onclick="CloseImageErrorModal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-danger">@ImageError</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseImageErrorModal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <div class="form-group mb-3">
         <label for="ProductImages"><i class="fas fa-image"></i> Hình ảnh sản phẩm:</label>
         <div class="row">
@@ -56,6 +75,10 @@
     <div class="form-group mb-3">
         <label for="ProductName"><i class="fas fa-tag"></i> Tên sản phẩm:</label>
         <input type="text" @bind="ProductName" class="form-control" placeholder="Nhập tên sản phẩm" id="ProductName" />
+        @if (!string.IsNullOrWhiteSpace(ProductNameError))
+        {
+            <div class="text-danger">@ProductNameError</div>
+        }
     </div>
 
     <div class="form-group mb-3">
@@ -67,16 +90,28 @@
                 <option value="@category.IDCategory">@category.NameCate</option>
             }
         </select>
+        @if (!string.IsNullOrWhiteSpace(ProductCategoryError))
+        {
+            <div class="text-danger">@ProductCategoryError</div>
+        }
     </div>
 
     <div class="form-group mb-3">
         <label for="ProductPrice"><img src="/AnhGiaoDien/business.png" style="width:16px;" /> Giá sản phẩm:</label>
         <input type="number" @bind="ProductPrice" class="form-control" placeholder="Nhập giá sản phẩm" id="ProductPrice" />
+        @if (!string.IsNullOrWhiteSpace(ProductPriceError))
+        {
+            <div class="text-danger">@ProductPriceError</div>
+        }
     </div>
 
     <div class="form-group mb-3">
         <label for="ProductQuantity"><i class="fas fa-sort-numeric-up"></i> Số lượng sản phẩm:</label>
         <input type="number" @bind="ProductQuantity" class="form-control" placeholder="Nhập số lượng sản phẩm" id="ProductQuantity" />
+        @if (!string.IsNullOrWhiteSpace(ProductQuantityError))
+        {
+            <div class="text-danger">@ProductQuantityError</div>
+        }
     </div>
 
     <div class="form-group mb-3">
@@ -86,8 +121,11 @@
             <option value="Phổ thông">Phổ thông</option>
             <option value="Ưu tiên">Ưu tiên</option>
         </select>
+        @if (!string.IsNullOrWhiteSpace(ProrityLevelError))
+        {
+            <div class="text-danger">@ProrityLevelError</div>
+        }
     </div>
-
 
 
     <div class="form-group">
@@ -125,10 +163,23 @@
     private List<Category> categories = new List<Category>();
     private List<ImageFile> selectedFiles = new List<ImageFile> { null, null, null };
 
+    private string ProductNameError { get; set; }
+    private string ProductCategoryError { get; set; }
+    private string ProductPriceError { get; set; }
+    private string ProductQuantityError { get; set; }
+    private string ProrityLevelError { get; set; }
+    private string ImageError { get; set; }
+
+
     private class ImageFile
     {
         public string DataUrl { get; set; }
     }
+    private void CloseImageErrorModal()
+    {
+        ImageError = string.Empty; // Đóng modal bằng cách xóa lỗi
+    }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -160,6 +211,17 @@
         {
             var files = e.GetMultipleFiles(3);
 
+            // Kiểm tra số lượng ảnh chọn được
+            if (files.Count < 1 || files.Count > 3)
+            {
+                ImageError = "Bạn phải chọn ít nhất 1 ảnh và tối đa 3 ảnh.";
+                selectedFiles.Clear();
+                return; // Không tiếp tục xử lý nếu số lượng ảnh sai
+            }
+
+            // Đặt lại lỗi hình ảnh
+            ImageError = string.Empty;
+
             foreach (var file in files)
             {
                 for (int i = 0; i < selectedFiles.Count; i++)
@@ -177,9 +239,12 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi khi chọn ảnh: {ex.Message}");
+            ImageError = "Bạn phải chọn ít nhất 1 ảnh và tối đa 3 ảnh.";
+            selectedFiles.Clear();
+            return; // Không tiếp tục xử lý nếu số lượng ảnh sai
         }
     }
+
 
     private async Task<string> GetImageDataUrl(IBrowserFile file)
     {
@@ -199,6 +264,57 @@
 
     private async Task SaveProduct()
     {
+        // Reset lỗi
+        ProductNameError = string.Empty;
+        ProductCategoryError = string.Empty;
+        ProductPriceError = string.Empty;
+        ProductQuantityError = string.Empty;
+        ProrityLevelError = string.Empty;
+
+        // Kiểm tra dữ liệu
+        if (string.IsNullOrWhiteSpace(ProductName))
+        {
+            ProductNameError = "Vui lòng nhập tên sản phẩm.";
+        }
+
+        if (ProductCategoryId == 0)
+        {
+            ProductCategoryError = "Vui lòng chọn loại sản phẩm.";
+        }
+
+        if (ProductPrice <= 0)
+        {
+            ProductPriceError = "Giá sản phẩm phải lớn hơn 0.";
+        }
+
+        if (ProductQuantity <= 0)
+        {
+            ProductQuantityError = "Số lượng sản phẩm phải lớn hơn 0.";
+        }
+
+        if (string.IsNullOrWhiteSpace(ProrityLevel))
+        {
+            ProrityLevelError = "Vui lòng chọn mức độ ưu tiên.";
+        }
+        var selectedImageCount = selectedFiles.Count(file => file != null);
+        if (selectedImageCount < 1 || selectedImageCount > 3)
+        {
+            ImageError = "Bạn phải chọn ít nhất 1 ảnh và tối đa 3 ảnh.";
+            selectedFiles.Clear();
+            return; // Dừng lại và hiển thị modal
+        }
+
+        // Nếu có lỗi thì không tiếp tục
+        if (!string.IsNullOrWhiteSpace(ProductNameError) ||
+            !string.IsNullOrWhiteSpace(ProductCategoryError) ||
+            !string.IsNullOrWhiteSpace(ProductPriceError) ||
+            !string.IsNullOrWhiteSpace(ProductQuantityError) ||
+            !string.IsNullOrWhiteSpace(ProrityLevelError))
+        {
+            return;
+        }
+
+        // Tiếp tục lưu sản phẩm
         try
         {
             var productDto = new ProductDto
