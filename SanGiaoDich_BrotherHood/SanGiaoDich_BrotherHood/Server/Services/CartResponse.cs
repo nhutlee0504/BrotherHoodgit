@@ -43,9 +43,9 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             }
         }
 
-        public async Task<IEnumerable<Cart>> GetCartsByUserName(string userName)
+        public async Task<Cart> GetCartsByUserName(string userName)
         {
-            return await _context.Carts.Where(x => x.UserName == userName).ToListAsync();
+            return await _context.Carts.FirstOrDefaultAsync(x => x.UserName == userName);
         }
 
         public async Task<Cart> UpdateCart(int IDCart, Cart cart)
@@ -56,7 +56,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 if (cartUpdate == null)
                     return null;
                 cartUpdate.UserName = cart.UserName;
-                
+
                 _context.Carts.Update(cartUpdate);
                 await _context.SaveChangesAsync();
                 return cart;

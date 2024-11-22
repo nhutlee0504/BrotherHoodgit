@@ -88,6 +88,7 @@ namespace API
             services.AddScoped<IBillDetail, BillDetailResponse>();
             services.AddScoped<ICart, CartResponse>();
             services.AddScoped<ICategory, CategoryResponse>();
+            services.AddScoped<ICartItem, CartItemResponse>();
 
             services.AddCors(options =>
             {

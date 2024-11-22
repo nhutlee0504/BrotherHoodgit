@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace API.Controllers
@@ -17,25 +18,17 @@ namespace API.Controllers
         {
             this.cart = cart;
         }
-
         [HttpGet("userName")]
-        public async Task<ActionResult> GetCartsByUserName(string userName)
+        public async Task<ActionResult> GetCartsByUserName([FromQuery] string userName)
         {
-            return Ok(await cart.GetCartsByUserName(userName));
-        }
-
-        [HttpPost]
-        public async Task<ActionResult> AddCart(Cart c)
-        {
-            var ca = await cart.AddCart(new Cart
+            var result = await cart.GetCartsByUserName(userName);
+            if (result == null)
             {
-                UserName = c.UserName,
-
-            });
-            if (ca == null)
-                return BadRequest();
-            return CreatedAtAction("AddCart", ca);
+                return NotFound(new { Message = "Không tìm thấy giỏ hàng của người dùng." });
+            }
+            return Ok(result);
         }
+
 
         [HttpPut("IDCart")]
         public async Task<ActionResult> UpdateCart(int IDCart, Cart c)

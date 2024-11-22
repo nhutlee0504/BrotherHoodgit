@@ -1,6 +1,85 @@
 ﻿@page "/PageThanhToan"
-
+@using System.Text.Json
+@inject HttpClient http
+@inject NavigationManager navigation
+@inject IJSRuntime jsruntime
 @code {
+    private List<PageGioHang.CartItemUser> selectedCartItems;
+    private decimal totalPrice = 0;
+    // private decimal tax = 0;
+    // private decimal shippingFee = 20000; // Phí vận chuyển cố định
+    private decimal grandTotal = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Lấy thông tin các sản phẩm đã chọn từ local storage
+        var selectedItemsJson = await jsruntime.InvokeAsync<string>("localStorage.getItem", "selectedCartItems");
+
+        if (!string.IsNullOrEmpty(selectedItemsJson))
+        {
+            selectedCartItems = JsonSerializer.Deserialize<List<PageGioHang.CartItemUser>>(selectedItemsJson);
+
+            // Tính toán các giá trị
+            if (selectedCartItems != null && selectedCartItems.Any())
+            {
+                // totalPrice = selectedCartItems.Sum(item => item.Quantity * item.Product.Price);
+                // tax = totalPrice * 0.1M; // Thuế 10%
+                // grandTotal = totalPrice + tax + shippingFee;
+                totalPrice = selectedCartItems.Sum(item => item.Price); // Không nhân với số lượng
+                grandTotal = totalPrice; // Tổng tiền chỉ là tổng giá trị sản phẩm
+            }
+        }
+    }
+
+    private async Task PlaceOrder()
+    {
+        if (selectedCartItems == null || !selectedCartItems.Any())
+        {
+            await jsruntime.InvokeVoidAsync("alert", "Bạn chưa chọn sản phẩm nào để thanh toán.");
+            return;
+        }
+
+        // Lấy thông tin từ giao diện
+        var bill = new Bill
+            {
+                FullName = fullName,
+                PhoneNumber = phone,
+                Email = email,
+                DeliveryAddress = address,
+                Total = grandTotal,
+                PaymentType = "Thanh toán bằng tiền mặt",
+                Status = "Chờ xác nhận",
+                UserName = userName,
+                OrderDate = DateTime.Now,
+                DateReceipt = DateTime.Now.AddDays(3), // Ví dụ 3 ngày nhận hàng
+                billDetails = selectedCartItems.Select(item => new BillDetail
+                {
+                    ProductID = item.ProductID,
+                    Quantity = item.Quantity,
+                    Price = item.Price
+                }).ToList()
+            };
+
+        try
+        {
+            var response = await http.PostAsJsonAsync("api/Bill/AddBill", bill);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await jsruntime.InvokeVoidAsync("alert", "Đặt hàng thành công!");
+                navigation.NavigateTo("/"); // Điều hướng về trang chủ
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                await jsruntime.InvokeVoidAsync("alert", $"Đặt hàng thất bại: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await jsruntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra: {ex.Message}");
+        }
+    }
 
 }
 <style>
@@ -138,8 +217,6 @@
                         <input type="text" class="form-control modern-input" id="phone" placeholder="Nhập số điện thoại">
                     </div>
                 </div>
-   
-
             </div>
         </form>
 
@@ -151,36 +228,35 @@
                 <!-- Product Container -->
                 <div class="product-container bg-white p-4 rounded shadow-sm mb-4">
                     <!-- Product Item -->
-                    <div class="product-item mb-3 d-flex align-items-center border-bottom pb-3">
-                        <img src="https://shopdunk.com/images/thumbs/0029155_iphone-16-pro-max-256gb_240.png" alt="Product 1" class="img-fluid rounded" style="max-width: 90px; margin-right: 15px;">
-                        <div class="product-details">
-                            <span class="product-name" style="font-weight:bolder">iPhone 16 Pro Max</span>
-                            <div class="product-price-quantity d-flex align-items-center mt-2">
-                                <i class="fas fa-tag text-success mr-2"></i>
-                                <span class="product-price">Giá: 140.000 VND</span>
+                    @if (selectedCartItems != null && selectedCartItems.Any())
+                    {
+                        @foreach (var item in selectedCartItems)
+                        {
+                            <div class="product-item mb-3 d-flex align-items-center border-bottom pb-3">
+                                <img src="/AnhSanPham/@item.ImageUrl" alt="Product Image" class="img-fluid rounded" style="max-width: 90px; margin-right: 15px;">
+                                <div class="product-details">
+                                    <span class="product-name" style="font-weight: bolder;">@item.ProductName</span>
+                                    <div class="product-price-quantity d-flex align-items-center mt-2">
+                                        <i class="fas fa-tag text-success mr-2"></i>
+                                        <span class="product-price">Giá: @($"{item.Price:N0} VNĐ")</span>
+                                    </div>
+                                    <div class="product-quantity d-flex align-items-center mt-2">
+                                        <i class="fas fa-box text-success mr-2"></i>
+                                        <span>Số lượng: @item.Quantity</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="product-quantity d-flex align-items-center mt-2">
-                                <i class="fas fa-box text-success mr-2"></i>
-                                <span>Số lượng: 2</span>
-                            </div>
-                        </div>
-                    </div>
+                        }
 
-                    <!-- Another Product Item -->
-                    <div class="product-item mb-3 d-flex align-items-center pt-3">
-                        <img src="https://shopdunk.com/images/thumbs/0029837_iphone-16-128gb_240.png" alt="Product 2" class="img-fluid rounded" style="max-width: 90px; margin-right: 15px;">
-                        <div class="product-details">
-                            <span class="product-name font-weight-bold " style="font-weight:bolder">iPhone 16</span>
-                            <div class="product-price-quantity d-flex align-items-center mt-2">
-                                <i class="fas fa-tag text-success mr-2"></i>
-                                <span class="product-price">Giá: 140.000 VND</span>
-                            </div>
-                            <div class="product-quantity d-flex align-items-center mt-2">
-                                <i class="fas fa-box text-success mr-2"></i>
-                                <span>Số lượng: 2</span>
-                            </div>
-                        </div>
-                    </div>
+                        <h4>Tổng cộng: @($"{selectedCartItems.Sum(i => i.Price):N0} VNĐ")</h4>
+
+                    }
+                    else
+                    {
+                        <p>Không có sản phẩm nào được chọn để thanh toán.</p>
+                    }
+
+  
                 </div>
 
                 <div class="seller-info-total-amount mt-4">
@@ -252,27 +328,22 @@
                         </h4>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-dark">Giá sản phẩm:</span>
-                            <span class="font-weight-bold">1.000.000 VND</span>
+                            <span class="font-weight-bold">@($"{totalPrice:N0} VNĐ")</span>
                         </div>
-                        <div class="d-flex justify-content-between mb-2">
+                       @*  <div class="d-flex justify-content-between mb-2">
                             <span class="text-dark">Thuế (10%):</span>
-                            <span class="font-weight-bold">100.000 VND</span>
+                            <span class="font-weight-bold">@($"{tax:N0} VNĐ")</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-dark">Vận chuyển:</span>
-                            <span class="font-weight-bold">20.000 VND</span>
-                        </div>
+                            <span class="font-weight-bold">@($"{shippingFee:N0} VNĐ")</span>
+                        </div> *@
                         <hr class="bg-success mt-2" style="height: 2px; border-radius: 5px;">
                         <div class="d-flex justify-content-between">
                             <span class="text-danger font-weight-bold" style="font-size: 1.5em;">Tổng cộng:</span>
-                            <span class="text-danger font-weight-bold" style="font-size: 1.5em;">1.120.000 VND</span>
+                            <span class="text-danger font-weight-bold" style="font-size: 1.5em;">@($"{grandTotal:N0} VNĐ")</span>
                         </div>
                     </div>
-
-
-
-
-
             </div>
 
             <!-- Submit Button -->
