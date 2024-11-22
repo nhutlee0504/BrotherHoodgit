@@ -32,68 +32,68 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             _httpClient = httpClient;
         }
 
-        public async Task<bool> ModerateContent(string inputText)
-        {
-            // Lấy API Key từ cấu hình (appsettings.json)
-            var apiKey = _configuration["OpenAI:ApiKey"];
-            var url = "https://api.openai.com/v1/moderations";
+        //public async Task<bool> ModerateContent(string inputText)
+        //{
+        //    // Lấy API Key từ cấu hình (appsettings.json)
+        //    var apiKey = _configuration["OpenAI:ApiKey"];
+        //    var url = "https://api.openai.com/v1/moderations";
 
-            var data = new
-            {
-                input = inputText
-            };
+        //    var data = new
+        //    {
+        //        input = inputText
+        //    };
 
-            var jsonContent = new StringContent(
-                JsonSerializer.Serialize(data),
-                Encoding.UTF8,
-                "application/json"
-            );
+        //    var jsonContent = new StringContent(
+        //        JsonSerializer.Serialize(data),
+        //        Encoding.UTF8,
+        //        "application/json"
+        //    );
 
-            // Tạo HttpClient để gửi yêu cầu
-            using (var httpClient = new HttpClient())
-            {
-                // Cấu hình headers cho HttpClient để thêm API Key vào Authorization
-                httpClient.DefaultRequestHeaders.Clear();
-                httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+        //    // Tạo HttpClient để gửi yêu cầu
+        //    using (var httpClient = new HttpClient())
+        //    {
+        //        // Cấu hình headers cho HttpClient để thêm API Key vào Authorization
+        //        httpClient.DefaultRequestHeaders.Clear();
+        //        httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
 
-                try
-                {
-                    // Gửi yêu cầu POST tới OpenAI API
-                    var response = await httpClient.PostAsync(url, jsonContent);
+        //        try
+        //        {
+        //            // Gửi yêu cầu POST tới OpenAI API
+        //            var response = await httpClient.PostAsync(url, jsonContent);
 
-                    // Kiểm tra nếu phản hồi không thành công
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        var errorContent = await response.Content.ReadAsStringAsync();
-                        throw new InvalidOperationException($"Lỗi khi gọi OpenAI API: {response.StatusCode}, Chi tiết lỗi: {errorContent}");
-                    }
+        //            // Kiểm tra nếu phản hồi không thành công
+        //            if (!response.IsSuccessStatusCode)
+        //            {
+        //                var errorContent = await response.Content.ReadAsStringAsync();
+        //                throw new InvalidOperationException($"Lỗi khi gọi OpenAI API: {response.StatusCode}, Chi tiết lỗi: {errorContent}");
+        //            }
 
-                    // Xử lý phản hồi từ OpenAI API
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var moderationResult = JsonSerializer.Deserialize<ModerationResponse>(responseString);
+        //            // Xử lý phản hồi từ OpenAI API
+        //            var responseString = await response.Content.ReadAsStringAsync();
+        //            var moderationResult = JsonSerializer.Deserialize<ModerationResponse>(responseString);
 
-                    // Kiểm tra xem kết quả có bị đánh dấu là không phù hợp hay không
-                    return moderationResult?.Results?.Any(r => r.Flagged) ?? false;
-                }
-                catch (Exception ex)
-                {
-                    // Xử lý lỗi nếu có
-                    throw new InvalidOperationException($"Đã xảy ra lỗi khi kiểm tra nội dung: {ex.Message}");
-                }
-            }
-        }
+        //            // Kiểm tra xem kết quả có bị đánh dấu là không phù hợp hay không
+        //            return moderationResult?.Results?.Any(r => r.Flagged) ?? false;
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            // Xử lý lỗi nếu có
+        //            throw new InvalidOperationException($"Đã xảy ra lỗi khi kiểm tra nội dung: {ex.Message}");
+        //        }
+        //    }
+        //}
 
 
-        // Class dùng để deserialize phản hồi của API Moderation
-        public class ModerationResponse
-        {
-            public List<ModerationResult> Results { get; set; }
-        }
+        //// Class dùng để deserialize phản hồi của API Moderation
+        //public class ModerationResponse
+        //{
+        //    public List<ModerationResult> Results { get; set; }
+        //}
 
-        public class ModerationResult
-        {
-            public bool Flagged { get; set; }
-        }
+        //public class ModerationResult
+        //{
+        //    public bool Flagged { get; set; }
+        //}
 
         public async Task<Product> AddProduct(ProductDto product)
         {
