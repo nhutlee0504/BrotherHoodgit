@@ -27,6 +27,7 @@
     <Folder Include="wwwroot\AnhNhanTin\" />
     <Folder Include="wwwroot\AnhAvatar\" />
     <Folder Include="wwwroot\AnhDanhGia\" />
+    <Folder Include="wwwroot\AnhNhanTin\" />
   </ItemGroup>
 
 </Project>

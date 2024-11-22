@@ -18,6 +18,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
     public class ProductController : ControllerBase
     {
         private IProduct prod;
+
         public ProductController(IProduct prods)
         {
             prod = prods;
@@ -213,7 +214,5 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 				return StatusCode(500, "An error occurred while upgrading the product priority level.");
 			}
 		}
-
-
-	}
+    }
 }

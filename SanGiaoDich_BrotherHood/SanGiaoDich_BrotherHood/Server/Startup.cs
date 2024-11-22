@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SanGiaoDich_BrotherHood.Server.Configurations;
 using SanGiaoDich_BrotherHood.Server.Data;
 using SanGiaoDich_BrotherHood.Server.Services;
 using System.Text;
@@ -116,7 +117,7 @@ namespace SanGiaoDich_BrotherHood.Server
             services.AddScoped<IBillDetail, BillDetailResponse>();
             services.AddScoped<ICart, CartResponse>();
             services.AddScoped<ICategory, CategoryResponse>();
-
+            services.AddSingleton<IConfiguration>(Configuration);
             // CORS policy
             services.AddCors(options =>
             {
