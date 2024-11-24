@@ -7,8 +7,11 @@
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
+@using Firebase.Storage
 @using SanGiaoDich_BrotherHood.Shared.Dto
 @using SanGiaoDich_BrotherHood.Shared.Models
+@using System.IO
+@using System.Text.Json
 
 <div class="container-fluid">
     <ul class="breadcrumb">
@@ -77,6 +80,64 @@
                 transform: scale(1.05);
                 box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
             }
+    /* Màu đỏ cho nhấn mạnh */
+    .highlight-red {
+        color: #d9534f;
+        font-weight: bold;
+        background-color: #f8d7da;
+        padding: 2px 4px;
+        border-radius: 3px;
+    }
+
+    /* Màu xanh dương cho tiêu đề */
+    .highlight-blue {
+        color: #0275d8;
+        font-weight: bold;
+        text-decoration: underline;
+    }
+
+    /* Màu vàng cho các nội dung nhấn mạnh */
+    .highlight-yellow {
+        background-color: #fff3cd;
+        padding: 2px 4px;
+        border-radius: 3px;
+    }
+    /* Tùy chỉnh kích thước modal */
+    .modal-dialog.modal-lg {
+        max-width: 90%; /* Modal có thể chiếm tối đa 90% chiều rộng màn hình */
+    }
+
+    /* Tạo thanh cuộn cho phần nội dung dài */
+    .modal-body {
+        max-height: 500px; /* Giới hạn chiều cao của modal body */
+        overflow-y: auto; /* Thêm thanh cuộn dọc khi nội dung dài hơn chiều cao */
+        padding-right: 15px; /* Đảm bảo thanh cuộn không bị ẩn */
+    }
+
+    /* Tùy chỉnh tiêu đề modal */
+    .modal-header h5 {
+        color: #0275d8;
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    /* Tùy chỉnh nội dung modal */
+    .modal-body {
+        font-size: 16px;
+        line-height: 1.6;
+        color: #333;
+    }
+
+        /* Kiểu cho các danh sách trong modal */
+        .modal-body ul {
+            list-style-type: disc;
+            margin-left: 20px;
+        }
+
+    /* Kiểu cho các nút trong modal */
+    .modal-footer button {
+        padding: 10px 20px;
+    }
 
 </style>
 <h4>Thông tin sản phẩm</h4>
@@ -109,11 +170,56 @@
                 <InputFile OnChange="HandleFileSelected" multiple accept="image/*" />
             </div>
             <div class="col-md-7 d-flex justify-content-end align-items-end">
-                <span>Xem quy định về <a href="#"><i class="fas fa-info-circle"></i> Cách chụp ảnh và quay sản phẩm</a></span>
+                <span>Xem quy định về <a href="#" data-bs-toggle="modal" data-bs-target="#policyModal"><i class="fas fa-info-circle"></i> Cách chụp ảnh và quay sản phẩm</a></span>
             </div>
         </div>
     </div>
+    <div class="modal fade" id="policyModal" tabindex="-1" aria-labelledby="policyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="policyModalLabel">Chính Sách Đăng Ảnh và Bài Viết</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-content">
+                        <p>
+                            <span class="highlight-red">Chúng tôi hiểu rằng điều quan trọng đối với BrotherHood</span> là phải trở thành nơi mà mọi người có thể cảm thấy tự tin để giao tiếp, nhưng chúng tôi cũng biết rằng cần phải xem trọng vai trò của bản thân trong việc ngăn chặn việc lạm dụng dịch vụ của mình. Đó là lý do <span class="highlight-red">BrotherHood phát triển Tiêu chuẩn cộng đồng</span> để cung cấp cho người dùng những nguyên tắc về nội dung được phép và không được phép trên BrotherHood.
+                        </p>
+                        <h6 class="highlight-blue">Nội dung có khả năng vi phạm Tiêu chuẩn cộng đồng:</h6>
+                        <ul>
+                            <li class="highlight-yellow">Nội dung được tạo và phân phối bằng tài khoản giả.</li>
+                            <li class="highlight-yellow">Nội dung chứa từ/cụm từ đã được xác định là gây thù ghét.</li>
+                            <li class="highlight-yellow">Nội dung có thể khiêu khích hoặc tạo điều kiện cho tình trạng bạo lực nghiêm trọng.</li>
+                            <li>Hành vi bắt nạt và quấy rối.</li>
+                            <li>Spam, hình ảnh phản cảm, hoạt động tình dục và ảnh khỏa thân người lớn.</li>
+                            <li>Bài viết mua bán, giao dịch hoặc quảng cáo hàng hóa hoặc dịch vụ bị hạn chế.</li>
+                        </ul>
+                        <h6 class="highlight-blue">Nội dung trên lằn ranh Tiêu chuẩn cộng đồng:</h6>
+                        <ul>
+                            <li class="highlight-yellow">Ảnh khỏa thân người lớn và hoạt động tình dục trên lằn ranh.</li>
+                            <li>Nội dung bạo lực và phản cảm trên lằn ranh.</li>
+                            <li>Hành vi sắp chạm ngưỡng bắt nạt & quấy rối, ngôn từ gây thù ghét và bạo lực & khích nộ.</li>
+                            <li class="highlight-yellow">Nội dung đăng trong các nhóm liên quan đến hàng hóa thuộc diện kiểm soát.</li>
+                        </ul>
+                        <h6 class="highlight-blue">Nguyên tắc đối với bài viết có mức độ lan truyền đáng ngờ:</h6>
+                        <p>
+                            <span class="highlight-red">Chúng tôi muốn đảm bảo rằng nội dung mọi người thấy trên BrotherHood</span> đến từ nguồn xác thực và không vi phạm chính sách của chúng tôi. Chúng tôi có thể tạm thời hạn chế phân phối bài viết có mức độ phân phối cao đột biến cho đến khi người đăng xác minh danh tính.
+                        </p>
+                        <h6 class="highlight-blue">Nguyên tắc đối với người nhiều lần vi phạm chính sách:</h6>
+                        <p>
+                            <span class="highlight-red">Những người nhiều lần vi phạm</span> việc đăng nội dung lên trang cá nhân, Trang hoặc Nhóm sẽ bị xử lý, đặc biệt là các tài khoản được tạo để né tránh chính sách.
+                        </p>
+                    </div>
 
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đồng ý và Tiếp tục</button>
+                </div>
+            </div>
+        </div>
+    </div>
         <div class="row">
             <!-- Tên sản phẩm -->
             <div class="col-md-6 mb-3">
@@ -191,10 +297,11 @@
     private string Description { get; set; }
     private string ProrityLevel { get; set; }
     private List<Category> categories = new List<Category>();
+    private FirebaseStorage _firebaseStorage;
 
     private List<ImageFile> selectedFiles = new List<ImageFile>
     {
-        null, null, null  // Khởi tạo ba khung trống
+        null, null, null  
     };
 
     private class ImageFile
@@ -204,6 +311,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _firebaseStorage = new FirebaseStorage("dbbrotherhood-ac2f1.appspot.com");
         await LoadUserData();
     }
 
@@ -214,7 +322,7 @@
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
-        var files = e.GetMultipleFiles(3); // Giới hạn tối đa 3 tệp
+        var files = e.GetMultipleFiles(3);
 
         foreach (var file in files)
         {
@@ -226,7 +334,7 @@
                         {
                             DataUrl = await GetImageDataUrl(file)
                         };
-                    break; // Thoát khỏi vòng lặp khi đã thêm tệp vào danh sách
+                    break; 
                 }
             }
         }
@@ -234,12 +342,11 @@
 
     private async Task<string> GetImageDataUrl(IBrowserFile file)
     {
-        using var stream = file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 3); // Giới hạn 3MB
+        using var stream = file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 3);
         var buffer = new byte[file.Size];
         await stream.ReadAsync(buffer);
         return $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
     }
-
     private async Task SaveProduct()
     {
         var productDto = new ProductDto
@@ -251,46 +358,46 @@
                 Description = Description,
                 ProrityLevel = ProrityLevel
             };
-
         var response = await HttpClient.PostAsJsonAsync("api/product/AddProduct", productDto);
 
-        if (response.IsSuccessStatusCode)
-        {
-            var createdProduct = await response.Content.ReadFromJsonAsync<Product>();
-            var productId = createdProduct.IDProduct;
-
-            var content = new MultipartFormDataContent();
-
-            foreach (var file in selectedFiles)
-            {
-                if (file != null)
-                {
-                    var byteArray = Convert.FromBase64String(file.DataUrl.Split(",")[1]);
-                    var fileContent = new ByteArrayContent(byteArray);
-                    fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
-
-                    // Không cần chỉ định tên file cụ thể ở đây
-                    content.Add(fileContent, "files", $"image_{Guid.NewGuid()}.jpg"); // Duy trì tên duy nhất cho từng upload
-                }
-            }
-
-            var uploadResponse = await HttpClient.PostAsync($"api/ImageProduct/ImageProduct/{productId}/upload", content);
-
-            if (uploadResponse.IsSuccessStatusCode)
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Sản phẩm đã được thêm thành công!");
-                NavigationManager.NavigateTo("/", forceLoad: true);
-            }
-            else
-            {
-                var errorMessage = await uploadResponse.Content.ReadAsStringAsync();
-                await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra khi tải ảnh: {errorMessage}");
-            }
-        }
-        else
+        if (!response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
             await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra khi thêm sản phẩm: {errorMessage}");
+            return;
+        }
+        var createdProduct = await response.Content.ReadFromJsonAsync<Product>();
+        var productId = createdProduct.IDProduct;
+
+        var imageUrls = new List<string>();
+
+        var content = new MultipartFormDataContent();
+        foreach (var file in selectedFiles)
+        {
+            if (file != null)
+            {
+                var fileBytes = Convert.FromBase64String(file.DataUrl.Split(",")[1]);
+                var fileContent = new ByteArrayContent(fileBytes);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+
+                content.Add(fileContent, "files", $"{Guid.NewGuid()}.jpg");
+            }
+        }
+
+        var imageResponse = await HttpClient.PostAsync(
+            $"api/ImageProduct/ImageProduct/{productId}/upload",
+            content
+        );
+
+        if (imageResponse.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Sản phẩm và hình ảnh đã được thêm thành công!");
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            var errorMessage = await imageResponse.Content.ReadAsStringAsync();
+            await JSRuntime.InvokeVoidAsync("alert", $"Lỗi khi lưu liên kết ảnh: {errorMessage}");
         }
     }
 }

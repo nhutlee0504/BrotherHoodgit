@@ -1,0 +1,225 @@
+﻿@using SanGiaoDich_BrotherHood.Shared.Models
+@using System.Text.Json
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@page "/vnpay/naptien"
+<div class="container-fluid">
+    <ul class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="#">Nạp tiền vào ví</a></li>
+    </ul>
+</div>
+<div class="container mt-1 mb-5">
+    <div class="card shadow-lg">
+        <div class="card-header text-center bg-success text-white">
+            <i class="bi bi-wallet2 me-2"></i>Nạp tiền vào ví
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Cột trái: Thông tin người dùng -->
+                          <div class="col-md-6 user-info">
+                <h5 class="text-success">
+                    <i class="bi bi-person-circle me-2"></i>Thông tin tài khoản
+                </h5>
+                <div class="info-list">
+                    <div class="info-item">
+                        <strong>Tên tài khoản:</strong> Admin
+                    </div>
+                    <div class="info-item">
+                        <strong>Email:</strong> admin@example.com
+                    </div>
+                    <div class="info-item">
+                        <strong>Số dư hiện tại:</strong> 1,000,000 VNĐ
+                    </div>
+                    <div class="info-item">
+                        <strong>Trạng thái:</strong> <span class="badge bg-success">Hoạt động</span>
+                    </div>
+                </div>
+            </div>
+
+
+                <!-- Cột phải: Nạp tiền -->
+                <div class="col-md-6 payment-section">
+                    <form @onsubmit="HandleSubmit">
+                        <div class="mb-3">
+                            <label class="form-label">Chọn số tiền (VNĐ)</label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-light w-100 py-3 border" 
+                                            @onclick="() => SelectAmount(25000)" 
+                                            style="@(OrderInfo.Amount == 25000 ? "background-color: #28a745; color: white;" : "")">
+                                        <i class="bi bi-cash-coin me-2"></i>25,000
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-light w-100 py-3 border" 
+                                            @onclick="() => SelectAmount(50000)" 
+                                            style="@(OrderInfo.Amount == 50000 ? "background-color: #28a745; color: white;" : "")">
+                                        <i class="bi bi-cash-coin me-2"></i>50,000
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-light w-100 py-3 border" 
+                                            @onclick="() => SelectAmount(100000)" 
+                                            style="@(OrderInfo.Amount == 100000 ? "background-color: #28a745; color: white;" : "")">
+                                        <i class="bi bi-cash-coin me-2"></i>100,000
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-light w-100 py-3 border" 
+                                            @onclick="() => SelectAmount(200000)" 
+                                            style="@(OrderInfo.Amount == 200000 ? "background-color: #28a745; color: white;" : "")">
+                                        <i class="bi bi-cash-coin me-2"></i>200,000
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Hoặc nhập số tiền (VNĐ)</label>
+                            <input type="number" id="amount" class="form-control" @bind="OrderInfo.Amount" placeholder="Nhập số tiền" required min="25000" step="1000" />
+                        </div>
+                          <div class="mb-3">
+                            <label class="form-label">Chọn loại thanh toán</label>
+                            <div class="row g-2">
+                                @foreach (var paymentOption in new[] { "MoMo", "VNPay" })
+                                {
+                                    <div class="col-md-6">
+                                        <div class="card payment-option" 
+                                             style="@(OrderInfo.PaymentType == paymentOption ? "border-color: #28a745; box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);" : "")"
+                                             @onclick="() => SelectPaymentType(paymentOption)">
+                                            <div class="card-body text-center">
+                                                <img src="/AnhGiaoDien/@paymentOption.ToLower()-logo.png" alt="@paymentOption" class="img-fluid mb-2" style="max-height: 50px;" />
+                                                <h6 class="mb-0">@paymentOption</h6>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Mô tả giao dịch</label>
+                            <textarea id="description" class="form-control" @bind="OrderIn" rows="3" readonly></textarea>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-success btn-lg w-100">
+                                <i class="bi bi-arrow-right-circle me-2"></i>Nạp tiền
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .payment-section button:hover {
+    transform: scale(1.05);
+    transition: 0.2s;
+}
+
+.payment-section .btn-light {
+    border: none;
+    font-size: 16px;
+}
+
+.user-info ul {
+    list-style: none;
+    padding: 0;
+}
+.user-info {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px; /* Làm mềm các góc */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Thêm bóng đổ nhẹ */
+}
+
+.user-info h5 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.info-list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #e0e0e0; /* Chia các mục thông tin bằng đường kẻ nhẹ */
+}
+
+.info-item:last-child {
+    border-bottom: none; /* Không có đường kẻ cho mục cuối cùng */
+}
+
+.info-item strong {
+    color: #333;
+}
+
+.badge {
+    font-size: 0.875rem; /* Giảm kích thước của badge */
+    padding: 0.4rem 0.6rem;
+}
+
+</style>
+@code {
+    string OrderIn;
+
+    private PaymentInformationModel OrderInfo = new PaymentInformationModel
+{
+    UserName = "Admin", 
+    Amount = 0,     
+    PaymentID = 1,
+    PaymentType = "MoMo", 
+    OrderDescription = "",
+    CreatedDate = DateTime.Now
+};
+    private void SelectAmount(double amount)
+    {
+        OrderInfo.Amount = amount;
+        UpdateOrderDescription(); // Cập nhật mô tả khi chọn số tiền
+    }
+
+    private void SelectPaymentType(string type)
+    {
+        OrderInfo.PaymentType = type;
+        UpdateOrderDescription(); // Cập nhật mô tả khi chọn loại thanh toán
+    }
+
+    private void UpdateOrderDescription()
+    {
+        if (OrderInfo.Amount > 0 && !string.IsNullOrEmpty(OrderInfo.PaymentType))
+        {
+            OrderIn = $"Thanh toán qua {OrderInfo.PaymentType}, Số tiền: {OrderInfo.Amount:N0} VNĐ.";
+            OrderInfo.OrderDescription = $"Thanh toan qua {OrderInfo.PaymentType} voi So tien: {OrderInfo.Amount:N0} VNĐ";
+        }
+        else
+        {
+            OrderInfo.OrderDescription = ""; 
+        }
+    }
+    private async Task HandleSubmit()
+    {
+        var response = await Http.PostAsJsonAsync("api/payment/CreatePaymentUrl", OrderInfo);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<JsonElement>();
+            string paymentUrl = result.GetProperty("paymentUrl").GetString();
+            Navigation.NavigateTo(paymentUrl, true);
+        }
+        else
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error response: {errorContent}");
+            // Hiển thị thông báo lỗi
+        }
+    }
+
+}

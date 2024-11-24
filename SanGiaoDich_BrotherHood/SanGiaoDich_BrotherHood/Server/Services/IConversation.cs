@@ -1,6 +1,11 @@
-﻿namespace SanGiaoDich_BrotherHood.Server.Services
+﻿using SanGiaoDich_BrotherHood.Shared.Models;
+using System.Threading.Tasks;
+
+namespace SanGiaoDich_BrotherHood.Server.Services
 {
-    public class IConversation
+    public interface IConversation
     {
+        Task<ConversationRespone> AddConversation(ConversationRespone conversation);
+        Task<ConversationRespone> DeleteConversation(ConversationRespone conversation);
     }
 }

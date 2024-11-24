@@ -17,13 +17,12 @@ namespace SanGiaoDich_BrotherHood.Server.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IConfiguration _configuration; // Thêm IConfiguration
-        private readonly string _imagePath;
-
-        public ImageProductResponse(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
+        private readonly IConfiguration _configuration;
+        private readonly FirebaseStorageService _firebaseService;
+        public ImageProductResponse(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, FirebaseStorageService firebaseService)
         {
+            _firebaseService = firebaseService;
             _context = context;
-            _imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "AnhSanPham");
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
         }
@@ -32,21 +31,16 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         {
             var user = GetUserInfoFromClaims();
 
-            // Tìm sản phẩm tương ứng với idProd
             var product = await _context.Products.FindAsync(idProd);
 
             if (product == null)
             {
                 throw new KeyNotFoundException("Sản phẩm không tồn tại.");
             }
-
-            // Kiểm tra xem người dùng có phải là người tạo sản phẩm không
             if (product.UserName != user.UserName)
             {
                 throw new UnauthorizedAccessException("Bạn không có quyền xóa ảnh này.");
             }
-
-            // Tìm ảnh theo idImage
             var imageProduct = await _context.ImageProducts.FindAsync(idImage);
 
             if (imageProduct != null)
@@ -86,40 +80,34 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 throw new UnauthorizedAccessException("Bạn không có quyền thêm ảnh cho sản phẩm này.");
             }
 
-            // Kiểm tra và tạo thư mục nếu không tồn tại
-            if (!Directory.Exists(_imagePath))
-            {
-                Directory.CreateDirectory(_imagePath);
-            }
-
             var imageProducts = new List<ImageProduct>();
-
-            if (files.Count > 3)
-                throw new System.Exception("Bạn chỉ được chọn tối đa 3 ảnh.");
 
             foreach (var file in files)
             {
-                // Tạo tên file duy nhất bằng cách sử dụng GUID hoặc timestamp
                 var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-                var filePath = Path.Combine(_imagePath, uniqueFileName);
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                using (var stream = file.OpenReadStream())
                 {
-                    await file.CopyToAsync(stream);
+                    try
+                    {
+                        var downloadUrl = await _firebaseService.UploadFileToFirebaseStorage(stream, uniqueFileName);
+                        var imageProduct = new ImageProduct
+                        {
+                            Image = downloadUrl,
+                            IDProduct = productId
+                        };
+
+                        imageProducts.Add(await AddImage(imageProduct));
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Lỗi khi tải ảnh lên Firebase: {ex.Message}");
+                    }
                 }
-
-                var imageProduct = new ImageProduct
-                {
-                    Image = uniqueFileName, // Lưu tên file duy nhất
-                    IDProduct = productId
-                };
-
-                imageProducts.Add(await AddImage(imageProduct));
             }
 
             return imageProducts;
         }
-
 
 
         public async Task<IEnumerable<ImageProduct>> GetImages()

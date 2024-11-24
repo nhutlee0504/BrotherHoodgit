@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -114,6 +115,9 @@ namespace SanGiaoDich_BrotherHood.Server
             services.AddScoped<IBillDetail, BillDetailResponse>();
             services.AddScoped<ICart, CartResponse>();
             services.AddScoped<ICategory, CategoryResponse>();
+            services.AddScoped<FirebaseStorageService>();
+            services.AddScoped<IVnPayService, VnPayService>();
+
             services.AddHttpClient();
 
             // Đăng ký các dịch vụ của bạn (ví dụ: ESMSService)
@@ -123,12 +127,10 @@ namespace SanGiaoDich_BrotherHood.Server
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAllOrigins",
-                    builder =>
-                    {
-                        builder.AllowAnyOrigin()
-                               .AllowAnyMethod()
-                               .AllowAnyHeader();
-                    });
+                    builder => builder.WithOrigins("https://localhost:5001")  // Thêm URL nguồn của bạn
+                              .AllowAnyMethod()
+                              .AllowAnyHeader()
+                              .AllowCredentials());
             });
         }
 

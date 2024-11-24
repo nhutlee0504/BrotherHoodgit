@@ -15,7 +15,7 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         public int ConversationID { get; set; }
         [ForeignKey("Account")]
         public string Username { get; set; }
-        public string CreatedDate { get; set; }
+        public DateTime CreatedDate { get; set; }
         public bool IsDeleted { get; set; }
         public Account Account { get; set; }
         public ICollection<Message> message { get; set; }

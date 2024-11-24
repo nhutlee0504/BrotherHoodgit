@@ -1,0 +1,35 @@
+﻿@page "/vnpay/payment-success"
+@using SanGiaoDich_BrotherHood.Shared.Models
+@inject HttpClient Http
+@code {
+    [Parameter] public string PaymentID { get; set; }
+    [Parameter] public double Amount { get; set; }
+
+    private string statusMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<PaymentResponseModel>("api/payment/PaymentCallbackVnpay");
+            if (response != null && response.Success)
+            {
+                Console.WriteLine("Thanh toán thành công!");
+                Console.WriteLine($"Message: {response.Success}");
+                Console.WriteLine($"Data: {response.OrderDescription}");
+            }
+            else
+            {
+                Console.WriteLine("Thanh toán thất bại!");
+                Console.WriteLine($"Message: {response?.OrderDescription}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Có lỗi xảy ra: {ex.Message}");
+        }
+    }
+}
+
+    <h3>Thông báo thanh toán</h3>
+    <p>@statusMessage</p>

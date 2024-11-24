@@ -20,7 +20,7 @@
                 <!-- Ảnh lớn -->
                 <div class="row mb-4">
                     <div class="col-md-12">
-                        <img src="/AnhSanPham/@images.First().Image" class="img-fluid" alt="Ảnh chính" style="border-radius: 15px; max-height: 400px; width: 100%; object-fit: cover;">
+                        <img src="@images.First().Image" class="img-fluid" alt="Ảnh chính" style="border-radius: 15px; max-height: 400px; width: 100%; object-fit: cover;">
                     </div>
                 </div>
 
@@ -29,7 +29,7 @@
                     @foreach (var item in images.Skip(1))
                     {
                         <div class="col-md-6 mb-2 d-flex">
-                            <img src="/AnhSanPham/@item.Image" class="img-fluid flex-fill" alt="Ảnh phụ" style="border-radius: 15px; height: 150px; object-fit: cover;">
+                            <img src="@item.Image" class="img-fluid flex-fill" alt="Ảnh phụ" style="border-radius: 15px; height: 150px; object-fit: cover;">
                         </div>
                     }
                 </div>
