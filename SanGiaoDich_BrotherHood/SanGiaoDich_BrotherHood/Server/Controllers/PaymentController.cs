@@ -40,13 +40,50 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 
             return Ok(new { paymentUrl = url });
         }
+        //[HttpGet("PaymentCallbackVnpay")]
+        //public IActionResult PaymentCallbackVnpay()
+        //{
+        //    Response.Headers["Cache-Control"] = "no-store";
+        //    var response = _vnPayService.PaymentExecute(Request.Query);
+        //    return Ok(response);
+        //}
         [HttpGet("PaymentCallbackVnpay")]
         public IActionResult PaymentCallbackVnpay()
         {
-            Response.Headers["Cache-Control"] = "no-store";
-            var response = _vnPayService.PaymentExecute(Request.Query);
-            return Ok(response);
+            try
+            {
+                // Đảm bảo không lưu cache khi trả về dữ liệu từ API
+                Response.Headers["Cache-Control"] = "no-store";
+
+                // Lấy dữ liệu phản hồi từ VNPay
+                var response = _vnPayService.PaymentExecute(Request.Query);
+
+                // Kiểm tra nếu response hợp lệ
+                if (response == null)
+                {
+                    // Trả về JSON nếu không nhận được phản hồi từ VNPay
+                    return new JsonResult(new { Success = false, Message = "Không nhận được dữ liệu từ VNPay." })
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest
+                    };
+                }
+
+                // Trả về phản hồi từ VNPay dưới dạng JSON
+                return new JsonResult(response)
+                {
+                    StatusCode = StatusCodes.Status200OK
+                };
+            }
+            catch (Exception ex)
+            {
+                // Trả về lỗi nếu có ngoại lệ
+                return new JsonResult(new { Success = false, Message = $"Lỗi hệ thống: {ex.Message}" })
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
+            }
         }
+
 
 
         public bool VerifyVNPAYHash(Dictionary<string, string> queryParams, string secretKey, string secureHash)

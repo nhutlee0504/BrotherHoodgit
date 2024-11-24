@@ -1,4 +1,4 @@
-﻿@page "/vnpay/payment-success"
+﻿@* @page "/vnpay/payment-success"
 @using SanGiaoDich_BrotherHood.Shared.Models
 @inject HttpClient Http
 @code {
@@ -32,4 +32,55 @@
 }
 
     <h3>Thông báo thanh toán</h3>
-    <p>@statusMessage</p>
+    <p>@statusMessage</p> *@
+@page "/vnpay/payment-success"
+@using SanGiaoDich_BrotherHood.Shared.Models
+@inject HttpClient Http
+@code {
+    [Parameter] public string PaymentID { get; set; }
+    [Parameter] public double Amount { get; set; }
+
+    private string statusMessage;
+    private string orderDescription;
+    private bool success;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Gọi API lấy phản hồi thanh toán
+            var response = await Http.GetFromJsonAsync<PaymentResponseModel>("api/payment/PaymentCallbackVnpay");
+
+            // Kiểm tra nếu phản hồi hợp lệ
+            if (response != null)
+            {
+                success = response.Success;
+                statusMessage = response.Message ?? "Không có thông báo";
+                orderDescription = response.OrderDescription ?? "Không có mô tả đơn hàng";
+            }
+            else
+            {
+                success = false;
+                statusMessage = "Không nhận được phản hồi từ hệ thống.";
+            }
+        }
+        catch (Exception ex)
+        {
+            success = false;
+            statusMessage = $"Đã xảy ra lỗi: {ex.Message}";
+        }
+    }
+}
+
+<h3>Thông báo thanh toán</h3>
+<div>
+    @if (success)
+    {
+        <p style="color: green;">✅ @statusMessage</p>
+        <p><strong>Mô tả đơn hàng:</strong> @orderDescription</p>
+    }
+    else
+    {
+        <p style="color: red;">❌ @statusMessage</p>
+    }
+</div>
