@@ -30,8 +30,31 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         [Route("GetCategoryByID/{IDCate}")]
         public async Task<ActionResult> GetCategoryByID(int IDCate)
         {
-            return Ok(await category.GeCategory(IDCate));
+            var result = await category.GeCategory(IDCate);
+            if (result == null)
+                return NotFound($"Không tìm thấy danh mục với ID: {IDCate}");
+            return Ok(result);
         }
+
+        [HttpGet]
+        [Route("GetCategoryByName/{name}")]
+        public async Task<ActionResult> GetCategoryByName(string name)
+        {
+            // Gọi dịch vụ để tìm danh mục theo tên
+            var categoryResult = await category.GetCategoryByName(name);
+
+            // Kiểm tra nếu không tìm thấy
+            if (categoryResult == null)
+            {
+                return NotFound($"Không tìm thấy danh mục với tên: {name}");
+            }
+
+            // Bao bọc kết quả trong danh sách và trả về
+            return Ok(new List<Category> { categoryResult });
+        }
+
+
+
         [HttpPost("AddCategory")]
         public async Task<ActionResult> AddCategory(Category cate)
         {

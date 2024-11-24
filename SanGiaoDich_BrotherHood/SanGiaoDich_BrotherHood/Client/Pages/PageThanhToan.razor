@@ -40,45 +40,45 @@
         }
 
         // Lấy thông tin từ giao diện
-        var bill = new Bill
-            {
-                FullName = fullName,
-                PhoneNumber = phone,
-                Email = email,
-                DeliveryAddress = address,
-                Total = grandTotal,
-                PaymentType = "Thanh toán bằng tiền mặt",
-                Status = "Chờ xác nhận",
-                UserName = userName,
-                OrderDate = DateTime.Now,
-                DateReceipt = DateTime.Now.AddDays(3), // Ví dụ 3 ngày nhận hàng
-                billDetails = selectedCartItems.Select(item => new BillDetail
-                {
-                    ProductID = item.ProductID,
-                    Quantity = item.Quantity,
-                    Price = item.Price
-                }).ToList()
-            };
+        // var bill = new Bill
+        //     // {
+        //     //     FullName = fullName,
+        //     //     PhoneNumber = phone,
+        //     //     Email = email,
+        //     //     DeliveryAddress = address,
+        //     //     Total = grandTotal,
+        //     //     PaymentType = "Thanh toán bằng tiền mặt",
+        //     //     Status = "Chờ xác nhận",
+        //     //     UserName = userName,
+        //     //     OrderDate = DateTime.Now,
+        //     //     DateReceipt = DateTime.Now.AddDays(3), // Ví dụ 3 ngày nhận hàng
+        //     //     billDetails = selectedCartItems.Select(item => new BillDetail
+        //     //     {
+        //     //         ProductID = item.ProductID,
+        //     //         Quantity = item.Quantity,
+        //     //         Price = item.Price
+        //     //     }).ToList()
+        //     // };
 
-        try
-        {
-            var response = await http.PostAsJsonAsync("api/Bill/AddBill", bill);
+        // try
+        // {
+        //     var response = await http.PostAsJsonAsync("api/Bill/AddBill", bill);
 
-            if (response.IsSuccessStatusCode)
-            {
-                await jsruntime.InvokeVoidAsync("alert", "Đặt hàng thành công!");
-                navigation.NavigateTo("/"); // Điều hướng về trang chủ
-            }
-            else
-            {
-                var error = await response.Content.ReadAsStringAsync();
-                await jsruntime.InvokeVoidAsync("alert", $"Đặt hàng thất bại: {error}");
-            }
-        }
-        catch (Exception ex)
-        {
-            await jsruntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra: {ex.Message}");
-        }
+        //     if (response.IsSuccessStatusCode)
+        //     {
+        //         await jsruntime.InvokeVoidAsync("alert", "Đặt hàng thành công!");
+        //         navigation.NavigateTo("/"); // Điều hướng về trang chủ
+        //     }
+        //     else
+        //     {
+        //         var error = await response.Content.ReadAsStringAsync();
+        //         await jsruntime.InvokeVoidAsync("alert", $"Đặt hàng thất bại: {error}");
+        //     }
+        // }
+        // catch (Exception ex)
+        // {
+        //     await jsruntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra: {ex.Message}");
+        // }
     }
 
 }

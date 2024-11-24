@@ -9,11 +9,12 @@
         <i class="bi bi-plus-circle"></i> Thêm mới
     </button>
     <div class="input-group w-50">
-        <input type="text" class="form-control" placeholder="Tìm kiếm danh mục" @bind="searchTerm" @bind:event="oninput" />
+        <input type="text" class="form-control" placeholder="Tìm kiếm theo ID hoặc Tên" @bind="searchTerm" @bind:event="oninput" />
         <button class="btn btn-outline-secondary" type="button" @onclick="SearchCategory">
             <i class="bi bi-search"></i> Tìm kiếm
         </button>
     </div>
+
 </div>
 @if (categories == null || !categories.Any())
 {
@@ -99,7 +100,15 @@ else
     {
         if (!string.IsNullOrEmpty(searchTerm))
         {
-            categories = await httpClient.GetFromJsonAsync<List<Category>>($"api/Category/search?name={searchTerm}");
+            if (int.TryParse(searchTerm, out int categoryId))
+            {
+                var result = await httpClient.GetFromJsonAsync<Category>($"api/Category/GetCategoryByID/{categoryId}");
+                categories = result != null ? new List<Category> { result } : new List<Category>();
+            }
+            else
+            {
+                categories = await httpClient.GetFromJsonAsync<List<Category>>($"api/Category/GetCategoryByName/{searchTerm}");
+            }
         }
         else
         {
