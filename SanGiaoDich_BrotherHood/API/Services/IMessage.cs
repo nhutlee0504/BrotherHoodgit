@@ -8,8 +8,11 @@ namespace API.Services
 {
     public interface IMessage
     {
-        public Task<Conversation> CreateChat(Conversation conversation);
-        public Task<Message> SendMessage(SendMessage sendDto, IFormFile imageFile);
-        public Task<IEnumerable<Message>> GetMessages(string usersend, string userrevice);
+        Task<Conversation> CreateConversationAsync(string username1, string username2);
+        Task<List<Conversation>> GetConversationsForUserAsync(string username);
+        Task<List<Message>> GetMessagesByConversationIdAsync(int conversationId);
+        Task<List<Message>> GetMessagesBetweenUsersAsync(string username1, string username2);
+        Task<Message> SendMessageAsync(int conversationId, string userSend, string content, string typeContent);
+
     }
 }

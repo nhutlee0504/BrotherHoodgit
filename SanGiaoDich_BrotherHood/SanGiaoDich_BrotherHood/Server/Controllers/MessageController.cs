@@ -1,14 +1,12 @@
-﻿using API.Dto;
-using API.Models;
-using API.Services;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using System;
+using SanGiaoDich_BrotherHood.Server.Services;
+using SanGiaoDich_BrotherHood.Shared.Dto;
+using System.Linq;
 
-namespace API.Controllers
+namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -40,22 +38,25 @@ namespace API.Controllers
         {
             try
             {
-                // Giả sử phương thức GetConversationsForUserAsync trả về danh sách các cuộc trò chuyện
                 var conversations = await _messageService.GetConversationsForUserAsync(username);
 
-                // Lọc ra danh sách người tham gia cuộc trò chuyện
+                // Kiểm tra và đảm bảo định dạng trả về là JSON
+                Response.ContentType = "application/json";
+
                 var participants = conversations
                     .SelectMany(conversation => conversation.conversationParticipants)
-                    .Where(participant => participant.UserName != null)  // Bạn có thể tùy chỉnh điều kiện lọc ở đây
+                    .Where(participant => participant.UserName != null)
                     .ToList();
 
-                return Ok(participants); // Trả về danh sách chỉ bao gồm người tham gia cuộc trò chuyện
+                return Ok(participants);
             }
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+
 
         [HttpGet("messages-by-conversation/{conversationId}")]
         public async Task<IActionResult> GetMessagesByConversationId(int conversationId)
@@ -71,17 +72,17 @@ namespace API.Controllers
             }
         }
 
-        [HttpGet("messages-between")]
-        public async Task<IActionResult> GetMessagesBetweenUsers([FromQuery] string username1, [FromQuery] string username2)
+        [HttpGet("messages-between/{username1}/{username2}")]
+        public async Task<IActionResult> GetMessagesBetweenUsers([FromRoute] string username1, [FromRoute] string username2)
         {
             try
             {
                 var messages = await _messageService.GetMessagesBetweenUsersAsync(username1, username2);
-                return Ok(messages); // Trả về danh sách tin nhắn trực tiếp
+                return Ok(messages);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message }); // Trả về thông báo lỗi
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -104,6 +105,5 @@ namespace API.Controllers
                 return BadRequest(new { message = ex.Message }); // Trả về thông báo lỗi
             }
         }
-
     }
 }

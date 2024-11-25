@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SanGiaoDich_BrotherHood.Server.Data;
 
 namespace SanGiaoDich_BrotherHood.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241125071954_Dbn000")]
+    partial class Dbn000
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -284,17 +286,10 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.Property<DateTime>("JoinedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("MessageID")
-                        .HasColumnType("int");
-
                     b.Property<string>("UserName")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ConversationId");
-
-                    b.HasIndex("MessageID");
 
                     b.ToTable("ConversationParticipants");
                 });
@@ -577,19 +572,6 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.Navigation("Account");
                 });
 
-            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.ConversationParticipant", b =>
-                {
-                    b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Conversation", null)
-                        .WithMany("conversationParticipants")
-                        .HasForeignKey("ConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Message", null)
-                        .WithMany("conversationParticipants")
-                        .HasForeignKey("MessageID");
-                });
-
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Favorite", b =>
                 {
                     b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Product", "Product")
@@ -702,14 +684,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
 
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Conversation", b =>
                 {
-                    b.Navigation("conversationParticipants");
-
                     b.Navigation("message");
-                });
-
-            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Message", b =>
-                {
-                    b.Navigation("conversationParticipants");
                 });
 
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Product", b =>

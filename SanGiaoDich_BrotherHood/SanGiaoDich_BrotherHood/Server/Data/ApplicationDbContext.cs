@@ -36,5 +36,6 @@ namespace SanGiaoDich_BrotherHood.Server.Data
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Conversation> Conversations { get; set; }
         public DbSet<Report> Reports { get; set; }
+        public DbSet<ConversationParticipant> ConversationParticipants { get; set; }
     }
 }

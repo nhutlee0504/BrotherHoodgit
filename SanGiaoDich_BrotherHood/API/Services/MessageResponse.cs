@@ -1,7 +1,5 @@
 ﻿using API.Data;
-using API.Dto;
 using API.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -23,92 +21,125 @@ namespace API.Services
             _imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "AnhNhanTin"); // Đường dẫn lưu hình ảnh
         }
 
-        // Gửi tin nhắn (Có thể là văn bản hoặc hình ảnh)
-        public async Task<Message> SendMessage(SendMessage sendDto, IFormFile imageFile = null)
+        public async Task<Conversation> CreateConversationAsync(string username1, string username2)
         {
-            if (sendDto == null || string.IsNullOrEmpty(sendDto.UserSend) || sendDto.ConversationID == 0)
-                throw new ArgumentException("Thông tin tin nhắn không hợp lệ");
+            // Kiểm tra xem đã tồn tại cuộc trò chuyện giữa hai người chưa
+            var existingConversation = await _context.Conversations
+                .Include(c => c.conversationParticipants)
+                .FirstOrDefaultAsync(c =>
+                    c.conversationParticipants.Any(cp => cp.UserName == username1) &&
+                    c.conversationParticipants.Any(cp => cp.UserName == username2) &&
+                    !c.IsDeleted);
 
-            // Tạo đối tượng Message từ Dto
-            var message = new Message
+            if (existingConversation != null)
             {
-                ConversationID = sendDto.ConversationID,
-                UserSend = sendDto.UserSend,
-                Content = sendDto.Content,
-                TypeContent = string.IsNullOrEmpty(sendDto.Content) ? "Text" : "Text", // Mặc định là Text nếu không có nội dung khác
-                CreatedDate = DateTime.Now.ToString(),
-                Status = "Đã gửi", // Trạng thái ban đầu
+                return existingConversation; // Trả về nếu đã tồn tại
+            }
+
+            // Tạo cuộc trò chuyện mới
+            var conversation = new Conversation
+            {
+                CreatedDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 IsDeleted = false
             };
 
-            // Nếu có tệp hình ảnh, lưu vào thư mục và thay đổi kiểu nội dung tin nhắn
-            if (imageFile != null)
+            _context.Conversations.Add(conversation);
+            await _context.SaveChangesAsync();
+
+            // Thêm hai người tham gia
+            var participants = new List<ConversationParticipant>
+    {
+        new ConversationParticipant
+        {
+            ConversationId = conversation.ConversationID,
+            UserName = username1,
+            JoinedDate = DateTime.Now,
+            IsDeleted = false
+        },
+        new ConversationParticipant
+        {
+            ConversationId = conversation.ConversationID,
+            UserName = username2,
+            JoinedDate = DateTime.Now,
+            IsDeleted = false
+        }
+    };
+
+            _context.ConversationParticipants.AddRange(participants);
+            await _context.SaveChangesAsync();
+
+            return conversation;
+        }
+
+        public async Task<List<Conversation>> GetConversationsForUserAsync(string username)
+        {
+            return await _context.Conversations
+                .Where(c => c.conversationParticipants.Any(cp => cp.UserName == username) && !c.IsDeleted)
+                .Include(c => c.conversationParticipants.Where(cp => cp.UserName != username)) // Lấy người dùng khác
+                .ToListAsync();
+        }
+
+        public async Task<List<Message>> GetMessagesByConversationIdAsync(int conversationId)
+        {
+            return await _context.Messages
+                .Where(m => m.ConversationID == conversationId && !m.IsDeleted)
+                .OrderBy(m => m.CreatedDate)
+                .ToListAsync();
+        }
+
+        public async Task<List<Message>> GetMessagesBetweenUsersAsync(string username1, string username2)
+        {
+            // Tìm cuộc trò chuyện giữa hai người
+            var conversation = await _context.Conversations
+                .Include(c => c.conversationParticipants)
+                .FirstOrDefaultAsync(c =>
+                    c.conversationParticipants.Any(cp => cp.UserName == username1) &&
+                    c.conversationParticipants.Any(cp => cp.UserName == username2) &&
+                    !c.IsDeleted);
+
+            if (conversation == null)
             {
-                await SaveImage(imageFile);
-                message.Content = "image"; // Nội dung tin nhắn là hình ảnh
-                message.Status = "Đã gửi hình ảnh"; // Trạng thái tin nhắn
-            }
-            else
-            {
-                message.Status = "Đã gửi tin nhắn"; // Trạng thái tin nhắn nếu là văn bản
+                return new List<Message>(); // Không có tin nhắn nếu không tìm thấy cuộc trò chuyện
             }
 
-            // Lưu tin nhắn vào cơ sở dữ liệu
+            return await GetMessagesByConversationIdAsync(conversation.ConversationID);
+        }
+
+        public async Task<Message> SendMessageAsync(int conversationId, string userSend, string content, string typeContent)
+        {
+            // Kiểm tra xem cuộc trò chuyện có tồn tại không
+            var conversation = await _context.Conversations
+                .Include(c => c.conversationParticipants)
+                .FirstOrDefaultAsync(c => c.ConversationID == conversationId && !c.IsDeleted);
+
+            if (conversation == null)
+            {
+                throw new ArgumentException("Conversation not found.");
+            }
+
+            // Kiểm tra xem người gửi có thuộc cuộc trò chuyện không
+            if (!conversation.conversationParticipants.Any(cp => cp.UserName == userSend))
+            {
+                throw new UnauthorizedAccessException("User is not part of this conversation.");
+            }
+
+            // Tạo tin nhắn mới
+            var message = new Message
+            {
+                ConversationID = conversationId,
+                UserSend = userSend,
+                CreatedDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                Content = content,
+                Status = "Sent",
+                IsDeleted = false,
+                TypeContent = typeContent
+            };
+
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
             return message;
         }
 
-        // Lấy tin nhắn trong cuộc trò chuyện giữa người gửi và người nhận
-        public async Task<IEnumerable<Message>> GetMessages(string userSend, string userRevice)
-        {
-            if (string.IsNullOrEmpty(userSend) || string.IsNullOrEmpty(userRevice))
-                throw new ArgumentException("Thông tin người gửi và người nhận không hợp lệ");
-
-            var conversation = await _context.Conversations
-                .Where(c => (c.Username == userSend || c.Username == userRevice) && !c.IsDeleted)
-                .FirstOrDefaultAsync();
-
-            if (conversation == null)
-                throw new Exception("Không tìm thấy cuộc trò chuyện giữa người gửi và người nhận");
-
-            return await _context.Messages
-                .Where(m => m.ConversationID == conversation.ConversationID && !m.IsDeleted)
-                .OrderBy(m => m.CreatedDate)
-                .ToListAsync();
-        }
-
-        // Tạo cuộc trò chuyện mới
-        public async Task<Conversation> CreateChat(Conversation conversation)
-        {
-            var newCon = new Conversation
-            {
-                Username = conversation.Username,
-                CreatedDate = DateTime.Now.ToString(),
-                IsDeleted = false,
-            };
-            _context.Conversations.Add(newCon);
-            await _context.SaveChangesAsync();
-            return newCon;
-        }
-
-        // Helper method để lưu ảnh vào thư mục
-        private async Task SaveImage(IFormFile imageFile)
-        {
-            var fileName = Path.GetFileName(imageFile.FileName);
-            var filePath = Path.Combine(_imagePath, fileName);
-
-            // Kiểm tra thư mục AnhNhanTin, nếu chưa có thì tạo
-            if (!Directory.Exists(_imagePath))
-            {
-                Directory.CreateDirectory(_imagePath);
-            }
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await imageFile.CopyToAsync(stream);
-            }
-        }
     }
 }
