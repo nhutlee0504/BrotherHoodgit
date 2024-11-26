@@ -25,17 +25,18 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             return Ok(await cart.GetCartsByUserName(userName));
         }
 
-        [HttpPost]
-        public async Task<ActionResult> AddCart(Cart c)
+        [HttpPost("AddCart/{idProduct}")]
+        public async Task<ActionResult> AddCart(int idProduct)
         {
-            var ca = await cart.AddCart(new Cart
+            try
             {
-                UserName = c.UserName,
-              
-            });
-            if (ca == null)
+                var add = await cart.AddCart(idProduct);
+                return Ok(add);
+            }
+            catch (System.Exception)
+            {
                 return BadRequest();
-            return CreatedAtAction("AddCart", ca);
+            }
         }
 
         [HttpPut("IDCart")]

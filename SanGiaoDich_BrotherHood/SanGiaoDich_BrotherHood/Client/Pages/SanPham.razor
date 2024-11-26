@@ -187,7 +187,7 @@
                                         <p class="card-text">Cần Thơ</p>
                                         <p class="card-text text-muted">@product.StartDate?.ToString("dd/MM/yyyy")</p>
                                     </div>
-                                    <button class="btn btn-success mt-3 w-100" style="border-radius: 15px;">
+                                    <button @onclick="() => AddToCart(product.IDProduct)" class="btn btn-success mt-3 w-100" style="border-radius: 15px;">
                                         <i class="fas fa-shopping-cart"></i> Thêm vào giỏ
                                     </button>
                                 </div>
@@ -232,3 +232,26 @@
         </div>
     </div>
 </div>
+@code {
+    private async Task AddToCart(int productId)
+    {
+        try
+        {
+            // Send the product ID as part of the URL without a body
+            var response = await http.PostAsync($"api/Cart/AddCart/{productId}", null);
+            if (response.IsSuccessStatusCode)
+            {
+                // Optionally, show a success message or refresh cart data
+                Console.WriteLine("Product added to cart successfully!");
+            }
+            else
+            {
+                Console.WriteLine("Failed to add product to cart.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
+    }
+}
