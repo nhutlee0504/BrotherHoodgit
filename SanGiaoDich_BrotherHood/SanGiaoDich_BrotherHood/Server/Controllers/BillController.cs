@@ -6,6 +6,8 @@ using SanGiaoDich_BrotherHood.Server.Services;
 using SanGiaoDich_BrotherHood.Shared.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using SanGiaoDich_BrotherHood.Shared.Dto;
+using System;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -37,26 +39,28 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             return Ok(await bill.GetBillByIDBill(IDBill));
         }
 
-        [HttpPost]
-        public async Task<ActionResult> AddBill(Bill bl)
+        [HttpPost("AddBill")]
+        public async Task<IActionResult> AddBill([FromBody] BillDto billDto)
         {
-            var b = await bill.AddBill(new Bill
+            if (billDto == null)
             {
-                FullName = bl.FullName,
-                PhoneNumber = bl.PhoneNumber,
-                Email = bl.Email,
-                DeliveryAddress = bl.DeliveryAddress,
-                Total = bl.Total,
-                OrderDate = bl.OrderDate,
-                DateReceipt = bl.DateReceipt,
-                PaymentType = bl.PaymentType,
-                Status = bl.Status,
-                UserName = bl.UserName
-            });
-            if (b == null)
-                return BadRequest();
-            return CreatedAtAction("AddBill",b);
+                return BadRequest("Thông tin hóa đơn không hợp lệ.");
+            }
+
+            try
+            {
+                var newBill = await bill.AddBill(billDto);
+
+                // Trả về phản hồi thành công với thông tin hóa đơn mới được tạo
+                return Ok(newBill);
+            }
+            catch (Exception ex)
+            {
+                // Ghi log lỗi (nếu cần thiết) và trả về phản hồi lỗi
+                return StatusCode(500, $"Đã xảy ra lỗi khi tạo hóa đơn: {ex.Message}");
+            }
         }
+
 
         [HttpPut("IDBill")]
         public async Task<ActionResult> UpdateBill(int IDBill, Bill bl)

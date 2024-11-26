@@ -6,48 +6,29 @@
 @inject IJSRuntime jsruntime
 @code {
     private Bill bill = new Bill();
-    private List<PageGioHang.CartItemUser> selectedCartItems;
+    private List<CartItemUser> selectedCartItems = new();
     private decimal totalPrice = 0;
 
     protected override async Task OnInitializedAsync()
     {
-        // Lấy thông tin giỏ hàng từ localStorage
-        var selectedItemsJson = await jsruntime.InvokeAsync<string>("localStorage.getItem", "selectedCartItems");
-
-        if (!string.IsNullOrEmpty(selectedItemsJson))
+        try
         {
-            selectedCartItems = JsonSerializer.Deserialize<List<PageGioHang.CartItemUser>>(selectedItemsJson);
+            // Lấy thông tin giỏ hàng từ localStorage
+            var selectedItemsJson = await jsruntime.InvokeAsync<string>("localStorage.getItem", "selectedCartItems");
+            if (!string.IsNullOrEmpty(selectedItemsJson))
+            {
+                selectedCartItems = JsonSerializer.Deserialize<List<CartItemUser>>(selectedItemsJson) ?? new List<CartItemUser>();
+                totalPrice = selectedCartItems.Sum(item => item.Price * item.Quantity);
+            }
 
-            // Tính tổng giá trị
-            totalPrice = selectedCartItems.Sum(item => item.Price * item.Quantity);
+            // Lấy thông tin người dùng
+            bill.UserName = await jsruntime.InvokeAsync<string>("localStorage.getItem", "username") ?? string.Empty;
         }
-
-        // Lấy thông tin username
-        bill.UserName = await jsruntime.InvokeAsync<string>("localStorage.getItem", "username");
+        catch (Exception ex)
+        {
+            await jsruntime.InvokeVoidAsync("alert", $"Đã xảy ra lỗi khi tải dữ liệu: {ex.Message}");
+        }
     }
-
-    public class Bill
-    {
-        public string UserName { get; set; }
-        public decimal Total { get; set; }
-        public DateTime OrderDate { get; set; }
-        public string Status { get; set; }
-        public string PaymentType { get; set; }
-        public string FullName { get; set; }
-        public string Email { get; set; }
-        public string DeliveryAddress { get; set; }
-        public string PhoneNumber { get; set; }
-        public List<BillDetail> BillDetails { get; set; } // Đảm bảo dùng đúng tên
-    }
-
-    public class CartItemUser
-    {
-        public int IDProduct { get; set; }  // Đảm bảo thuộc tính này có mặt
-        public int Quantity { get; set; }
-        public decimal Price { get; set; }
-        public string ImageUrl { get; set; } // Đảm bảo có thuộc tính này
-    }
-
 
     private async Task PlaceOrder()
     {
@@ -58,19 +39,20 @@
         }
 
         // Chuẩn bị dữ liệu đơn hàng
-        bill.Total = totalPrice; // Chỉ tính tổng giá trị sản phẩm
+        bill.Total = totalPrice;
         bill.OrderDate = DateTime.Now;
         bill.Status = "Chờ xác nhận";
-        bill.PaymentType = "Thanh toán bằng tiền mặt"; // Bạn có thể thay đổi nếu cần
+        bill.PaymentType = "Thanh toán bằng tiền mặt";
 
-        // Tạo BillDetails từ selectedCartItems
+        // Tạo chi tiết hóa đơn từ giỏ hàng
         bill.BillDetails = selectedCartItems.Select(item => new BillDetail
             {
-                IDProduct = item.IdProduct,  // Sử dụng IDProduct trong CartItem
+                IDProduct = item.IDProduct,
                 Quantity = item.Quantity,
-                Price = item.Price,  // Lấy giá từ Product liên kết trong CartItem
-                CreatedDate = DateTime.Now  // Đảm bảo bạn có gán CreatedDate nếu cần thiết
+                Price = item.Price,
+                CreatedDate = DateTime.Now
             }).ToList();
+
         try
         {
             // Gửi yêu cầu POST tới API
@@ -93,8 +75,36 @@
         }
     }
 
-}
+    public class Bill
+    {
+        public string UserName { get; set; }
+        public decimal Total { get; set; }
+        public DateTime OrderDate { get; set; }
+        public string Status { get; set; }
+        public string PaymentType { get; set; }
+        public string FullName { get; set; }
+        public string Email { get; set; }
+        public string DeliveryAddress { get; set; }
+        public string PhoneNumber { get; set; }
+        public List<BillDetail> BillDetails { get; set; } = new();
+    }
 
+    public class CartItemUser
+    {
+        public int IDProduct { get; set; }
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+        public string ImageUrl { get; set; }
+        public string ProductName { get; set; }
+    }
+
+    public class BillDetail
+    {
+        public int IDProduct { get; set; }
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+        public DateTime CreatedDate { get; set; }
+    }
 }
 <style>
     .checkout-container {
