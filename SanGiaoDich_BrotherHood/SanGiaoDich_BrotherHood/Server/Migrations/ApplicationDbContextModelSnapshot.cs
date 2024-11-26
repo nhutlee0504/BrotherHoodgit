@@ -360,6 +360,89 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.ToTable("Messages");
                 });
 
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.PaymentRequestModel", b =>
+                {
+                    b.Property<int>("PaymentReqID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<double>("Amount")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("OrderDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TxnRef")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("PaymentReqID");
+
+                    b.HasIndex("UserName");
+
+                    b.ToTable("PaymentRequests");
+                });
+
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.PaymentResponseModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsProcessed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("OrderDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OrderId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PaymentReqID")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Success")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Token")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TransactionId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("VnPayResponseCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PaymentReqID")
+                        .IsUnique();
+
+                    b.ToTable("PaymentResponses");
+                });
+
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Product", b =>
                 {
                     b.Property<int>("IDProduct")
@@ -588,6 +671,26 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.Navigation("conversation");
                 });
 
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.PaymentRequestModel", b =>
+                {
+                    b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Account", "Account")
+                        .WithMany("paymentRequests")
+                        .HasForeignKey("UserName");
+
+                    b.Navigation("Account");
+                });
+
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.PaymentResponseModel", b =>
+                {
+                    b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.PaymentRequestModel", "PaymentRequest")
+                        .WithOne("PaymentResponse")
+                        .HasForeignKey("SanGiaoDich_BrotherHood.Shared.Models.PaymentResponseModel", "PaymentReqID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PaymentRequest");
+                });
+
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Product", b =>
                 {
                     b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Category", "Category")
@@ -634,6 +737,8 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
 
                     b.Navigation("favorites");
 
+                    b.Navigation("paymentRequests");
+
                     b.Navigation("products");
 
                     b.Navigation("ratings");
@@ -662,6 +767,11 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Conversation", b =>
                 {
                     b.Navigation("message");
+                });
+
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.PaymentRequestModel", b =>
+                {
+                    b.Navigation("PaymentResponse");
                 });
 
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Product", b =>

@@ -274,7 +274,7 @@
 
             foreach (var product in products)
             {
-                var images = await httpClient.GetFromJsonAsync<List<ImageProduct>>($"api/ImageProduct/GetImageProduct?id={product.IDProduct}");
+                var images = await httpClient.GetFromJsonAsync<List<ImageProduct>>($"api/ImageProduct/GetImageProduct/{product.IDProduct}");
                 productImages[product.IDProduct] = images?.Select(img => img.Image).ToList() ?? new List<string>();
             }
         }

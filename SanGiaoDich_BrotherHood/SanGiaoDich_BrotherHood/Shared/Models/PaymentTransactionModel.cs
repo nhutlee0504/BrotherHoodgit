@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 
 namespace SanGiaoDich_BrotherHood.Shared.Models
 {
-    public class PaymentInformationModel
+    public class PaymentTransactionModel
     {
-        public int PaymentID { get; set; }
-        public string UserName { get; set; }
-        public string PaymentType { get; set; }
+        public string TxnRef { get; set; }
         public double Amount { get; set; }
         public string OrderDescription { get; set; }
         public DateTime CreatedDate { get; set; }
-
-
+        public string PaymentType { get; set; }
+        public string UserName { get; set; }
+        public PaymentResponseModel PaymentResponse { get; set; }
     }
+
 }

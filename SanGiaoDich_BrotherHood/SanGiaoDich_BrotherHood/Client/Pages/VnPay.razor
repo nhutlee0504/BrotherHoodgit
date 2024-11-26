@@ -2,6 +2,7 @@
 @using System.Text.Json
 @inject HttpClient Http
 @inject NavigationManager Navigation
+@inject IJSRuntime jsruntime
 @page "/vnpay/naptien"
 <div class="container-fluid">
     <ul class="breadcrumb">
@@ -18,23 +19,40 @@
             <div class="row">
                 <!-- Cột trái: Thông tin người dùng -->
                           <div class="col-md-6 user-info">
-                <h5 class="text-success">
-                    <i class="bi bi-person-circle me-2"></i>Thông tin tài khoản
-                </h5>
-                <div class="info-list">
-                    <div class="info-item">
-                        <strong>Tên tài khoản:</strong> Admin
-                    </div>
-                    <div class="info-item">
-                        <strong>Email:</strong> admin@example.com
-                    </div>
-                    <div class="info-item">
-                        <strong>Số dư hiện tại:</strong> 1,000,000 VNĐ
-                    </div>
-                    <div class="info-item">
-                        <strong>Trạng thái:</strong> <span class="badge bg-success">Hoạt động</span>
-                    </div>
-                </div>
+                    <h5 class="text-success">
+                        <i class="bi bi-person-circle me-2"></i>Thông tin tài khoản
+                    </h5>
+                    @if (isLoading)
+                    {
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    }
+                    else if (IsLoggedIn && accountInfo != null)
+                    {
+                        <div class="info-list">
+                            <div class="info-item">
+                                <strong>Tên tài khoản:</strong> @accountInfo.UserName
+                            </div>
+                            <div class="info-item">
+                                <strong>Họ và tên:</strong> @accountInfo.FullName
+                            </div>
+                            <div class="info-item">
+                                <strong>Số dư hiện tại:</strong> @accountInfo.PreSystem.ToString("N0") VNĐ
+                            </div>
+                            <div class="info-item">
+                                <strong>Trạng thái:</strong>
+                                <span class="badge bg-success">Hoạt động</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning" role="alert">
+                            Chưa đăng nhập hoặc không có thông tin tài khoản.
+                        </div>
+                    }
+
             </div>
 
 
@@ -70,6 +88,13 @@
                                             @onclick="() => SelectAmount(200000)" 
                                             style="@(OrderInfo.Amount == 200000 ? "background-color: #28a745; color: white;" : "")">
                                         <i class="bi bi-cash-coin me-2"></i>200,000
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-light w-100 py-3 border"
+                                            @onclick="() => SelectAmount(500000)"
+                                            style="@(OrderInfo.Amount == 500000 ? "background-color: #28a745; color: white;" : "")">
+                                        <i class="bi bi-cash-coin me-2"></i>500,000
                                     </button>
                                 </div>
                             </div>
@@ -131,8 +156,8 @@
 .user-info {
     background-color: #f9f9f9;
     padding: 20px;
-    border-radius: 8px; /* Làm mềm các góc */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Thêm bóng đổ nhẹ */
+    border-radius: 8px; 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .user-info h5 {
@@ -151,11 +176,11 @@
     display: flex;
     justify-content: space-between;
     padding: 10px;
-    border-bottom: 1px solid #e0e0e0; /* Chia các mục thông tin bằng đường kẻ nhẹ */
+    border-bottom: 1px solid #e0e0e0; 
 }
 
 .info-item:last-child {
-    border-bottom: none; /* Không có đường kẻ cho mục cuối cùng */
+    border-bottom: none;
 }
 
 .info-item strong {
@@ -163,33 +188,115 @@
 }
 
 .badge {
-    font-size: 0.875rem; /* Giảm kích thước của badge */
+    font-size: 0.875rem; 
     padding: 0.4rem 0.6rem;
 }
 
 </style>
 @code {
+    private bool isLoading = true;
+    private string errorMessage;
+    AccountInfoDto accountInfo;
+    private bool IsLoggedIn { get; set; } = false; 
+    
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckTokenAndLoadAccountInfo();
+    }
+
+    private async Task CheckTokenAndLoadAccountInfo()
+    {
+        var token = await jsruntime.InvokeAsync<string>("localStorage.getItem", "token");
+
+        if (!string.IsNullOrEmpty(token))
+        {
+  
+            Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            await LoadAccountInfo();
+        }
+        else
+        {
+            isLoading = false;
+            IsLoggedIn = false;
+        }
+    }
+
+    private async Task LoadAccountInfo()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var response = await Http.GetAsync("api/User/GetMyInfo");
+
+            if (response.IsSuccessStatusCode)
+            {
+ 
+                accountInfo = await response.Content.ReadFromJsonAsync<AccountInfoDto>();
+                IsLoggedIn = true; 
+            }
+            else
+            {
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Lỗi: {response.StatusCode} - {errorContent}";
+                IsLoggedIn = false;
+                await Logout(); 
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Có lỗi xảy ra khi lấy thông tin tài khoản: " + ex.Message;
+            IsLoggedIn = false;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private class AccountInfoDto
+    {
+        public string UserName { get; set; }
+        public decimal PreSystem { get; set; }
+        public string FullName { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Gender { get; set; }
+        public DateTime? Birthday { get; set; }
+        public string ImageAccount { get; set; }
+    }
+   
+
+    private async Task Logout()
+    {
+        await jsruntime.InvokeVoidAsync("localStorage.removeItem", "token");
+        IsLoggedIn = false;
+        accountInfo = null; 
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
     string OrderIn;
 
-    private PaymentInformationModel OrderInfo = new PaymentInformationModel
+    private PaymentRequestModel OrderInfo = new PaymentRequestModel
 {
-    UserName = "Admin", 
+     UserName = "",
     Amount = 0,     
-    PaymentID = 1,
-    PaymentType = "MoMo", 
+    PaymentType = "VnPay", 
     OrderDescription = "",
     CreatedDate = DateTime.Now
 };
     private void SelectAmount(double amount)
     {
         OrderInfo.Amount = amount;
-        UpdateOrderDescription(); // Cập nhật mô tả khi chọn số tiền
+        UpdateOrderDescription(); 
     }
 
     private void SelectPaymentType(string type)
     {
         OrderInfo.PaymentType = type;
-        UpdateOrderDescription(); // Cập nhật mô tả khi chọn loại thanh toán
+        
+        UpdateOrderDescription(); 
     }
 
     private void UpdateOrderDescription()
@@ -197,7 +304,7 @@
         if (OrderInfo.Amount > 0 && !string.IsNullOrEmpty(OrderInfo.PaymentType))
         {
             OrderIn = $"Thanh toán qua {OrderInfo.PaymentType}, Số tiền: {OrderInfo.Amount:N0} VNĐ.";
-            OrderInfo.OrderDescription = $"Thanh toan qua {OrderInfo.PaymentType} voi So tien: {OrderInfo.Amount:N0} VNĐ";
+            OrderInfo.OrderDescription = $"Thanh toán qua {OrderInfo.PaymentType} với số tiền: {OrderInfo.Amount:N0} VNĐ";
         }
         else
         {
@@ -206,6 +313,11 @@
     }
     private async Task HandleSubmit()
     {
+
+        if (string.IsNullOrEmpty(OrderInfo.UserName) && accountInfo != null)
+        {
+            OrderInfo.UserName = accountInfo.UserName; 
+        }
         var response = await Http.PostAsJsonAsync("api/payment/CreatePaymentUrl", OrderInfo);
 
         if (response.IsSuccessStatusCode)
@@ -217,8 +329,6 @@
         else
         {
             var errorContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Error response: {errorContent}");
-            // Hiển thị thông báo lỗi
         }
     }
 

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace SanGiaoDich_BrotherHood.Server.Migrations
 {
-    public partial class addmigrationadddb : Migration
+    public partial class Adddb : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -156,6 +156,31 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PaymentRequests",
+                columns: table => new
+                {
+                    PaymentReqID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PaymentType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Amount = table.Column<double>(type: "float", nullable: false),
+                    OrderDescription = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TxnRef = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AccountUserName = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PaymentRequests", x => x.PaymentReqID);
+                    table.ForeignKey(
+                        name: "FK_PaymentRequests_Accounts_AccountUserName",
+                        column: x => x.AccountUserName,
+                        principalTable: "Accounts",
+                        principalColumn: "UserName",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Products",
                 columns: table => new
                 {
@@ -215,6 +240,36 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         column: x => x.ConversationID,
                         principalTable: "Conversations",
                         principalColumn: "ConversationID",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PaymentResponses",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Success = table.Column<bool>(type: "bit", nullable: false),
+                    PaymentMethod = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OrderDescription = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OrderId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PaymentId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TransactionId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Token = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    VnPayResponseCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    IsProcessed = table.Column<bool>(type: "bit", nullable: false),
+                    PaymentReqID = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PaymentResponses", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PaymentResponses_PaymentRequests_PaymentReqID",
+                        column: x => x.PaymentReqID,
+                        principalTable: "PaymentRequests",
+                        principalColumn: "PaymentReqID",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -307,7 +362,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 {
                     IDImage = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Image = table.Column<string>(type: "varchar(150)", nullable: true),
+                    Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsPrimary = table.Column<bool>(type: "bit", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsDelete = table.Column<bool>(type: "bit", nullable: false),
@@ -414,6 +469,17 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 column: "ConversationID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PaymentRequests_AccountUserName",
+                table: "PaymentRequests",
+                column: "AccountUserName");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentResponses_PaymentReqID",
+                table: "PaymentResponses",
+                column: "PaymentReqID",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Products_IDCategory",
                 table: "Products",
                 column: "IDCategory");
@@ -453,6 +519,9 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 name: "Messages");
 
             migrationBuilder.DropTable(
+                name: "PaymentResponses");
+
+            migrationBuilder.DropTable(
                 name: "Ratings");
 
             migrationBuilder.DropTable(
@@ -463,6 +532,9 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
 
             migrationBuilder.DropTable(
                 name: "Conversations");
+
+            migrationBuilder.DropTable(
+                name: "PaymentRequests");
 
             migrationBuilder.DropTable(
                 name: "BillDetails");

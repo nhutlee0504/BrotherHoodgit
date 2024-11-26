@@ -96,84 +96,191 @@
         text-decoration: underline;
     }
 
-    /* Màu vàng cho các nội dung nhấn mạnh */
+   
     .highlight-yellow {
         background-color: #fff3cd;
         padding: 2px 4px;
         border-radius: 3px;
     }
-    /* Tùy chỉnh kích thước modal */
     .modal-dialog.modal-lg {
-        max-width: 90%; /* Modal có thể chiếm tối đa 90% chiều rộng màn hình */
+        max-width: 90%; 
     }
 
-    /* Tạo thanh cuộn cho phần nội dung dài */
     .modal-body {
-        max-height: 500px; /* Giới hạn chiều cao của modal body */
-        overflow-y: auto; /* Thêm thanh cuộn dọc khi nội dung dài hơn chiều cao */
-        padding-right: 15px; /* Đảm bảo thanh cuộn không bị ẩn */
+        max-height: 500px; 
+        overflow-y: auto; 
+        padding-right: 15px;
     }
 
-    /* Tùy chỉnh tiêu đề modal */
+    
     .modal-header h5 {
         color: #0275d8;
         font-weight: bold;
         font-size: 18px;
     }
 
-    /* Tùy chỉnh nội dung modal */
     .modal-body {
         font-size: 16px;
         line-height: 1.6;
         color: #333;
     }
 
-        /* Kiểu cho các danh sách trong modal */
         .modal-body ul {
             list-style-type: disc;
             margin-left: 20px;
         }
 
-    /* Kiểu cho các nút trong modal */
+    
     .modal-footer button {
         padding: 10px 20px;
     }
 
+    .card.priority-option {
+        cursor: pointer;
+        transition: box-shadow 0.3s ease;
+    }
+
+        .card.priority-option:hover {
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card.priority-option.selected {
+            border-color: #28a745;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        }
+
 </style>
-<h4>Thông tin sản phẩm</h4>
+
 
 <div class="container">
-    <!-- Hình ảnh sản phẩm -->
-    <div class="form-group mb-3">
-        <label for="ProductImages"><i class="fas fa-image"></i> Hình ảnh sản phẩm:</label>
-        <div class="row">
-            @for (int i = 0; i < 3; i++)
-            {
-                <div class="col-md-4">
-                    <div class="image-preview border d-flex align-items-center justify-content-center"
-                         style="height: 200px;">
-                        @if (selectedFiles.Count > i && selectedFiles[i] != null)
-                        {
-                            
-                            <img src="@selectedFiles[i].DataUrl" class="img-fluid" alt="Hình ảnh sản phẩm" />
-                        }
-                        else
-                        {
-                            <span class="placeholder-text">Chưa có hình ảnh</span>
-                        }
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group mb-3">
+                <div class="row">
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <div class="col-md-6 col-6 mb-1">
+                            <div class="image-preview border d-flex align-items-center justify-content-center"
+                                 style="height: 200px;">
+                                @if (selectedFiles.Count > i && selectedFiles[i] != null)
+                                {
+
+                                    <img src="@selectedFiles[i].DataUrl" class="img-fluid" alt="Hình ảnh sản phẩm" />
+                                }
+                                else
+                                {
+                                    <span class="placeholder-text">Chưa có hình ảnh</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="row mt-2">
+                   
+                    <div class="col-md-12">
+                        <span>Xem quy định về <a href="#" data-bs-toggle="modal" data-bs-target="#policyModal"><i class="fas fa-info-circle"></i> Cách chụp ảnh và quay sản phẩm</a></span>
                     </div>
                 </div>
-            }
+                <div class="row mt-2">
+                    <div class="col-md-12 d-flex align-items-center justify-content-center">
+                        <InputFile OnChange="HandleFileSelected" multiple accept="image/*" />
+                    </div>
+                 
+                </div>
+            </div>
         </div>
-        <div class="row mt-2">
-            <div class="col-md-5 d-flex align-items-center">
-                <InputFile OnChange="HandleFileSelected" multiple accept="image/*" />
+        <div class="col-md-6">
+            <div class="row">
+                <!-- Tên sản phẩm -->
+                <div class="col-md-6 mb-3">
+                    <label for="ProductName"><i class="fas fa-tag"></i> Tên sản phẩm:</label>
+                    <input type="text" @bind="ProductName" class="form-control" placeholder="Nhập tên sản phẩm" id="ProductName" />
+                </div>
+
+                <!-- Loại sản phẩm -->
+                <div class="col-md-6 mb-3">
+                    <label for="ProductCategory"><i class="fas fa-box"></i> Loại sản phẩm:</label>
+                    <select @bind="ProductCategoryId" class="form-control" id="ProductCategory">
+                        <option value="">Chọn loại sản phẩm</option>
+                        @foreach (var category in categories)
+                        {
+                            <option value="@category.IDCategory">@category.NameCate</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Giá sản phẩm -->
+                <div class="col-md-6 mb-3">
+                    <label for="ProductPrice">
+                        <img src="/AnhGiaoDien/business.png" style="width:16px;" /> Giá sản phẩm:
+                    </label>
+                    <input type="number" @bind="ProductPrice" class="form-control" placeholder="Nhập giá sản phẩm" id="ProductPrice" />
+                </div>
+
+                <!-- Số lượng sản phẩm -->
+                <div class="col-md-6 mb-3">
+                    <label for="ProductQuantity"><i class="fas fa-sort-numeric-up"></i> Số lượng sản phẩm:</label>
+                    <input type="number" @bind="ProductQuantity" class="form-control" placeholder="Nhập số lượng sản phẩm" id="ProductQuantity" />
+                </div>
             </div>
-            <div class="col-md-7 d-flex justify-content-end align-items-end">
-                <span>Xem quy định về <a href="#" data-bs-toggle="modal" data-bs-target="#policyModal"><i class="fas fa-info-circle"></i> Cách chụp ảnh và quay sản phẩm</a></span>
+
+            <div class="mb-3">
+                <div class="row">
+                    <div class="col-md-6">
+                           <label class="form-label">Chọn mức độ ưu tiên</label>
+                    </div>
+                    <div class="col-md-6">
+
+                    </div>
+                </div>
+             
+                <div class="row g-2">
+                    @foreach (var priority in new[] { "Phổ thông", "Ưu tiên" })
+                    {
+                        <div class="col-md-6">
+                            <div class="card priority-option"
+                                 style="@(ProrityLevel == priority ? "border-color: #28a745; box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);" : "")"
+                                 @onclick="() => SelectPriority(priority)">
+                                <div class="card-body text-center">
+                                    <span class="h5 mb-0">@priority</span>
+                                    <div class="mt-2">
+                                        @if (priority == "Phổ thông")
+                                        {
+                                            <span class="text-muted">Giá: 25,000 VNĐ</span>
+                                        }
+                                        else if (priority == "Ưu tiên")
+                                        {
+                                            <span class="text-muted">Giá: 50,000 VNĐ</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
+
+
+            <!-- Mô tả sản phẩm -->
+            <div class="form-group">
+                <label for="ProductDescription"><i class="fas fa-info-circle"></i> Mô tả sản phẩm chi tiết:</label>
+                <textarea @bind="Description" class="form-control" id="ProductDescription" rows="4" placeholder="Nhập mô tả chi tiết về sản phẩm..."></textarea>
+
+                <small class="form-text text-muted">
+                    <i class="fas fa-lightbulb"></i> Gợi ý:
+                    <ul>
+                        <li>Chất liệu: 100% cotton, mềm mại và thoáng khí.</li>
+                        <li>Thiết kế: Cổ áo đính cúc, tay dài có thể gấp lên dễ dàng.</li>
+                        <li>Màu sắc: Trắng, xanh dương, xám.</li>
+                        <li>Kích thước: S, M, L, XL.</li>
+                        <li>Chất lượng: Dệt chắc chắn, không phai màu sau nhiều lần giặt.</li>
+                    </ul>
+                </small>
+            </div>
+
         </div>
     </div>
+   
     <div class="modal fade" id="policyModal" tabindex="-1" aria-labelledby="policyModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -220,66 +327,7 @@
             </div>
         </div>
     </div>
-        <div class="row">
-            <!-- Tên sản phẩm -->
-            <div class="col-md-6 mb-3">
-                <label for="ProductName"><i class="fas fa-tag"></i> Tên sản phẩm:</label>
-                <input type="text" @bind="ProductName" class="form-control" placeholder="Nhập tên sản phẩm" id="ProductName" />
-            </div>
-
-            <!-- Loại sản phẩm -->
-            <div class="col-md-6 mb-3">
-                <label for="ProductCategory"><i class="fas fa-box"></i> Loại sản phẩm:</label>
-                <select @bind="ProductCategoryId" class="form-control" id="ProductCategory">
-                    <option value="">Chọn loại sản phẩm</option>
-                    @foreach (var category in categories)
-                    {
-                        <option value="@category.IDCategory">@category.NameCate</option>
-                    }
-                </select>
-            </div>
-
-            <!-- Giá sản phẩm -->
-            <div class="col-md-6 mb-3">
-                <label for="ProductPrice">
-                    <img src="/AnhGiaoDien/business.png" style="width:16px;" /> Giá sản phẩm:
-                </label>
-                <input type="number" @bind="ProductPrice" class="form-control" placeholder="Nhập giá sản phẩm" id="ProductPrice" />
-            </div>
-
-            <!-- Số lượng sản phẩm -->
-            <div class="col-md-6 mb-3">
-                <label for="ProductQuantity"><i class="fas fa-sort-numeric-up"></i> Số lượng sản phẩm:</label>
-                <input type="number" @bind="ProductQuantity" class="form-control" placeholder="Nhập số lượng sản phẩm" id="ProductQuantity" />
-            </div>
-        </div>
-
-    <div class="form-group mb-3">
-        <label for="ProrityLevel"><i class="fas fa-exclamation"></i> :</label>
-        <select @bind="ProrityLevel" class="form-control" id="ProrityLevel">
-            <option value="">Chọn mức độ ưu tiên</option>
-            <option value="Phổ thông">Phổ thông</option>
-            <option value="Ưu tiên">Ưu tiên</option>
-        </select>
-    </div>
-
-    <!-- Mô tả sản phẩm -->
-    <div class="form-group">
-        <label for="ProductDescription"><i class="fas fa-info-circle"></i> Mô tả sản phẩm chi tiết:</label>
-        <textarea @bind="Description" class="form-control" id="ProductDescription" rows="4" placeholder="Nhập mô tả chi tiết về sản phẩm..."></textarea>
-
-        <small class="form-text text-muted">
-            <i class="fas fa-lightbulb"></i> Gợi ý:
-            <ul>
-                <li>Chất liệu: 100% cotton, mềm mại và thoáng khí.</li>
-                <li>Thiết kế: Cổ áo đính cúc, tay dài có thể gấp lên dễ dàng.</li>
-                <li>Màu sắc: Trắng, xanh dương, xám.</li>
-                <li>Kích thước: S, M, L, XL.</li>
-                <li>Chất lượng: Dệt chắc chắn, không phai màu sau nhiều lần giặt.</li>
-            </ul>
-        </small>
-    </div>
-
+     
     <div class="row">
         <div class="col-md-12 d-flex justify-content-end">
             <div class="text-right mb-3">
@@ -298,7 +346,17 @@
     private string ProrityLevel { get; set; }
     private List<Category> categories = new List<Category>();
     private FirebaseStorage _firebaseStorage;
-
+    private void SelectPriority(string selectedPriority)
+    {
+        if (ProrityLevel == selectedPriority)
+        {
+            ProrityLevel = null; 
+        }
+        else
+        {
+            ProrityLevel = selectedPriority;
+        }
+    }
     private List<ImageFile> selectedFiles = new List<ImageFile>
     {
         null, null, null  
