@@ -56,7 +56,13 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 PreSystem = 10000,
                 IsActived = true
             };
+            var newCart = new Cart
+            {
+                UserName = newAdmin.UserName,
+            };
+            
             await _context.Accounts.AddAsync(newAdmin);
+            await _context.Carts.AddAsync(newCart);
             await _context.SaveChangesAsync();
             return newAdmin;
         }

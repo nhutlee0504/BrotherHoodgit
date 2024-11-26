@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-
+using System;
 namespace API.Models
 {
     public class Conversation
@@ -10,9 +10,8 @@ namespace API.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ConversationID { get; set; }
-        [ForeignKey("Account")]
-        public string Username { get; set; }
-        public string CreatedDate { get; set; }
+        public string UserName { get; set; }
+        public DateTime CreatedDate { get; set; }
         public bool IsDeleted { get; set; }
         [JsonIgnore]
         public Account Account { get; set; }

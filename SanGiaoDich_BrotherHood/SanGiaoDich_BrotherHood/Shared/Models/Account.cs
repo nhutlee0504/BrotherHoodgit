@@ -53,6 +53,7 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         public ICollection<Rating> ratings { get; set; }
         public ICollection<AddressDetail> addressDetails { get; set; }
         public ICollection<Bill> bills { get; set; }
+        public ICollection<PaymentRequestModel> paymentRequests { get; set; }
         public ICollection<Conversation> conversations { get; set; }
     }
 }

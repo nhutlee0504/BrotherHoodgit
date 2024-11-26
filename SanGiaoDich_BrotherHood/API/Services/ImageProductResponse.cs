@@ -27,13 +27,9 @@ namespace API.Services
             _configuration = configuration;
         }
 
-        public async Task DeleteImage(int idProd, int idImage)//Xóa ảnh sản phẩm
+        public async Task DeleteImage(int idProd, int idImage)
         {
             var user = GetUserInfoFromClaims();
-            if(user.Role != "Người dùng")
-            {
-                throw new UnauthorizedAccessException("Chỉ người bán mới có thể xóa ảnh sản phẩm");
-            }
 
             // Tìm sản phẩm tương ứng với idProd
             var product = await _context.Products.FindAsync(idProd);
@@ -64,7 +60,7 @@ namespace API.Services
         }
 
 
-        public async Task<IEnumerable<ImageProduct>> GetImageProducts(int id)//Lấy ảnh sản phẩm
+        public async Task<IEnumerable<ImageProduct>> GetImageProducts(int id)
         {
             var Image = await _context.ImageProducts.Where(ip => ip.IDProduct == id).ToListAsync();
             if (Image == null)
@@ -74,15 +70,9 @@ namespace API.Services
             return Image;
         }
 
-        public async Task<IEnumerable<ImageProduct>> UploadImages(List<IFormFile> files, int productId)//Thêm ảnh sản phẩm
+        public async Task<IEnumerable<ImageProduct>> UploadImages(List<IFormFile> files, int productId)
         {
             var user = GetUserInfoFromClaims();
-            if (user.Role != "Người dùng")
-            {
-                throw new UnauthorizedAccessException("Chỉ người bán mới có thể thêm ảnh sản phẩm");
-            }
-
-            // Lấy sản phẩm tương ứng với productId
             var product = await _context.Products.FindAsync(productId);
 
             if (product == null)
@@ -90,10 +80,15 @@ namespace API.Services
                 throw new KeyNotFoundException("Sản phẩm không tồn tại.");
             }
 
-            // Kiểm tra xem người dùng có phải là người tạo sản phẩm không
             if (product.UserName != user.UserName)
             {
                 throw new UnauthorizedAccessException("Bạn không có quyền thêm ảnh cho sản phẩm này.");
+            }
+
+            // Kiểm tra và tạo thư mục nếu không tồn tại
+            if (!Directory.Exists(_imagePath))
+            {
+                Directory.CreateDirectory(_imagePath);
             }
 
             var imageProducts = new List<ImageProduct>();
@@ -103,28 +98,28 @@ namespace API.Services
 
             foreach (var file in files)
             {
-                var fileName = Path.GetFileName(file.FileName);
-                var filePath = Path.Combine(_imagePath, fileName);
+                // Tạo tên file duy nhất bằng cách sử dụng GUID hoặc timestamp
+                var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                var filePath = Path.Combine(_imagePath, uniqueFileName);
 
-                // Lưu tệp vào thư mục
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
 
-                // Tạo đối tượng ImageProduct với ID sản phẩm
                 var imageProduct = new ImageProduct
                 {
-                    Image = fileName,
-                    IDProduct = productId // Gán ID sản phẩm
+                    Image = uniqueFileName, // Lưu tên file duy nhất
+                    IDProduct = productId
                 };
 
-                // Thêm hình ảnh vào cơ sở dữ liệu
                 imageProducts.Add(await AddImage(imageProduct));
             }
 
             return imageProducts;
         }
+
+
 
         public async Task<IEnumerable<ImageProduct>> GetImages()
         {

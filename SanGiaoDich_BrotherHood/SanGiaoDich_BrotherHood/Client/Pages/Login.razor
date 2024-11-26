@@ -14,8 +14,8 @@
     }
 
     .input-group-text {
-        background-color: #28a745;
-        color: white;
+        background-color:white;
+        color: green;
         border-top-left-radius: 10px;
         border-bottom-left-radius: 10px;
     }
@@ -129,7 +129,7 @@
             left: 0;
             width: 100%;
             height: 2px;
-            background-color: #28a745; /* Màu viền ban đầu */
+            background-color: #28a745; 
             transform: scaleX(0);
             transform-origin: bottom right;
             transition: transform 0.3s ease-out;
@@ -138,7 +138,7 @@
         .form-label:hover::after {
             transform: scaleX(1);
             transform-origin: bottom left;
-            background-color: #28a745; /* Màu viền khi hover */
+            background-color: #28a745; 
         }
 
 </style>
@@ -147,7 +147,7 @@
     <div class="row justify-content-center mt-5 mb-5">
         <div class="col-md-6">
             <div class="form-container p-4 rounded bg-white shadow-sm">
-                <h2 class="text-center mb-4">Đăng nhập tài khoản</h2>
+                <h3 class="text-success text-center mb-4" style="font-weight:bolder">Đăng nhập</h3>
 
                 @if (!string.IsNullOrEmpty(SuccessMessage))
                 {
@@ -164,16 +164,21 @@
 
                 <EditForm Model="@this" OnValidSubmit="HandleLogin">
                     <DataAnnotationsValidator />
-                    <ValidationSummary />
+        
 
                     <div class="mb-3">
                         <label for="UserName" class="form-label">Tên tài khoản</label>
-                        <InputText id="UserName" class="form-control rounded-start" @bind-Value="UserName" placeholder="Nhập tên tài khoản" />
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            <InputText id="UserName" class="form-control rounded-start" @bind-Value="UserName" placeholder="Nhập tên tài khoản" />
+
+                        </div>
                         <ValidationMessage For="@(() => UserName)" />
                     </div>
                     <div class="mb-3">
                         <label for="Password" class="form-label">Mật khẩu</label>
                         <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
                             <InputText id="Password" type="password" class="form-control rounded-start" @bind-Value="Password" placeholder="Nhập mật khẩu" />
                         </div>
                         <ValidationMessage For="@(() => Password)" />
@@ -210,9 +215,10 @@
 </div>
 
 @code {
-    
-    private string UserName { get; set; }
-    private string Password { get; set; }
+    [Required(ErrorMessage = "Vui lòng nhập tên tài khoản")]
+    public string UserName { get; set; }
+    [Required(ErrorMessage = "Vui lòng nhập mật khẩu")]
+    public string Password { get; set; }
     private string ErrorMessage { get; set; }
     private string SuccessMessage { get; set; }
     private string Token { get; set; }
@@ -271,16 +277,14 @@
 
     private async Task LoginWithGoogle()
     {
-        // Redirect the user to the Google authentication page
-        var googleAuthUrl = "https://localhost:44359/api/user/signin-google";
-        NavigationManager.NavigateTo(googleAuthUrl, true);  // Điều hướng đến trang đăng nhập Google
+        var googleAuthUrl = "https://brotherhoodtrading.io.vn/api/user/signin-google";
+        NavigationManager.NavigateTo(googleAuthUrl, true);
     }
 
     private async Task LoginWithFacebook()
     {
-    // Redirect the user to the Facebook authentication page
     var facebookAuthUrl = "https://localhost:44359/api/user/signin-facebook";
-    NavigationManager.NavigateTo(facebookAuthUrl, true);  // Điều hướng đến trang đăng nhập Facebook
+    NavigationManager.NavigateTo(facebookAuthUrl, true); 
     }
 
 

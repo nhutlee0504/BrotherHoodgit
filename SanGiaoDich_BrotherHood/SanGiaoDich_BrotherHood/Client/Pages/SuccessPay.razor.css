@@ -1,0 +1,91 @@
+﻿body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8f9fa;
+}
+
+.card {
+    border-radius: 12px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+    .card .list-group-item {
+        background-color: #f8f9fa;
+        border: none;
+        padding: 12px 16px;
+        font-size: 1rem;
+        color: #495057;
+    }
+
+        .card .list-group-item i {
+            font-size: 1.25rem;
+        }
+
+        .card .list-group-item:hover {
+            background-color: #e9ecef;
+            transition: background-color 0.3s ease;
+        }
+
+    .card .text-success {
+        font-weight: bold;
+    }
+
+.copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #28a745;
+}
+
+    .copy-btn i {
+        font-size: 1rem;
+    }
+
+    .copy-btn:hover {
+        color: #218838;
+        transition: color 0.3s ease;
+    }
+
+.btn-hover {
+    transition: all 0.3s ease;
+}
+
+    .btn-hover:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+.btn-outline-success,
+.btn-outline-primary,
+.btn-outline-info {
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 30px;
+}
+
+.text-center button, .text-center a {
+    font-size: 1.1rem;
+    padding: 12px 30px;
+    border-radius: 50px;
+}
+
+    .text-center button i, .text-center a i {
+        margin-right: 8px;
+    }
+
+@media (max-width: 767px) {
+    .card {
+        padding: 20px;
+    }
+
+    .btn-outline-success,
+    .btn-outline-primary,
+    .btn-outline-info {
+        padding: 8px 16px;
+    }
+
+    .text-center button, .text-center a {
+        padding: 10px 25px;
+        font-size: 1rem;
+    }
+}

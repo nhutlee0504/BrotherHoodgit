@@ -1,6 +1,7 @@
 ﻿using API.Data;
 using API.Models;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -14,24 +15,25 @@ namespace API.Services
             _context = context;
         }
 
-        public async Task<Category> AddCategory(string nameCategory)
+        public async Task<Category> AddCategory(Category category)
         {
             try
             {
-                var newCate = new Category
-                {
-                    NameCate = nameCategory
-                };
-                await _context.Categories.AddAsync(newCate);
-                await _context.SaveChangesAsync();
-                return newCate;
-            }
-            catch (System.Exception)
-            {
+                category.CreatedDate = DateTime.Now;  
+                category.UpdatedDate = DateTime.Now; 
+                category.UserUpdated = "Admin"; 
 
+                await _context.Categories.AddAsync(category);
+                await _context.SaveChangesAsync();
+                return category;
+            }
+            catch (Exception)
+            {
+                // Nếu có lỗi, trả về null
                 return null;
             }
         }
+
 
         public async Task<Category> DeleteCategory(int IDCate)
         {
@@ -45,7 +47,7 @@ namespace API.Services
 
         public async Task<Category> GeCategory(int IDCate)
         {
-           return await _context.Categories.FindAsync( IDCate);
+           return IDCate == null? null : await _context.Categories.FindAsync( IDCate);
         }
 
         public async Task<IEnumerable<Category>> GetCategories()

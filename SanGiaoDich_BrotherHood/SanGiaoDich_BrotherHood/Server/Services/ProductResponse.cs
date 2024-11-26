@@ -47,37 +47,30 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 throw new InvalidOperationException("Người dùng không tồn tại");
             }
 
-            //bool isContentInappropriate = await ModerateContent(product.Name);
-            //if (isContentInappropriate)
-            //{
-            //    throw new InvalidOperationException("Tên sản phẩm không phù hợp.");
-            //}
-
-            // Xác định số tiền cần trừ dựa trên mức ưu tiên
+         
             int deductionAmount;
-			if (product.ProrityLevel == "Ưu tiên")
-			{
-				deductionAmount = 50000; // Mức trừ cho sản phẩm ưu tiên
-			}
-			else if (product.ProrityLevel == "Phổ thông")
-			{
-				deductionAmount = 25000; // Mức trừ cho sản phẩm phổ thông
-			}
-			else
-			{
-				throw new InvalidOperationException("Mức độ ưu tiên không hợp lệ");
-			}
+            if (product.ProrityLevel == "Ưu tiên")
+            {
+                deductionAmount = 50000; // Mức trừ cho sản phẩm ưu tiên
+            }
+            else if (product.ProrityLevel == "Phổ thông")
+            {
+                deductionAmount = 25000; // Mức trừ cho sản phẩm phổ thông
+            }
+            else
+            {
+                throw new InvalidOperationException("Mức độ ưu tiên không hợp lệ");
+            }
 
-			// Kiểm tra số dư
-			if (existingUser.PreSystem < deductionAmount)
-			{
-				throw new InvalidOperationException("Số dư không đủ để thực hiện thao tác này");
-			}
+            // Kiểm tra số dư
+            if (existingUser.PreSystem < deductionAmount)
+            {
+                throw new InvalidOperationException("Số dư không đủ để thực hiện thao tác này");
+            }
 
-			// Trừ số dư
-			existingUser.PreSystem -= deductionAmount;
-			_context.Accounts.Update(existingUser);
-
+            // Trừ số dư
+            existingUser.PreSystem -= deductionAmount;
+            _context.Accounts.Update(existingUser);
 
 			var newProd = new Product
             {
@@ -93,7 +86,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 StartDate = DateTime.Now,
                 UserName = user.UserName,
                 AccountAccept = "Admin"
-                
+
             };
 
             await _context.Products.AddAsync(newProd);
@@ -101,7 +94,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
             return newProd;
         }
-
         public async Task<IEnumerable<Product>> GetAllProductsAsync()//Lấy tất cả sản phẩm
         {
             var getP = await _context.Products.ToListAsync();
@@ -229,9 +221,36 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
             }
             existingProduct.Status = "Đã hủy";
-            _context.SaveChanges();
+            decimal refundAmount = 0;
+            if (existingProduct.ProrityLevel == "Phổ thông")
+            {
+                refundAmount = 25000 * 0.95m; 
+            }
+            else if (existingProduct.ProrityLevel == "Ưu tiên")
+            {
+                refundAmount = 50000 * 0.95m;
+            }
+            else
+            {
+                throw new NotImplementedException("Priority không hợp lệ");
+            }
+
+
+     
+            var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == existingProduct.UserName);
+            if (user == null)
+            {
+                throw new NotImplementedException("Không tìm thấy người dùng tương ứng");
+            }
+            user.PreSystem += refundAmount;
+
+
+            await _context.SaveChangesAsync();
+
             return existingProduct;
         }
+
+
         //Phương thức ngooài
 
         private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()
@@ -320,4 +339,5 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 			return prodFind;
 		}
 	}
+      
 }

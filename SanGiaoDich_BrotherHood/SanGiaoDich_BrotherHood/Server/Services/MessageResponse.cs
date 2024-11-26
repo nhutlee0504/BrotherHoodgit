@@ -42,7 +42,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             // Tạo cuộc trò chuyện mới
             var conversation = new Conversation
             {
-                CreatedDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                CreatedDate = DateTime.Now,
                 IsDeleted = false
             };
 

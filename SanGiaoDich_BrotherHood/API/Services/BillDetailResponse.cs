@@ -28,7 +28,7 @@ namespace API.Services
 
         public async Task<IEnumerable<BillDetail>> GetBillDetails()
         {
-           return await _context.BillDetails.ToListAsync();
+            return await _context.BillDetails.ToListAsync();
         }
 
         public async Task<IEnumerable<BillDetail>> GetBillDetailsByIDBill(int IDBill)
