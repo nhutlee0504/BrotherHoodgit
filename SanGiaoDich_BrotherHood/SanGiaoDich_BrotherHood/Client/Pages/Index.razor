@@ -309,12 +309,22 @@
                 }
 
                 <div class="card-body">
-                    <h5 class="fs-5" style="font-weight:bolder">
-                        <span class="badge text-bg-success" style="background-color: green; padding: 5px 10px;">
-                            <i class="bi bi-shield-check"></i> Đối tác
-                        </span>
-                        @product.Name
-                    </h5>
+                    @if(product.ProrityLevel == "Ưu tiên")
+                    {
+                        <h5 class="fs-5" style="font-weight:bolder">
+                            <span class="badge text-bg-success" style="background-color: green; padding: 5px 10px;">
+                                <i class="bi bi-shield-check"></i> @product.ProrityLevel
+                            </span>
+                            @product.Name
+                        </h5>
+                    }
+                    else
+                    {
+                        <h5 class="fs-5" style="font-weight:bolder">
+ 
+                            @product.Name
+                        </h5>
+                    }
                     <p class="price" style="color:green; font-weight:bolder">@product.Price.ToString("N0") VND</p>
                     <div class="row">
                         <div class="col-md-6 col-6" style="font-style:italic">

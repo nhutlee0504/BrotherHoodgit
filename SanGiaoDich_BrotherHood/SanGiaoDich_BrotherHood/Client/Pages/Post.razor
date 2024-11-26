@@ -20,6 +20,12 @@
     </ul>
 </div>
 <style>
+    .text-danger {
+        color: #dc3545; 
+        font-size: 0.9rem;
+        text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
 
     .image-preview img {
         max-width: 100%; 
@@ -195,6 +201,10 @@
                 <div class="col-md-6 mb-3">
                     <label for="ProductName"><i class="fas fa-tag"></i> Tên sản phẩm:</label>
                     <input type="text" @bind="ProductName" class="form-control" placeholder="Nhập tên sản phẩm" id="ProductName" />
+                    @if (!string.IsNullOrWhiteSpace(ProductNameError))
+                    {
+                        <div class="text-danger">@ProductNameError</div>
+                    }
                 </div>
 
                 <!-- Loại sản phẩm -->
@@ -206,7 +216,12 @@
                         {
                             <option value="@category.IDCategory">@category.NameCate</option>
                         }
+                       
                     </select>
+                    @if (!string.IsNullOrWhiteSpace(ProductCategoryError))
+                    {
+                        <div class="text-danger">@ProductCategoryError</div>
+                    }
                 </div>
 
                 <!-- Giá sản phẩm -->
@@ -215,12 +230,20 @@
                         <img src="/AnhGiaoDien/business.png" style="width:16px;" /> Giá sản phẩm:
                     </label>
                     <input type="number" @bind="ProductPrice" class="form-control" placeholder="Nhập giá sản phẩm" id="ProductPrice" />
+                    @if (!string.IsNullOrWhiteSpace(ProductPriceError))
+                    {
+                        <div class="text-danger">@ProductPriceError</div>
+                    }
                 </div>
 
                 <!-- Số lượng sản phẩm -->
                 <div class="col-md-6 mb-3">
                     <label for="ProductQuantity"><i class="fas fa-sort-numeric-up"></i> Số lượng sản phẩm:</label>
                     <input type="number" @bind="ProductQuantity" class="form-control" placeholder="Nhập số lượng sản phẩm" id="ProductQuantity" />
+                    @if (!string.IsNullOrWhiteSpace(ProductQuantityError))
+                    {
+                        <div class="text-danger">@ProductQuantityError</div>
+                    }
                 </div>
             </div>
 
@@ -256,6 +279,10 @@
                                 </div>
                             </div>
                         </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(ProrityLevelError))
+                    {
+                        <div class="text-danger">@ProrityLevelError</div>
                     }
                 </div>
             </div>
@@ -336,7 +363,22 @@
         </div>
     </div>
 </div>
-
+<div class="modal fade show" style="@(!string.IsNullOrEmpty(ImageError) ? "display: block;" : "display: none;")" tabindex="-1" aria-labelledby="imageErrorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageErrorModalLabel">Lỗi hình ảnh</h5>
+                <button type="button" class="btn-close" @onclick="CloseImageErrorModal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-danger">@ImageError</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseImageErrorModal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
 @code {
     private string ProductName { get; set; }
     private decimal ProductPrice { get; set; }
@@ -346,6 +388,12 @@
     private string ProrityLevel { get; set; }
     private List<Category> categories = new List<Category>();
     private FirebaseStorage _firebaseStorage;
+    private string ImageError { get; set; }
+    private string ProductNameError { get; set; }
+    private string ProductCategoryError { get; set; }
+    private string ProductPriceError { get; set; }
+    private string ProductQuantityError { get; set; }
+    private string ProrityLevelError { get; set; }
     private void SelectPriority(string selectedPriority)
     {
         if (ProrityLevel == selectedPriority)
@@ -377,24 +425,46 @@
     {
         categories = await HttpClient.GetFromJsonAsync<List<Category>>("api/Category/GetCategories");
     }
+    private void CloseImageErrorModal()
+    {
+        ImageError = string.Empty; 
+    }
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
-        var files = e.GetMultipleFiles(3);
-
-        foreach (var file in files)
+        try
         {
-            for (int i = 0; i < selectedFiles.Count; i++)
+            var files = e.GetMultipleFiles(3);
+
+            if (files.Count < 1 || files.Count > 3)
             {
-                if (selectedFiles[i] == null)
+                ImageError = "Bạn phải chọn ít nhất 1 ảnh và tối đa 3 ảnh.";
+                selectedFiles.Clear();
+                return;
+            }
+
+            ImageError = string.Empty;
+
+            foreach (var file in files)
+            {
+                for (int i = 0; i < selectedFiles.Count; i++)
                 {
-                    selectedFiles[i] = new ImageFile
-                        {
-                            DataUrl = await GetImageDataUrl(file)
-                        };
-                    break; 
+                    if (selectedFiles[i] == null)
+                    {
+                        selectedFiles[i] = new ImageFile
+                            {
+                                DataUrl = await GetImageDataUrl(file)
+                            };
+                        break;
+                    }
                 }
             }
+        }
+        catch (Exception ex)
+        {
+            ImageError = "Bạn phải chọn ít nhất 1 ảnh và tối đa 3 ảnh.";
+            selectedFiles.Clear();
+            return; 
         }
     }
 
@@ -407,55 +477,130 @@
     }
     private async Task SaveProduct()
     {
-        var productDto = new ProductDto
-            {
-                Name = ProductName,
-                Price = ProductPrice,
-                Quantity = ProductQuantity,
-                CategoryId = ProductCategoryId,
-                Description = Description,
-                ProrityLevel = ProrityLevel
-            };
-        var response = await HttpClient.PostAsJsonAsync("api/product/AddProduct", productDto);
+        // Reset lỗi
+        ProductNameError = string.Empty;
+        ProductCategoryError = string.Empty;
+        ProductPriceError = string.Empty;
+        ProductQuantityError = string.Empty;
+        ProrityLevelError = string.Empty;
 
-        if (!response.IsSuccessStatusCode)
+        // Kiểm tra dữ liệu
+        if (string.IsNullOrWhiteSpace(ProductName))
         {
-            var errorMessage = await response.Content.ReadAsStringAsync();
-            await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra khi thêm sản phẩm: {errorMessage}");
+            ProductNameError = "Vui lòng nhập tên sản phẩm.";
+        }
+
+        if (ProductCategoryId == 0)
+        {
+            ProductCategoryError = "Vui lòng chọn loại sản phẩm.";
+        }
+
+        if (ProductPrice <= 0)
+        {
+            ProductPriceError = "Giá sản phẩm phải lớn hơn 0.";
+        }
+
+        if (ProductQuantity <= 0)
+        {
+            ProductQuantityError = "Số lượng sản phẩm phải lớn hơn 0.";
+        }
+
+        if (string.IsNullOrWhiteSpace(ProrityLevel))
+        {
+            ProrityLevelError = "Vui lòng chọn mức độ ưu tiên.";
+        }
+        var selectedImageCount = selectedFiles.Count(file => file != null);
+        if (selectedImageCount < 1 || selectedImageCount > 3)
+        {
+            ImageError = "Bạn phải chọn ít nhất 1 ảnh và tối đa 3 ảnh.";
+            selectedFiles.Clear();
+            return; // Dừng lại và hiển thị modal
+        }
+
+        // Nếu có lỗi thì không tiếp tục
+        if (!string.IsNullOrWhiteSpace(ProductNameError) ||
+            !string.IsNullOrWhiteSpace(ProductCategoryError) ||
+            !string.IsNullOrWhiteSpace(ProductPriceError) ||
+            !string.IsNullOrWhiteSpace(ProductQuantityError) ||
+            !string.IsNullOrWhiteSpace(ProrityLevelError))
+        {
             return;
         }
-        var createdProduct = await response.Content.ReadFromJsonAsync<Product>();
-        var productId = createdProduct.IDProduct;
 
-        var imageUrls = new List<string>();
-
-        var content = new MultipartFormDataContent();
-        foreach (var file in selectedFiles)
+        // Tiếp tục lưu sản phẩm
+        try
         {
-            if (file != null)
-            {
-                var fileBytes = Convert.FromBase64String(file.DataUrl.Split(",")[1]);
-                var fileContent = new ByteArrayContent(fileBytes);
-                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+            var productDto = new ProductDto
+                {
+                    Name = ProductName,
+                    Price = ProductPrice,
+                    Quantity = ProductQuantity,
+                    CategoryId = ProductCategoryId,
+                    Description = Description,
+                    ProrityLevel = ProrityLevel
+                };
 
-                content.Add(fileContent, "files", $"{Guid.NewGuid()}.jpg");
+            var response = await HttpClient.PostAsJsonAsync("api/product/AddProduct", productDto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var createdProduct = await response.Content.ReadFromJsonAsync<Product>();
+                var productId = createdProduct?.IDProduct ?? 0;
+
+                if (productId > 0)
+                {
+                    await UploadImages(productId);
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "Không thể lấy thông tin sản phẩm mới tạo.");
+                }
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra khi thêm sản phẩm: {errorMessage}");
             }
         }
-
-        var imageResponse = await HttpClient.PostAsync(
-            $"api/ImageProduct/ImageProduct/{productId}/upload",
-            content
-        );
-
-        if (imageResponse.IsSuccessStatusCode)
+        catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Sản phẩm và hình ảnh đã được thêm thành công!");
-            NavigationManager.NavigateTo("/", forceLoad: true);
+            await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra khi thêm sản phẩm: {ex.Message}");
         }
-        else
+    }
+    private async Task UploadImages(int productId)
+    {
+        try
         {
-            var errorMessage = await imageResponse.Content.ReadAsStringAsync();
-            await JSRuntime.InvokeVoidAsync("alert", $"Lỗi khi lưu liên kết ảnh: {errorMessage}");
+            var content = new MultipartFormDataContent();
+
+            foreach (var file in selectedFiles)
+            {
+                if (file != null)
+                {
+                    var byteArray = Convert.FromBase64String(file.DataUrl.Split(",")[1]);
+                    var fileContent = new ByteArrayContent(byteArray);
+                    fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+
+                    content.Add(fileContent, "files", $"image_{Guid.NewGuid()}.jpg");
+                }
+            }
+
+            var uploadResponse = await HttpClient.PostAsync($"api/ImageProduct/ImageProduct/{productId}/upload", content);
+
+            if (uploadResponse.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Sản phẩm đã được thêm thành công!");
+                NavigationManager.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                var errorMessage = await uploadResponse.Content.ReadAsStringAsync();
+                await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra khi tải ảnh: {errorMessage}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra khi tải ảnh: {ex.Message}");
         }
     }
 }
