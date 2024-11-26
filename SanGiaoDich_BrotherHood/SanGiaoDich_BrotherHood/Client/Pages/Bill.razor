@@ -1,187 +1,205 @@
 ﻿@page "/bill"
-@using System.ComponentModel.DataAnnotations
-@inject HttpClient HttpClient
+@using SanGiaoDich_BrotherHood.Shared.Models
+@inject HttpClient httpClient
 @inject NavigationManager NavigationManager
-@inject IJSRuntime JSRuntime
-<style>
-    .nav-tabs .nav-link {
-        color: green;
-    }
+@inject IJSRuntime jsrunetime
 
-        .nav-tabs .nav-link:hover {
-            color: forestgreen; 
-        }
+<h3>Danh sách hóa đơn</h3>
 
-        .nav-tabs .nav-link.active {
-            color: #ffffff; 
-            background-color: green;
-            border-color: green; 
-        }
-
-            .nav-tabs .nav-link.active:hover {
-                background-color: green;
-            }
-
-
-</style>
-<div class="container-fluid">
-    <ul class="breadcrumb">
-        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
-        <li class="breadcrumb-item"><a href="#">Hóa đơn của tôi</a></li>
-    </ul>
-</div>
-<div class="container mt-4">
-    <ul class="nav nav-tabs mb-2" id="myTab" role="tablist">
-        <li class="nav-item" role="presentation">
-            <a class="nav-link active" id="purchase-tab" data-bs-toggle="tab" href="#purchase" role="tab" aria-controls="purchase" aria-selected="true">
-                <i class="fas fa-shopping-cart"></i> Đơn Mua
-            </a>
-        </li>
-        <li class="nav-item" role="presentation">
-            <a class="nav-link" id="sale-tab" data-bs-toggle="tab" href="#sale" role="tab" aria-controls="sale" aria-selected="false">
-                <i class="fas fa-shopping-basket"></i> Đơn Bán
-            </a>
-        </li>
-    </ul>
-
-
-    <div class="tab-content" id="myTabContent">
-        <div class="tab-pane fade show active" id="purchase" role="tabpanel" aria-labelledby="purchase-tab">
-            @foreach (var order in Orders) // Giả định bạn có một danh sách đơn mua
-            {
-                <div class="card mb-4 shadow" style="border:none; border-radius:20px;">
-                    <div class="row g-0">
-                        <!-- Phần 1: Khung hình -->
-                        <div class="col-md-3">
-                            <img src="/AnhSanPham/default.png" class="img-fluid rounded-start" alt="Image">
-                        </div>
-                        <!-- Phần 2: Thông tin -->
-                        <div class="col-md-9">
-                            <div class="card-body">
-                                <div class="py-1">
-                                    <p class="mb-1"><i class="fa fa-receipt"></i> <strong>Mã đơn:</strong> @order.OrderId</p>
-                                    <p class="mb-1"><i class="fa fa-user"></i> <strong>Họ tên:</strong> @order.CustomerName</p>
-                                    <p class="mb-1"><i class="fa fa-map-marker-alt"></i> <strong>Địa chỉ:</strong> @order.Address</p>
-                                    <p class="mb-1"><i class="fa fa-money-bill-wave"></i> <strong>Tổng tiền:</strong> @order.TotalAmount.ToString("N0") VND</p>
-                                    <p class="mb-1"><i class="fa fa-calendar-alt"></i> <strong>Ngày đặt:</strong> @order.OrderDate.ToString("dd/MM/yyyy")</p>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center py-0">
-                                    <div>
-                                        <p class="mb-1">
-                                            <i class="fa fa-calendar-check"></i>
-                                            <strong>Ngày nhận:</strong> @order.DeliveryDate.ToString("dd/MM/yyyy")
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p class="mb-1">
-                                            <i class="fa fa-info-circle"></i>
-                                            <strong>Trạng thái:</strong> @order.Status
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <button class="btn btn-success" @onclick="() => XacNhan(order)">
-                                            <i class="fa fa-check-circle"></i> Xác nhận
-                                        </button>
-                                        <a href="orderdetails" class="btn btn-light ms-2">
-                                            <i class="fa fa-eye"></i> Xem Chi Tiết
-                                        </a>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
+<!-- Tìm kiếm -->
+<div class="mb-3">
+    <div class="row">
+        <div class="col-md-6">
+            <label for="searchByFullName">Tìm kiếm theo Họ và tên:</label>
+            <input id="searchByFullName" type="text" @bind="searchFullName" class="form-control" placeholder="Nhập họ và tên" />
         </div>
-        <div class="tab-pane fade" id="sale" role="tabpanel" aria-labelledby="sale-tab">
-            @foreach (var order in Orders) // Giả định bạn có một danh sách đơn mua
-            {
-                <div class="card mb-4 shadow" style="border:none;border-radius:20px;">
-                    <div class="row g-0">
-                        <!-- Phần 1: Khung hình -->
-                        <div class="col-md-3">
-                            <img src="/AnhSanPham/ao4.webp" class="img-fluid rounded-start" alt="Image">
-                        </div>
-                        <!-- Phần 2: Thông tin -->
-                        <div class="col-md-9">
-                            <div class="card-body">
-                                <div class="py-1">
-                                    <p class="mb-1"><i class="fa fa-receipt"></i> <strong>Mã đơn mua:</strong> @order.OrderId</p>
-                                    <p class="mb-1"><i class="fa fa-user"></i> <strong>Người mua:</strong> @order.CustomerName</p>
-                                    <p class="mb-1"><i class="fa fa-map-marker-alt"></i> <strong>Địa chỉ giao hàng:</strong> @order.Address</p>
-                                    <p class="mb-1"><i class="fa fa-money-bill-wave"></i> <strong>Tổng tiền:</strong> @order.TotalAmount.ToString("N0") VND</p>
-                                    <p class="mb-1"><i class="fa fa-calendar-alt"></i> <strong>Ngày đặt mua:</strong> @order.OrderDate.ToString("dd/MM/yyyy")</p>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center py-0">
-                                    <div>
-                                        <p class="mb-1"><i class="fa fa-calendar-check"></i> <strong>Dự kiến giao:</strong> @order.DeliveryDate.ToString("dd/MM/yyyy")</p>
-                                    </div>
-                                    <p class="mb-1"><i class="fa fa-info-circle"></i> <strong>Trạng thái đơn:</strong> @order.Status</p>
-                                    <button class="btn btn-outline-success" @onclick="() => XacNhan(order)">
-                                        <i class="fa fa-check-circle"></i> Xác nhận nhận hàng
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-
+        <div class="col-md-4">
+            <label for="searchByIDBill">Tìm kiếm theo ID Hóa đơn:</label>
+            <input id="searchByIDBill" type="number" @bind="searchIDBill" class="form-control" placeholder="Nhập ID hóa đơn" />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-primary" @onclick="SearchBills">Tìm kiếm</button>
         </div>
     </div>
-
 </div>
 
+@if (bills == null)
+{
+    <p>Đang tải dữ liệu...</p>
+}
+else if (!bills.Any())
+{
+    <p>Không có hóa đơn nào.</p>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Họ và tên</th>
+                <th>Số điện thoại</th>
+                <th>Địa chỉ giao hàng</th>
+                <th>Ngày đặt hàng</th>
+                <th>Hình thức thanh toán</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var bill in bills.Where(x => x.UserName == userName))
+            {
+                <tr>
+                    <td>@bill.IDBill</td>
+                    <td>@bill.FullName</td>
+                    <td>@bill.PhoneNumber</td>
+                    <td>@bill.DeliveryAddress</td>
+                    <td>@bill.OrderDate.ToString("dd/MM/yyyy")</td>
+                    <td>@bill.PaymentType</td>
+                    <td>@bill.Total.ToString("C")</td>
+                    <td>@bill.Status</td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="() => NavigateToBillDetails(bill.IDBill)">Xem chi tiết</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 @code {
-    // Class để chứa thông tin đơn hàng
-    public class Order
+    private string userName;
+    private bool isLoading = true;
+    private string errorMessage;
+    private AccountInfoDto accountInfo;
+    private bool IsLoggedIn { get; set; } = false; // Biến để theo dõi trạng thái đăng nhập
+    private string searchQuery;
+    private List<BillModel> bills;
+    private List<BillModel> allBills;
+    private string searchFullName;
+    private int? searchIDBill;
+
+    protected override async Task OnInitializedAsync()
     {
-        public string OrderId { get; set; }
-        public string CustomerName { get; set; }
-        public string Address { get; set; }
-        public decimal TotalAmount { get; set; }
-        public DateTime OrderDate { get; set; }
-        public DateTime DeliveryDate { get; set; }
-        public string Status { get; set; }
-        public string ImageUrl { get; set; }
+        try
+        {
+            await CheckTokenAndLoadAccountInfo();
+            // Lấy tất cả hóa đơn khi trang được khởi tạo
+            allBills = await httpClient.GetFromJsonAsync<List<BillModel>>("api/Bill/GetBill");
+            bills = new List<BillModel>(allBills); // Hiển thị tất cả hóa đơn khi chưa tìm kiếm
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi khi tải dữ liệu: " + ex.Message);
+            bills = new List<BillModel>();
+        }
     }
 
-    // Danh sách đơn hàng (thay thế bằng dữ liệu thực tế từ cơ sở dữ liệu)
-    private List<Order> Orders = new List<Order>
+    // Phương thức tìm kiếm hóa đơn
+    private async Task SearchBills()
     {
-        new Order
+        try
         {
-            OrderId = "001", CustomerName = "Nguyen Van A", Address = "123 ABC Street",
-            TotalAmount = 1000000, OrderDate = DateTime.Now.AddDays(-5), DeliveryDate = DateTime.Now.AddDays(2),
-            Status = "Chưa xác nhận", ImageUrl = "your-image-url-here.jpg"
-        },
-        new Order
-        {
-            OrderId = "002", CustomerName = "Tran Van B", Address = "456 DEF Street",
-            TotalAmount = 2000000, OrderDate = DateTime.Now.AddDays(-3), DeliveryDate = DateTime.Now.AddDays(1),
-            Status = "Chưa xác nhận", ImageUrl = "your-image-url-here.jpg"
-        },
-        new Order
-        {
-            OrderId = "003", CustomerName = "Le Thi C", Address = "789 GHI Street",
-            TotalAmount = 1500000, OrderDate = DateTime.Now.AddDays(-7), DeliveryDate = DateTime.Now.AddDays(3),
-            Status = "Chưa xác nhận", ImageUrl = "your-image-url-here.jpg"
-        },
-        new Order
-        {
-            OrderId = "004", CustomerName = "Pham Van D", Address = "101 JKL Street",
-            TotalAmount = 500000, OrderDate = DateTime.Now.AddDays(-2), DeliveryDate = DateTime.Now.AddDays(4),
-            Status = "Chưa xác nhận", ImageUrl = "your-image-url-here.jpg"
+            // Tìm kiếm theo họ và tên
+            if (!string.IsNullOrWhiteSpace(searchFullName))
+            {
+                bills = await httpClient.GetFromJsonAsync<List<BillModel>>($"api/Bill/GetBillsByUserName/{searchFullName}");
+            }
+            // Tìm kiếm theo ID Hóa đơn
+            else if (searchIDBill.HasValue)
+            {
+                var bill = await httpClient.GetFromJsonAsync<BillModel>($"api/Bill/GetBillsByIDBill/{searchIDBill.Value}");
+                bills = bill != null ? new List<BillModel> { bill } : new List<BillModel>();
+            }
+            else
+            {
+                // Nếu không có điều kiện tìm kiếm, hiển thị tất cả hóa đơn
+                bills = new List<BillModel>(allBills);
+            }
         }
-    };
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi khi tìm kiếm hóa đơn: " + ex.Message);
+            bills = new List<BillModel>();
+        }
+    }
 
-    // Phương thức để xử lý khi nhấn nút Xác nhận
-    private void XacNhan(Order order)
+    // Điều hướng tới trang chi tiết hóa đơn
+    private void NavigateToBillDetails(int IDBill)
     {
-        // Cập nhật trạng thái đơn hàng và thông báo
-        order.Status = "Đã xác nhận";
-        JSRuntime.InvokeVoidAsync("alert", $"Đơn hàng {order.OrderId} đã được xác nhận!");
+        NavigationManager.NavigateTo($"/Admin/BillDetails/{IDBill}");
+    }
+
+    // Class Bill mô tả thông tin hóa đơn
+    public class BillModel
+    {
+        public int IDBill { get; set; }
+        public string FullName { get; set; }
+        public string PhoneNumber { get; set; }
+        public string DeliveryAddress { get; set; }
+        public DateTime OrderDate { get; set; }
+        public string PaymentType { get; set; }
+        public decimal Total { get; set; }
+        public string Status { get; set; }
+        public string UserName { get; set; }
+    }
+
+    private async Task CheckTokenAndLoadAccountInfo()
+    {
+        var token = await jsrunetime.InvokeAsync<string>("localStorage.getItem", "token");
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            await LoadAccountInfo();
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/login");
+        }
+    }
+
+    private class AccountInfoDto
+    {
+        public string UserName { get; set; }
+        public string FullName { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Gender { get; set; }
+        public DateTime? Birthday { get; set; }
+        public string ImageAccount { get; set; }
+    }
+
+    private async Task LoadAccountInfo()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var response = await httpClient.GetAsync("api/User/GetMyInfo");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var accountInfo = await response.Content.ReadFromJsonAsync<AccountInfoDto>();
+                IsLoggedIn = true;
+                userName = accountInfo.UserName;
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                IsLoggedIn = false;
+                NavigationManager.NavigateTo("/login");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Có lỗi xảy ra: {ex.Message}";
+            IsLoggedIn = false;
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 }

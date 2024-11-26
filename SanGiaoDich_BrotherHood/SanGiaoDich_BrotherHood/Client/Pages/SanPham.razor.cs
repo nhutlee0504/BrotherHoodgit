@@ -22,7 +22,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         private List<Product> pagedProducts;
         private int currentPage = 1;
         private int totalPages;
-        private int pageSize = 4; // số lượng sp mỗi page
+        private int pageSize = 6; // số lượng sp mỗi page
         private string searchQuery = "";
 
         protected override async Task OnInitializedAsync()
