@@ -1,0 +1,217 @@
+﻿@page "/AddAddress"
+@using System.Text.Json
+@using SanGiaoDich_BrotherHood.Shared.Dto
+@using SanGiaoDich_BrotherHood.Shared.Models
+@inject HttpClient http
+@inject IJSRuntime js
+@inject NavigationManager navigation
+
+<div class="container mt-5">
+    <div class="row dflex justify-content-center">
+        <div class="col-md-6">
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <div class="alert alert-success fs-5 text-center">@successMessage</div>
+            }
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger fs-5 text-center">@errorMessage</div>
+            }
+            <h2 class="text-center">Thêm địa chỉ</h2>
+            <EditForm Model="address" OnValidSubmit="SubmitAdd">
+                <DataAnnotationsValidator />
+
+                <select class="form-select form-select-sm" @onchange="OnCityChange">
+                    <option value="" selected>Chọn tỉnh thành</option>
+                    @foreach (var city in Locations)
+                    {
+                        <option value="@city.Id">@city.Name</option>
+                    }
+                </select>
+                <ValidationMessage For="()=> address.ProvinceCity"></ValidationMessage>
+
+                <select class="form-select form-select-sm mt-3" @onchange="OnDistrictChange">
+                    <option value="" selected>Chọn quận huyện</option>
+                    @foreach (var district in Districts)
+                    {
+                        <option value="@district.Id">@district.Name</option>
+                    }
+                </select>
+                <ValidationMessage For="()=> address.District"></ValidationMessage>
+
+                <select class="form-select form-select-sm mt-3" @onchange="OnWardChange">
+                    <option value="" selected>Chọn xã/phường</option>
+                    @foreach (var ward in Wards)
+                    {
+                        <option value="@ward.Id">@ward.Name</option>
+                    }
+                </select>
+                <ValidationMessage For="()=> address.Wardcommune"></ValidationMessage>
+
+                <InputText class="form-select form-select-sm mt-3" @bind-Value="address.AdditionalDetail" placeholder="Chi tiết địa chỉ" />
+                <ValidationMessage For="()=> address.AdditionalDetail"></ValidationMessage>
+
+                <div class="d-flex justify-content-center">
+                    <button type="submit" class="btn btn-success mt-3 w-50 mb-5">Lưu</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private AddressDetail address = new AddressDetail();
+    private List<AddressDetail> listAddressByUser;
+    private InfoAccountDto account;
+    private List<Location> Locations = new();
+    private List<Location> Districts = new();
+    private List<Location> Wards = new();
+    private string successMessage;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await CheckLogined();
+            Locations = await http.GetFromJsonAsync<List<Location>>("data/data.json");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading locations: {ex.Message}");
+        }
+    }
+
+    private async Task SubmitAdd()
+    {
+        try
+        {
+            var response = await http.GetAsync($"api/AddressDetail/GetAddressDetailsByUserName/{account.UserName}");
+            if (response.IsSuccessStatusCode)
+            {
+                listAddressByUser = await response.Content.ReadFromJsonAsync<List<AddressDetail>>();
+                if (listAddressByUser != null)
+                {
+                    var addressExit = listAddressByUser.Any(x => x.AdditionalDetail.ToLower() == address.AdditionalDetail.ToLower());
+                    if(addressExit)
+                    {
+                        errorMessage = "Địa chỉ đã tồn tại";
+                        StateHasChanged();
+                        await Task.Delay(3000);
+                        errorMessage = null;
+                        return;
+                    }
+                }
+            }
+            address.UserName = account.UserName;
+            var content = new StringContent(JsonSerializer.Serialize(address), System.Text.Encoding.UTF8, "application/json");
+            var response1 = await http.PostAsync("api/AddressDetail/AddAddress", content);
+
+            if (response1.StatusCode == System.Net.HttpStatusCode.Created)
+            {
+                errorMessage = null;
+                successMessage = "Thêm địa chỉ thành công";
+                StateHasChanged();
+                await Task.Delay(2000);
+                successMessage = null;
+                navigation.NavigateTo("/address");
+            }
+            else
+            {
+                var error = await response1.Content.ReadAsStringAsync();
+                Console.WriteLine($"Lỗi: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+    }
+
+    private async Task CheckLogined()
+    {
+        var token = await js.InvokeAsync<string>("localStorage.getItem", "token");
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            await LoadAccount();
+        }
+        else
+        {
+            errorMessage = "Vui lòng đăng nhập";
+            StateHasChanged();
+            await Task.Delay(2000);
+            navigation.NavigateTo("/login");
+        }
+    }
+
+    private async Task LoadAccount()
+    {
+        try
+        {
+            var response = await http.GetAsync("api/User/GetMyInfo");
+
+            if (response.IsSuccessStatusCode)
+            {
+                account = await response.Content.ReadFromJsonAsync<InfoAccountDto>();
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Có lỗi xảy ra: " + ex.Message;
+        }
+    }
+
+
+    private void OnCityChange(ChangeEventArgs e)
+    {
+        var selectedCityId = e.Value?.ToString();
+        address.ProvinceCity = Locations.FirstOrDefault(c => c.Id == selectedCityId)?.Name;
+
+        Districts.Clear();
+        Wards.Clear();
+        if (!string.IsNullOrEmpty(selectedCityId))
+        {
+            var selectedCity = Locations.FirstOrDefault(c => c.Id == selectedCityId);
+            if (selectedCity?.Districts != null)
+            {
+                Districts = selectedCity.Districts;
+            }
+        }
+    }
+
+    private void OnDistrictChange(ChangeEventArgs e)
+    {
+        var selectedDistrictId = e.Value?.ToString();
+        address.District = Districts.FirstOrDefault(d => d.Id == selectedDistrictId)?.Name;
+
+        Wards.Clear();
+        if (!string.IsNullOrEmpty(selectedDistrictId))
+        {
+            var selectedDistrict = Districts.FirstOrDefault(d => d.Id == selectedDistrictId);
+            if (selectedDistrict?.Wards != null)
+            {
+                Wards = selectedDistrict.Wards;
+            }
+        }
+    }
+
+    private void OnWardChange(ChangeEventArgs e)
+    {
+        var selectedWardId = e.Value?.ToString();
+        address.Wardcommune = Wards.FirstOrDefault(w => w.Id == selectedWardId)?.Name;
+    }
+
+    public class Location
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public List<Location> Districts { get; set; }
+        public List<Location> Wards { get; set; }
+    }
+}
