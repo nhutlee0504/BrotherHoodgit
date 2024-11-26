@@ -115,6 +115,7 @@ namespace SanGiaoDich_BrotherHood.Server
             services.AddScoped<ICart, CartResponse>();
             services.AddScoped<ICategory, CategoryResponse>();
 
+
             // CORS policy
             services.AddCors(options =>
             {

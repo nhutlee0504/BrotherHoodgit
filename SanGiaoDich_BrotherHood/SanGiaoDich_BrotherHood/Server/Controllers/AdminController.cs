@@ -63,5 +63,6 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 return BadRequest(ex.Message); // Thông báo lỗi đơn giản
             }
         }
+
     }
 }

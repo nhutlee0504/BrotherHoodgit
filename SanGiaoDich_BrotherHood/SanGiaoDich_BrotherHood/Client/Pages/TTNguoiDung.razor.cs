@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 using SanGiaoDich_BrotherHood.Shared.Dto;
 using SanGiaoDich_BrotherHood.Shared.Models;
 using System;
@@ -34,6 +35,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			await LoadUserData();
 			await LoadProducts();
 			await LoadCategoryNames(userProducts);
+			await LoadFavoriteAccounts();
 		}
 		private async Task LoadUserData()
 		{
@@ -60,7 +62,139 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				errorMessage = "Không thể lấy thông tin tài khoản: " + ex.Message;
 			}
 		}
-		private async Task LoadProducts()
+
+        private async Task DeleteProduct(int productId)
+        {
+            try
+            {
+                // Make a DELETE request to the API to delete the product
+                var response = await HttpClient.DeleteAsync($"api/product/DeleteProduct/{productId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // If deletion is successful, find and update the product in the list
+                    var productToDelete = userProducts.FirstOrDefault(p => p.IDProduct == productId);
+                    if (productToDelete != null)
+                    {
+                        // Optionally, update the product status on the frontend
+                        productToDelete.Status = "Đã xóa";
+                    }
+                    // Optionally, display a success message
+                    await JSRuntime.InvokeVoidAsync("alert", "Sản phẩm đã được xóa thành công!");
+                }
+                else
+                {
+                    // If there is an error from the API, display the error message
+                    var errorResponse = await response.Content.ReadAsStringAsync();
+                    await JSRuntime.InvokeVoidAsync("alert", $"Lỗi: {errorResponse}");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle any exceptions that might occur during the delete operation
+                Console.WriteLine($"Lỗi xảy ra khi xóa sản phẩm: {ex.Message}");
+                await JSRuntime.InvokeVoidAsync("alert", "Đã xảy ra lỗi khi xóa sản phẩm.");
+            }
+        }
+
+        private async Task UpgradePriorityLevel(int productId)
+        {
+            try
+            {
+                // Gọi API nâng cấp mức độ sản phẩm
+                var response = await HttpClient.PutAsync($"api/product/UpgradeProrityLevel/{productId}", null);
+                if (response.IsSuccessStatusCode)
+                {
+                    // Nếu nâng cấp thành công, cập nhật trạng thái sản phẩm trong giao diện
+                    var productToUpdate = userProducts.FirstOrDefault(p => p.IDProduct == productId);
+                    if (productToUpdate != null)
+                    {
+                        productToUpdate.ProrityLevel = "Ưu tiên";
+                    }
+                    await JSRuntime.InvokeVoidAsync("alert", "Sản phẩm đã được nâng cấp thành công!");
+                }
+                else
+                {
+                    // Nếu API trả về lỗi
+                    var errorResponse = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Lỗi khi nâng cấp sản phẩm: {errorResponse}");
+                    await JSRuntime.InvokeVoidAsync("alert", $"Lỗi: {errorResponse}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi xảy ra khi nâng cấp sản phẩm: {ex.Message}");
+                await JSRuntime.InvokeVoidAsync("alert", "Đã xảy ra lỗi khi nâng cấp sản phẩm.");
+            }
+
+        }
+        private string activeTab = "posts"; // Tab mặc định là bài đăng
+
+        private void SwitchTabToPosts()
+        {
+            activeTab = "posts";
+        }
+
+        private void SwitchTabToFavorites()
+        {
+            activeTab = "favorites";
+        }
+        private List<Favorite> favorites = new List<Favorite>();
+        private Dictionary<int, Product> favoriteProducts = new Dictionary<int, Product>(); // Lưu thông tin sản phẩm yêu thích
+        private string favoriteErrorMessage;
+        private bool isLoadingFavorites = false;
+
+        private async Task LoadFavoriteAccounts()
+        {
+            try
+            {
+                isLoadingFavorites = true; // Bắt đầu tải dữ liệu
+                var response = await HttpClient.GetFromJsonAsync<List<Favorite>>("api/Favorite/GetFavoriteAccount");
+
+                if (response != null)
+                {
+                    favorites = response;
+
+                    // Lấy thông tin sản phẩm yêu thích cho từng sản phẩm
+                    foreach (var favorite in favorites)
+                    {
+                        var product = await HttpClient.GetFromJsonAsync<Product>($"api/product/GetProductById/{favorite.IDProduct}");
+                        if (product != null)
+                        {
+                            favoriteProducts[favorite.IDProduct] = product;
+                        }
+                    }
+                }
+                else
+                {
+                    favoriteErrorMessage = "Danh sách yêu thích trống.";
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                favoriteErrorMessage = "Không thể kết nối đến API: " + ex.Message;
+                Console.WriteLine(ex);
+            }
+            catch (Exception ex)
+            {
+                favoriteErrorMessage = "Đã xảy ra lỗi khi tải danh sách yêu thích: " + ex.Message;
+                Console.WriteLine(ex);
+            }
+            finally
+            {
+                isLoadingFavorites = false; // Kết thúc quá trình tải
+            }
+        }
+
+
+
+        public class FavoriteAccountDto
+        {
+            public int IDFavorite { get; set; }
+            public string AccountName { get; set; }
+        }
+
+        private async Task LoadProducts()
 		{
 			try
 			{
@@ -186,5 +320,52 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				}
 			}
 		}
-	}
+        private HashSet<int> selectedForDeletion = new HashSet<int>();
+
+        private async Task ToggleFavorite(int productId)
+        {
+            try
+            {
+                if (selectedForDeletion.Contains(productId))
+                {
+                    // Nếu sản phẩm đã được chọn để xóa, bỏ chọn và giữ lại sản phẩm trong danh sách yêu thích
+                    selectedForDeletion.Remove(productId);
+                }
+                else
+                {
+                    // Nếu sản phẩm chưa được chọn để xóa, chúng ta sẽ thêm vào danh sách xóa
+                    selectedForDeletion.Add(productId);
+                }
+
+                // Chỉ xóa khi có sản phẩm đã được chọn trong selectedForDeletion
+                if (selectedForDeletion.Count > 0)
+                {
+                    // Gửi yêu cầu xóa sản phẩm sau khi người dùng xác nhận (nếu cần)
+                    var response = await HttpClient.DeleteAsync($"api/favorite/DeleteFavorite/{productId}");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Cập nhật danh sách yêu thích sau khi xóa
+                        favorites.RemoveAll(f => selectedForDeletion.Contains(f.IDProduct));
+                        foreach (var productIdToRemove in selectedForDeletion)
+                        {
+                            favoriteProducts.Remove(productIdToRemove);
+                        }
+                        selectedForDeletion.Clear(); // Sau khi xóa, dọn dẹp trạng thái
+                    }
+                    else
+                    {
+                        var errorMessage = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"Lỗi khi xóa sản phẩm yêu thích: {errorMessage}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi xảy ra khi thay đổi trạng thái yêu thích: {ex.Message}");
+            }
+        }
+
+
+
+    }
 }

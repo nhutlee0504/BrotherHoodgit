@@ -77,3 +77,232 @@
     height: 100%;
     width: 100%;
 }
+.cart-container {
+    width: 80%;
+    margin: 20px auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.select-all {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    font-weight: bold;
+    font-size: 18px;
+    color: #1D2939;
+}
+
+    .select-all input {
+        margin-right: 10px;
+    }
+
+.cart-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+    .cart-item:last-child {
+        border-bottom: none;
+    }
+
+    .cart-item img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+.item-details {
+    flex: 2;
+    margin-left: 15px;
+}
+
+    .item-details h3 {
+        margin: 0;
+        font-size: 18px;
+        color: #000;
+    }
+
+    .item-details p {
+        margin: 5px 0;
+        font-size: 14px;
+        color: #6B7280;
+    }
+
+.item-quantity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .item-quantity button {
+        width: 30px;
+        height: 30px;
+        border: none;
+        background-color: #22c55e;
+        color: #fff;
+        font-size: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    .item-quantity span {
+        width: 20px;
+        text-align: center;
+    }
+
+.item-price {
+    flex: 1;
+    text-align: right;
+    font-size: 16px;
+    color: #000;
+}
+
+.remove-item {
+    border: none;
+    background: none;
+    font-size: 15px;
+    cursor: pointer;
+    color: #000000;
+    position: relative;
+    top: -40px;
+}
+
+.cart-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+    .cart-actions button {
+        padding: 10px 100px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 0 10px;
+        font-weight: bold;
+        transition: all 0.3s ease; /* Thêm hiệu ứng chuyển động */
+    }
+
+.remove-all {
+    background-color: #ef4444;
+    color: #fff;
+}
+
+    .remove-all:hover {
+        background-color: #d32f2f; /* Hiệu ứng hover */
+    }
+
+    .remove-all:active {
+        transform: scale(0.98); /* Hiệu ứng nhấn nút */
+    }
+
+.continue-shopping {
+    background-color: #22c55e;
+    color: #fff;
+}
+
+    .continue-shopping:hover {
+        background-color: #1f9d42; /* Hiệu ứng hover */
+    }
+
+    .continue-shopping:active {
+        transform: scale(0.98); /* Hiệu ứng nhấn nút */
+    }
+
+.checkout {
+    background-color: #16a34a;
+    color: #fff;
+}
+
+    .checkout:hover {
+        background-color: #148f38; /* Hiệu ứng hover */
+    }
+
+    .checkout:active {
+        transform: scale(0.98);
+    }
+
+/*     .checkbox {
+        margin-right: 15px;
+    } */
+
+
+/* Product */
+.related-products {
+    margin: 20px;
+}
+
+    .related-products h2 {
+        color: green;
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+.product-list {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.product-item {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 15px;
+    width: 22%;
+    box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+    .product-item:hover {
+        transform: scale(1.05);
+    }
+
+    .product-item img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+    }
+
+.product-info {
+    margin-top: 10px;
+    text-align: left;
+}
+
+.product-name {
+    font-size: 16px;
+    margin: 5px 0;
+}
+
+.product-price {
+    color: red;
+    font-size: 18px;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.product-location {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.product-date {
+    color: #888;
+    font-size: 14px;
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+}

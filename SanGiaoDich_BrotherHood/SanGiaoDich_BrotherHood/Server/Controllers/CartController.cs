@@ -14,6 +14,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
     public class CartController : ControllerBase
     {
         private readonly ICart cart;
+
         public CartController(ICart cart)
         {
             this.cart = cart;
@@ -25,32 +26,18 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             return Ok(await cart.GetCartsByUserName(userName));
         }
 
-        [HttpPost]
-        public async Task<ActionResult> AddCart(Cart c)
+        [HttpPost("AddCart/{idProduct}")]
+        public async Task<ActionResult> AddCart(int idProduct)
         {
-            var ca = await cart.AddCart(new Cart
+            try
             {
-                UserName = c.UserName,
-              
-            });
-            if (ca == null)
+                var add = await cart.AddCart(idProduct);
+                return Ok(add);
+            }
+            catch (System.Exception)
+            {
                 return BadRequest();
-            return CreatedAtAction("AddCart", ca);
-        }
-
-        [HttpPut("IDCart")]
-        public async Task<ActionResult> UpdateCart(int IDCart, Cart c)
-        {
-            return Ok(await cart.UpdateCart(IDCart, c));
-        }
-
-        [HttpDelete("IDCart")]
-        public async Task<ActionResult> DeleteCart(int IDCart)
-        {
-            var ca = await cart.DeleteCart(IDCart);
-            if (ca == null)
-                return BadRequest();
-            return NoContent();
+            }
         }
     }
 }

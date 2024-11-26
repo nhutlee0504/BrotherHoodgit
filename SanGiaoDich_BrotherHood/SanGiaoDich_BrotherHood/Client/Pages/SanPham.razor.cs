@@ -171,5 +171,6 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             }
             UpdatePageProducts();
         }
+
     }
 }
