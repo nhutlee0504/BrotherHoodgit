@@ -16,5 +16,6 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         public Account Account { get; set; }
         [JsonIgnore]
         public ICollection<CartItem> cartitem { get; set; }
+
     }
 }

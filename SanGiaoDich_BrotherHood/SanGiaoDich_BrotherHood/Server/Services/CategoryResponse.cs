@@ -4,6 +4,7 @@ using SanGiaoDich_BrotherHood.Server.Data;
 using SanGiaoDich_BrotherHood.Shared.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SanGiaoDich_BrotherHood.Server.Services
@@ -73,6 +74,15 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
                 return null;
             }
+        }
+        public async Task<IEnumerable<Category>> GetCategoryByName(string name)
+        {
+            var cateFind = await _context.Categories.Where(c => c.NameCate.Contains(name)).ToListAsync();
+            if(cateFind == null)
+            {
+                throw new NotImplementedException("Không tìm thấy sản phẩm đang tìm kiếm");
+            }
+            return cateFind;
         }
     }
 }

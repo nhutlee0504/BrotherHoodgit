@@ -12,6 +12,8 @@ namespace API.Services
         public Task<Category> AddCategory(string nameCategory);
         public Task<Category> UpdateCategory(int IDCate, Category category);
         public Task<Category> DeleteCategory(int IDCate);
+       public Task<Category> GetCategoryByName(string name);
+
 
     }
 }

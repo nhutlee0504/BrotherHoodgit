@@ -112,9 +112,15 @@
 </style>
 <div class="search-filter-container">
     <div class="search-container">
-        <input type="text" class="search-input" placeholder="Tìm kiếm bài đăng...">
-        <button class="btn btn-search">Tìm kiếm</button>
+        <input type="text" @bind="searchQuery" class="search-input" placeholder="Tìm kiếm theo tên hoặc ID sản phẩm...">
+        <button class="btn btn-search" @onclick="Search">Tìm kiếm</button>
     </div>
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-danger">
+            @errorMessage
+        </div>
+    }
    
 
     <div class="filter-container">
@@ -175,6 +181,9 @@
     private List<Product> products = new List<Product>();
     private Dictionary<int, List<string>> productImages = new Dictionary<int, List<string>>();
     private Product product1 = new Product();
+    private string searchQuery = string.Empty;
+    private string errorMessage = string.Empty;
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -193,6 +202,68 @@
             Console.WriteLine($"Error fetching products or images: {ex.Message}");
         }
 
+    }
+    private async Task Search()
+    {
+        try
+        {
+            errorMessage = string.Empty;
+
+            // Nếu không có nhập gì, load tất cả sản phẩm
+            if (string.IsNullOrWhiteSpace(searchQuery))
+            {
+                products = await httpClient.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
+                return;
+            }
+
+            // Kiểm tra nếu là số nguyên, tìm kiếm theo ID
+            if (int.TryParse(searchQuery, out int productId))
+            {
+                var response = await httpClient.GetAsync($"api/product/GetProductById/{productId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var product = await response.Content.ReadFromJsonAsync<Product>();
+                    if (product != null)
+                    {
+                        products = new List<Product> { product };
+                    }
+                    else
+                    {
+                        errorMessage = "Không tìm thấy sản phẩm theo ID.";
+                        products = new List<Product>();
+                    }
+                }
+                else
+                {
+                    errorMessage = $"Lỗi API: {response.ReasonPhrase}";
+                }
+            }
+            else
+            {
+                // Tìm kiếm theo tên
+                var response = await httpClient.GetAsync($"api/product/GetProductByName/{searchQuery}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<List<Product>>();
+                    if (result != null && result.Any())
+                    {
+                        products = result;
+                    }
+                    else
+                    {
+                        errorMessage = "Không tìm thấy sản phẩm theo tên.";
+                    }
+                }
+                else
+                {
+                    errorMessage = $"Lỗi API: {response.ReasonPhrase}";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
+        }
     }
 
     private async Task HanndleAccept(int productid)

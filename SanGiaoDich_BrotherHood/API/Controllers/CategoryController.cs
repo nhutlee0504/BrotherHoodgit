@@ -27,8 +27,21 @@ namespace API.Controllers
         [HttpGet("IDCate")]
         public async Task<ActionResult> GetCategoryByID(int IDCate)
         {
-            return Ok(await category.GeCategory(IDCate));
+            var result = await category.GeCategory(IDCate);
+            if (result == null)
+                return NotFound($"Không tìm thấy danh mục với ID: {IDCate}");
+            return Ok(result);
         }
+
+        [HttpGet("Name")]
+        public async Task<ActionResult> GetCategoryByName(string name)
+        {
+            var categoryResult = await category.GetCategoryByName(name);
+            if (categoryResult == null)
+                return NotFound();
+            return Ok(categoryResult);
+        }
+
 
         [HttpPost]
         public async Task<ActionResult> AddCategory(string cate)

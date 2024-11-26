@@ -18,11 +18,16 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             this.cart = cart;
         }
-
-        [HttpGet("userName")]
+        [HttpGet]
+        [Route("GetCartsByUserName/{userName}")]
         public async Task<ActionResult> GetCartsByUserName(string userName)
         {
-            return Ok(await cart.GetCartsByUserName(userName));
+            var result = await cart.GetCartsByUserName(userName);
+            if (result == null)
+            {
+                return NotFound(new { Message = "Không tìm thấy giỏ hàng của người dùng." });
+            }
+            return Ok(result);
         }
 
         [HttpPost("AddCart/{idProduct}")]

@@ -5,6 +5,7 @@ using System;
 using SanGiaoDich_BrotherHood.Shared.Models;
 using System.Linq;
 using static System.Net.WebRequestMethods;
+using Microsoft.AspNetCore.Components;
 
 namespace SanGiaoDich_BrotherHood.Client.Pages
 {
@@ -22,13 +23,28 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         private int currentPage = 1;
         private int totalPages;
         private int pageSize = 4; // số lượng sp mỗi page
+        private string searchQuery = "";
 
         protected override async Task OnInitializedAsync()
         {
-            await LoadProducts();
             await LoadCategories();
+
+            var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+            var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+            if (queryParams.TryGetValue("search", out var searchParam))
+            {
+                searchQuery = searchParam.ToString();
+                await PerformSearch(searchQuery);  // Gọi hàm tìm kiếm ngay khi có từ khóa
+            }
+            else
+            {
+                await LoadProducts();
+            }
+
             UpdatePageProducts();
         }
+
 
         private async Task LoadProducts()
         {
@@ -92,9 +108,10 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         private void UpdatePageProducts()
         {
             var prods = products.Where(x => x.Status.ToLower().Contains("đã duyệt")).ToList();
-            totalPages = (int)Math.Ceiling((double)prods.Count / pageSize);
+            totalPages = prods.Any() ? (int)Math.Ceiling((double)prods.Count / pageSize) : 1;
             pagedProducts = prods.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
         }
+
 
         private void ChangePage(int page)
         {
@@ -171,5 +188,50 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             }
             UpdatePageProducts();
         }
+        private async Task OnSearchChanged(ChangeEventArgs e)
+        {
+            searchQuery = e.Value.ToString();
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                await PerformSearch(searchQuery);
+            }
+            else
+            {
+                await LoadProducts();
+            }
+
+            UpdatePageProducts();
+        }
+
+        private async Task PerformSearch(string keyword)
+        {
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                try
+                {
+                    var result = await http.GetFromJsonAsync<List<Product>>($"api/product/GetProductByName/{keyword}");
+
+                    if (result != null && result.Count > 0)
+                    {
+                        products = result;
+                    }
+                    else
+                    {
+                        products = new List<Product>();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Lỗi khi tìm kiếm sản phẩm: {ex.Message}");
+                    products = new List<Product>();
+                }
+            }
+            else
+            {
+                await LoadProducts();
+            }
+            UpdatePageProducts();
+        }
+
     }
 }
