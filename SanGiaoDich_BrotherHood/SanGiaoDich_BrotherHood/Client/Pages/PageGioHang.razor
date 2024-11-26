@@ -95,7 +95,8 @@
                         item.Price = product.Price;
                         item.CategoryName = await GetCategoryNameById(product.IDCategory);
                         var images = await GetImagesByProductId(item.IdProduct);
-                        item.ImageUrl = images.FirstOrDefault()?.Image ?? "/path/to/default-image.png";
+                        // item.ImageUrl = images.FirstOrDefault()?.Image ?? "/path/to/default-image.png";
+                        item.ImageUrl = $"{http.BaseAddress}{images.FirstOrDefault()?.Image}";
                     }
                 }
                 itemUsers = cartItems;
@@ -280,9 +281,6 @@
             errorMessage = "Lỗi khi xóa sản phẩm: " + ex.Message;
         }
     }
-
-
-
 }
 
 <style>
@@ -345,7 +343,7 @@
 
                                 <!-- Cột hình ảnh -->
                                 <td class="text-center align-middle">
-                                    <img src="@item.ImageUrl" alt="Product Image" style="width:100px;" />
+                                    <img src="~/AnhSanPham/@item.ImageUrl" alt="Product Image" style="width:100px;" />
                                 </td>
 
                                 <!-- Cột tên sản phẩm -->

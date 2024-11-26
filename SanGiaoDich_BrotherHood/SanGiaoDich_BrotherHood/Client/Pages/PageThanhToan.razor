@@ -1,85 +1,99 @@
 ﻿@page "/PageThanhToan"
 @using System.Text.Json
+@using SanGiaoDich_BrotherHood.Shared.Models
 @inject HttpClient http
 @inject NavigationManager navigation
 @inject IJSRuntime jsruntime
 @code {
+    private Bill bill = new Bill();
     private List<PageGioHang.CartItemUser> selectedCartItems;
     private decimal totalPrice = 0;
-    // private decimal tax = 0;
-    // private decimal shippingFee = 20000; // Phí vận chuyển cố định
-    private decimal grandTotal = 0;
 
     protected override async Task OnInitializedAsync()
     {
-        // Lấy thông tin các sản phẩm đã chọn từ local storage
+        // Lấy thông tin giỏ hàng từ localStorage
         var selectedItemsJson = await jsruntime.InvokeAsync<string>("localStorage.getItem", "selectedCartItems");
 
         if (!string.IsNullOrEmpty(selectedItemsJson))
         {
             selectedCartItems = JsonSerializer.Deserialize<List<PageGioHang.CartItemUser>>(selectedItemsJson);
 
-            // Tính toán các giá trị
-            if (selectedCartItems != null && selectedCartItems.Any())
-            {
-                // totalPrice = selectedCartItems.Sum(item => item.Quantity * item.Product.Price);
-                // tax = totalPrice * 0.1M; // Thuế 10%
-                // grandTotal = totalPrice + tax + shippingFee;
-                totalPrice = selectedCartItems.Sum(item => item.Price); // Không nhân với số lượng
-                grandTotal = totalPrice; // Tổng tiền chỉ là tổng giá trị sản phẩm
-            }
+            // Tính tổng giá trị
+            totalPrice = selectedCartItems.Sum(item => item.Price * item.Quantity);
         }
+
+        // Lấy thông tin username
+        bill.UserName = await jsruntime.InvokeAsync<string>("localStorage.getItem", "username");
     }
+
+    public class Bill
+    {
+        public string UserName { get; set; }
+        public decimal Total { get; set; }
+        public DateTime OrderDate { get; set; }
+        public string Status { get; set; }
+        public string PaymentType { get; set; }
+        public string FullName { get; set; }
+        public string Email { get; set; }
+        public string DeliveryAddress { get; set; }
+        public string PhoneNumber { get; set; }
+        public List<BillDetail> BillDetails { get; set; } // Đảm bảo dùng đúng tên
+    }
+
+    public class CartItemUser
+    {
+        public int IDProduct { get; set; }  // Đảm bảo thuộc tính này có mặt
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+        public string ImageUrl { get; set; } // Đảm bảo có thuộc tính này
+    }
+
 
     private async Task PlaceOrder()
     {
         if (selectedCartItems == null || !selectedCartItems.Any())
         {
-            await jsruntime.InvokeVoidAsync("alert", "Bạn chưa chọn sản phẩm nào để thanh toán.");
+            await jsruntime.InvokeVoidAsync("alert", "Bạn chưa chọn sản phẩm nào.");
             return;
         }
 
-        // Lấy thông tin từ giao diện
-        // var bill = new Bill
-        //     // {
-        //     //     FullName = fullName,
-        //     //     PhoneNumber = phone,
-        //     //     Email = email,
-        //     //     DeliveryAddress = address,
-        //     //     Total = grandTotal,
-        //     //     PaymentType = "Thanh toán bằng tiền mặt",
-        //     //     Status = "Chờ xác nhận",
-        //     //     UserName = userName,
-        //     //     OrderDate = DateTime.Now,
-        //     //     DateReceipt = DateTime.Now.AddDays(3), // Ví dụ 3 ngày nhận hàng
-        //     //     billDetails = selectedCartItems.Select(item => new BillDetail
-        //     //     {
-        //     //         ProductID = item.ProductID,
-        //     //         Quantity = item.Quantity,
-        //     //         Price = item.Price
-        //     //     }).ToList()
-        //     // };
+        // Chuẩn bị dữ liệu đơn hàng
+        bill.Total = totalPrice; // Chỉ tính tổng giá trị sản phẩm
+        bill.OrderDate = DateTime.Now;
+        bill.Status = "Chờ xác nhận";
+        bill.PaymentType = "Thanh toán bằng tiền mặt"; // Bạn có thể thay đổi nếu cần
 
-        // try
-        // {
-        //     var response = await http.PostAsJsonAsync("api/Bill/AddBill", bill);
+        // Tạo BillDetails từ selectedCartItems
+        bill.BillDetails = selectedCartItems.Select(item => new BillDetail
+            {
+                IDProduct = item.IdProduct,  // Sử dụng IDProduct trong CartItem
+                Quantity = item.Quantity,
+                Price = item.Price,  // Lấy giá từ Product liên kết trong CartItem
+                CreatedDate = DateTime.Now  // Đảm bảo bạn có gán CreatedDate nếu cần thiết
+            }).ToList();
+        try
+        {
+            // Gửi yêu cầu POST tới API
+            var response = await http.PostAsJsonAsync("api/Bill/AddBill", bill);
 
-        //     if (response.IsSuccessStatusCode)
-        //     {
-        //         await jsruntime.InvokeVoidAsync("alert", "Đặt hàng thành công!");
-        //         navigation.NavigateTo("/"); // Điều hướng về trang chủ
-        //     }
-        //     else
-        //     {
-        //         var error = await response.Content.ReadAsStringAsync();
-        //         await jsruntime.InvokeVoidAsync("alert", $"Đặt hàng thất bại: {error}");
-        //     }
-        // }
-        // catch (Exception ex)
-        // {
-        //     await jsruntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra: {ex.Message}");
-        // }
+            if (response.IsSuccessStatusCode)
+            {
+                await jsruntime.InvokeVoidAsync("alert", "Đặt hàng thành công!");
+                navigation.NavigateTo("/"); // Quay về trang chủ
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                await jsruntime.InvokeVoidAsync("alert", $"Đặt hàng thất bại: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await jsruntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra: {ex.Message}");
+        }
     }
+
+}
 
 }
 <style>
@@ -186,7 +200,7 @@
                             <i class="fas fa-user" style="color: #ffffff; margin-right: 10px;"></i>
                             Họ và tên
                         </label>
-                        <input type="text" class="form-control modern-input" id="username" placeholder="Nhập tên">
+                        <input type="text" class="form-control" id="fullName" @bind="bill.FullName" placeholder="Nhập tên" required>
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -195,7 +209,7 @@
                             <i class="fas fa-envelope" style="color: #ffffff; margin-right: 10px;"></i>
                             Email
                         </label>
-                        <input type="email" class="form-control modern-input" id="email" placeholder="Nhập email">
+                        <input type="email" class="form-control" id="email" @bind="bill.Email" placeholder="Nhập email" required>
                     </div>
                 </div>
                 <div class="col-12">
@@ -204,7 +218,7 @@
                             <i class="fas fa-map-marker-alt" style="color: #ffffff; margin-right: 10px;"></i>
                             Địa chỉ nhận hàng
                         </label>
-                        <textarea class="form-control modern-input" id="address" placeholder="Số nhà, tên đường, quận/huyện, xã/phường, tỉnh/thành phố"></textarea>
+                        <textarea class="form-control" id="deliveryAddress" @bind="bill.DeliveryAddress" placeholder="Số nhà, tên đường, quận/huyện, xã/phường, tỉnh/thành phố"></textarea>
                         <a href="#" class="custom-link" style="color:white;">Tùy chỉnh</a>
                     </div>
                 </div>
@@ -214,7 +228,7 @@
                             <i class="fas fa-phone" style="color: #ffffff; margin-right: 10px;"></i>
                             Số điện thoại
                         </label>
-                        <input type="text" class="form-control modern-input" id="phone" placeholder="Nhập số điện thoại">
+                        <input type="text" class="form-control" id="phoneNumber" @bind="bill.PhoneNumber" placeholder="Nhập số điện thoại" required>
                     </div>
                 </div>
             </div>
@@ -233,7 +247,7 @@
                         @foreach (var item in selectedCartItems)
                         {
                             <div class="product-item mb-3 d-flex align-items-center border-bottom pb-3">
-                                <img src="/AnhSanPham/@item.ImageUrl" alt="Product Image" class="img-fluid rounded" style="max-width: 90px; margin-right: 15px;">
+                                <img src="~/AnhSanPham/@item.ImageUrl" alt="Product Image" class="img-fluid rounded" style="max-width: 90px; margin-right: 15px;">
                                 <div class="product-details">
                                     <span class="product-name" style="font-weight: bolder;">@item.ProductName</span>
                                     <div class="product-price-quantity d-flex align-items-center mt-2">
@@ -255,8 +269,6 @@
                     {
                         <p>Không có sản phẩm nào được chọn để thanh toán.</p>
                     }
-
-  
                 </div>
 
                 <div class="seller-info-total-amount mt-4">
@@ -286,7 +298,6 @@
 
                     <div class="row mt-3">
                         <div class="col-md-12">
-                          
                             <h6 class="text-uppercase text-secondary font-weight-bold mb-1" style="font-size: 1rem; letter-spacing: 0.05em;">
                                 <i class="fas fa-credit-card mr-2"></i> Hình thức thanh toán
                             </h6>
@@ -341,19 +352,16 @@
                         <hr class="bg-success mt-2" style="height: 2px; border-radius: 5px;">
                         <div class="d-flex justify-content-between">
                             <span class="text-danger font-weight-bold" style="font-size: 1.5em;">Tổng cộng:</span>
-                            <span class="text-danger font-weight-bold" style="font-size: 1.5em;">@($"{grandTotal:N0} VNĐ")</span>
+                            <span class="text-danger font-weight-bold" style="font-size: 1.5em;">@($"{totalPrice:N0} VNĐ")</span>
                         </div>
                     </div>
-            </div>
-
-            <!-- Submit Button -->
-            <div class="text-center mt-4">
-                <button class="submit-btn btn btn-success font-weight-bold">
-                    <i class="fas fa-shopping-cart mr-2"></i> Đặt hàng
-                </button>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="text-center mt-4">
+                    <button class="btn btn-success btn-lg" @onclick="PlaceOrder">Đặt hàng</button>
+                </div>
             </div>
         </div>
-        
-    </div>
     </div>
 </div>
