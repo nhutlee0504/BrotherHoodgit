@@ -113,9 +113,12 @@ else if (userAccount != null)
 						<img src="/AnhAvatar/@userAccount.ImageAccount" class="rounded-circle img-fluid" style="width: 100px;">
 						<h5 class="mt-3">@userAccount.FullName</h5>
 						<p class="text-muted">#CodeUser</p>
-						<button class="btn btn-outline-primary btn-sm mb-3" type="button" onclick="triggerFileInput()">
-							<i class="fa fa-upload"></i> Tải ảnh lên
-						</button>
+						@if (isCurrentUser)
+						{
+							<button class="btn btn-outline-primary btn-sm mb-3" type="button" onclick="triggerFileInput()">
+								<i class="fa fa-upload"></i> Tải ảnh lên
+							</button>
+						}
 
 						<!-- Input file -->
 						<InputFile id="fileInput"
@@ -140,7 +143,12 @@ else if (userAccount != null)
 				<div class="row mb-3">
 					<div class="col-12 d-grid gap-2">
 						<div class="d-flex justify-content-around">
-							<button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">	<i class="fas fa-user-edit"></i> Cập nhật thông tin</button>
+							@if (isCurrentUser)
+							{
+								<button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+									<i class="fas fa-user-edit"></i> Cập nhật thông tin
+								</button>
+						
 							@* 	<button class="btn btn-outline-success">
 						<i class="fas fa-user-edit"></i> Cập nhật thông tin
 						</button> *@
@@ -154,6 +162,7 @@ else if (userAccount != null)
 									<i class="fas fa-plus-circle"></i> Đăng bài
 								</button>
 							</a>
+							}
 						</div>
 					</div>
 				</div>
@@ -172,8 +181,6 @@ else if (userAccount != null)
 						</p>
 					</div>
 				</div>
-
-
 				<!-- Payment Info with Icon -->
 				<div class="card shadow mb-3" style="border:none;">
 					<div class="card-body d-flex align-items-center justify-content-start">
@@ -238,6 +245,8 @@ else if (userAccount != null)
 										<div class="d-flex justify-content-end">
 											@if (productList.Status == "Đã duyệt")
 											{
+												@if (isCurrentUser)
+												{
 												@if (productList.ProrityLevel == "Phổ thông")
 												{
 													<button class="btn btn-info me-2" @onclick="() => UpgradePriorityLevel(productList.IDProduct)">
@@ -252,6 +261,7 @@ else if (userAccount != null)
 												<button class="btn btn-danger me-2" @onclick="() => DeleteProduct(productList.IDProduct)">
 													<i class="fa fa-trash"></i> Xóa
 												</button>
+												}
 											}
 										</div>
 

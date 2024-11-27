@@ -32,6 +32,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                     {
                         IDCart = cartFind.IDCart,
                         IDProduct = idProduct,
+                        CreatedDate = DateTime.Now,
                     };
                     _context.CartItems.Add(newCartItem);
                     await _context.SaveChangesAsync();

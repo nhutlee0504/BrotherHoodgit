@@ -24,7 +24,10 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration; // Thêm IConfiguration
         private readonly HttpClient _httpClient;
-        public ProductResponse(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, HttpClient httpClient)
+		private readonly string _apiUrl = "https://generativelanguage.googleapis.com/v1beta2/models/gemini-1.5-safe/contentModeration"; // Địa chỉ API kiểm duyệt văn bản
+		private readonly string _apiKey = "AIzaSyDbce3o_4id0lVOhGr0Xva0KJcVeR5RRc4"; // Thay API key của bạn
+
+		public ProductResponse(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, HttpClient httpClient)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
@@ -32,69 +35,149 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             _httpClient = httpClient;
         }
 
-        public async Task<Product> AddProduct(ProductDto product)
-        {
-            var user = GetUserInfoFromClaims();
+		public async Task<bool> ContainsProfanityAsync(string text)
+		{
+			if (string.IsNullOrWhiteSpace(text))
+				throw new ArgumentException("Nội dung kiểm tra không được để trống.");
 
-            if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null)
-            {
-                throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
-            }
-            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
+			var requestPayload = new { text };
+			var requestContent = new StringContent(
+				JsonSerializer.Serialize(requestPayload),
+				Encoding.UTF8,
+				"application/json"
+			);
 
-            if (existingUser == null)
-            {
-                throw new InvalidOperationException("Người dùng không tồn tại");
-            }
+			// Sử dụng HttpRequestMessage để thêm header Authorization
+			var request = new HttpRequestMessage(HttpMethod.Post, _apiUrl)
+			{
+				Content = requestContent
+			};
 
-         
-            int deductionAmount;
-            if (product.ProrityLevel == "Ưu tiên")
-            {
-                deductionAmount = 50000; // Mức trừ cho sản phẩm ưu tiên
-            }
-            else if (product.ProrityLevel == "Phổ thông")
-            {
-                deductionAmount = 25000; // Mức trừ cho sản phẩm phổ thông
-            }
-            else
-            {
-                throw new InvalidOperationException("Mức độ ưu tiên không hợp lệ");
-            }
+			request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _apiKey);
 
-            // Kiểm tra số dư
-            if (existingUser.PreSystem < deductionAmount)
-            {
-                throw new InvalidOperationException("Số dư không đủ để thực hiện thao tác này");
-            }
+			try
+			{
+				var response = await _httpClient.SendAsync(request);
 
-            // Trừ số dư
-            existingUser.PreSystem -= deductionAmount;
-            _context.Accounts.Update(existingUser);
+				if (!response.IsSuccessStatusCode)
+				{
+					var errorDetails = await response.Content.ReadAsStringAsync();
+					throw new InvalidOperationException($"Lỗi từ API kiểm duyệt: {response.StatusCode} - {errorDetails}");
+				}
+
+				var result = await response.Content.ReadAsStringAsync();
+				var profanityResult = JsonSerializer.Deserialize<ProfanityCheckResult>(result);
+
+				if (profanityResult == null)
+					throw new InvalidOperationException("API trả về phản hồi không hợp lệ hoặc null.");
+
+				return profanityResult.IsProfane;
+			}
+			catch (HttpRequestException ex)
+			{
+				throw new InvalidOperationException($"Lỗi kết nối đến API kiểm duyệt: {ex.Message}");
+			}
+			catch (JsonException ex)
+			{
+				throw new InvalidOperationException($"Lỗi giải mã JSON từ phản hồi API: {ex.Message}");
+			}
+			catch (Exception ex)
+			{
+				throw new InvalidOperationException($"Lỗi không xác định: {ex.Message}");
+			}
+		}
+
+
+		public class ProfanityCheckResult
+		{
+			public bool IsProfane { get; set; }
+			public string Reason { get; set; } // Nếu API cung cấp lý do (optional)
+		}
+
+
+		// Định nghĩa model phản hồi của API kiểm duyệt
+		private class ModerationResponse
+		{
+			public bool IsSafe { get; set; }
+			public string Reason { get; set; }
+		}
+
+		public async Task<Product> AddProduct(ProductDto product)
+		{
+			// Kiểm duyệt tên sản phẩm
+			if (!await ContainsProfanityAsync(product.Name))
+			{
+				throw new InvalidOperationException("Tên sản phẩm chứa nội dung không phù hợp.");
+			}
+
+			// Kiểm duyệt mô tả sản phẩm
+			if (!await ContainsProfanityAsync(product.Description))
+			{
+				throw new InvalidOperationException("Mô tả sản phẩm chứa nội dung không phù hợp.");
+			}
+
+			// Phần còn lại của logic thêm sản phẩm
+			var user = GetUserInfoFromClaims();
+
+			if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null)
+			{
+				throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
+			}
+
+			var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
+
+			if (existingUser == null)
+			{
+				throw new InvalidOperationException("Người dùng không tồn tại");
+			}
+
+			int deductionAmount;
+			if (product.ProrityLevel == "Ưu tiên")
+			{
+				deductionAmount = 50000; // Mức trừ cho sản phẩm ưu tiên
+			}
+			else if (product.ProrityLevel == "Phổ thông")
+			{
+				deductionAmount = 25000; // Mức trừ cho sản phẩm phổ thông
+			}
+			else
+			{
+				throw new InvalidOperationException("Mức độ ưu tiên không hợp lệ");
+			}
+
+			// Kiểm tra số dư
+			if (existingUser.PreSystem < deductionAmount)
+			{
+				throw new InvalidOperationException("Số dư không đủ để thực hiện thao tác này");
+			}
+
+			// Trừ số dư
+			existingUser.PreSystem -= deductionAmount;
+			_context.Accounts.Update(existingUser);
 
 			var newProd = new Product
-            {
-                Name = product.Name,
-                Quantity = product.Quantity,
-                Price = product.Price,
-                Description = product.Description,
-                IDCategory = product.CategoryId,
-                Status = "Đang chờ duyệt",
-                ProrityLevel = product.ProrityLevel,
-                CreatedDate = DateTime.Now,
-                UpdatedDate = DateTime.Now,
-                StartDate = DateTime.Now,
-                UserName = user.UserName,
-                AccountAccept = "Admin"
+			{
+				Name = product.Name,
+				Quantity = product.Quantity,
+				Price = product.Price,
+				Description = product.Description,
+				IDCategory = product.CategoryId,
+				Status = "Đang chờ duyệt",
+				ProrityLevel = product.ProrityLevel,
+				CreatedDate = DateTime.Now,
+				UpdatedDate = DateTime.Now,
+				StartDate = DateTime.Now,
+				UserName = user.UserName,
+				AccountAccept = "Admin"
+			};
 
-            };
+			await _context.Products.AddAsync(newProd);
+			await _context.SaveChangesAsync();
 
-            await _context.Products.AddAsync(newProd);
-            await _context.SaveChangesAsync();
+			return newProd;
+		}
 
-            return newProd;
-        }
-        public async Task<IEnumerable<Product>> GetAllProductsAsync()//Lấy tất cả sản phẩm
+		public async Task<IEnumerable<Product>> GetAllProductsAsync()//Lấy tất cả sản phẩm
         {
             var getP = await _context.Products.ToListAsync();
             if (getP == null)

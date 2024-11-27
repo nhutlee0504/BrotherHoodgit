@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 using SanGiaoDich_BrotherHood.Shared.Dto;
 using SanGiaoDich_BrotherHood.Shared.Models;
 using System;
@@ -26,14 +27,65 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		private string productErrorMessage;
 		private Dictionary<int, string> categoryNames = new Dictionary<int, string>();
 		private Dictionary<int, string> productImages = new Dictionary<int, string>();
+        private string currentUserName;
+        private bool isCurrentUser => string.Equals(currentUserName, username, StringComparison.OrdinalIgnoreCase);
 
-		// Đối tượng để lưu tệp
-		private IBrowserFile selectedFile;
+        private class AccountInfoDto
+        {
+            public string UserName { get; set; }
+            public string FullName { get; set; }
+            public string PhoneNumber { get; set; }
+            public string Gender { get; set; }
+            public DateTime? Birthday { get; set; }
+            public string ImageAccount { get; set; }
+        }
+        private bool isLoading = true;
+
+
+        // Đối tượng để lưu tệp
+        private IBrowserFile selectedFile;
 		protected override async Task OnInitializedAsync()
 		{
 			await LoadUserData();
 			await LoadProducts();
 			await LoadCategoryNames(userProducts);
+			try
+			{
+				// Kiểm tra token trước khi gọi API
+				var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
+				if (string.IsNullOrEmpty(token))
+				{
+					currentUserName = string.Empty; // Không đăng nhập
+					return;
+				}
+
+				var response = await HttpClient.GetAsync("api/User/GetMyInfo");
+
+				if (response.IsSuccessStatusCode)
+				{
+					var accountInfo = await response.Content.ReadFromJsonAsync<AccountInfoDto>();
+					currentUserName = accountInfo?.UserName ?? string.Empty;
+				}
+				else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+				{
+					currentUserName = string.Empty; // Xử lý trường hợp không được phép
+				}
+				else
+				{
+					currentUserName = string.Empty; // Xử lý các trường hợp lỗi khác
+				}
+			}
+			catch (HttpRequestException)
+			{
+				// Lỗi liên quan đến kết nối, không log lên console
+				currentUserName = string.Empty;
+			}
+			catch (Exception ex)
+			{
+				// Xử lý lỗi ngoại lệ khác mà không ghi log
+				Console.WriteLine($"Đã xảy ra lỗi: {ex.Message}"); // Chỉ log nếu cần
+				currentUserName = string.Empty;
+			}
 		}
 		private async Task LoadUserData()
 		{

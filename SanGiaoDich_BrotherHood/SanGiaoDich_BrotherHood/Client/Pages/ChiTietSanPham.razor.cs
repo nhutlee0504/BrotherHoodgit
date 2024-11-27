@@ -17,6 +17,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         private Account user;
         private List<ImageProduct> images;
         private string errorMessage;
+        private string name = string.Empty;
         private bool isFavorite = false;  // Trạng thái yêu thích của sản phẩm
 
         protected override async Task OnInitializedAsync()
@@ -71,8 +72,13 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             {
                 return null;
             }
-            return await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
-        }
+			var account = await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
+			if (account != null)
+			{
+				name = account.UserName; // Gán tên người dùng vào biến name
+			}
+			return account;
+		}
 
         private async Task<List<ImageProduct>> GetImagesByProductId(int id)
         {
@@ -143,8 +149,5 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                 errorMessage = "Bạn cần đăng nhập để thực hiện hành động này.";
             }
         }
-
-
-
     }
 }
