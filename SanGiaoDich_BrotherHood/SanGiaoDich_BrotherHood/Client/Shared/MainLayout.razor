@@ -306,8 +306,8 @@
     }
 
 
+>>>>>>> QuocHuy
 </style>
-
 <div class="page">
     <div class="main">
         @*Header*@
@@ -329,8 +329,12 @@
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
                         <div class="d-flex justify-content-center me-0">
                             <div class="search-box">
-                                <button class="btn-search"><i class="fas fa-search"></i></button>
-                                <input type="text" class="input-search" style="color:black;border-color:#15ba6d !important; border-radius:15px; font-size:14px; font-family:Arial, Helvetica, sans-serif" placeholder="Nhập thông tin tìm kiếm...">
+                                <button class="btn-search" @onclick="OnSearchClick"><i class="fas fa-search"></i></button>
+                                <input type="text" class="input-search"
+                                       @bind="searchQuery"
+                                       placeholder="Nhập thông tin tìm kiếm..."
+                                       style="color:black; border-color:#15ba6d !important; border-radius:15px; font-size:14px; font-family:Arial, Helvetica, sans-serif"
+                                       id="searchQueryInput">
                             </div>
     
                         </div>
@@ -455,9 +459,6 @@
                                         </li>
                                     </ul>
                                 </div>
-
-
-
                             }
                         </div>
 
@@ -543,10 +544,25 @@
     private string errorMessage;
     private AccountInfoDto accountInfo;
     private bool IsLoggedIn { get; set; } = false; // Biến để theo dõi trạng thái đăng nhập
+    private string searchQuery;
 
     protected override async Task OnInitializedAsync()
     {
         await CheckTokenAndLoadAccountInfo();
+    }
+
+    private void OnSearchClick()
+    {
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            // Điều hướng đến trang sản phẩm với tham số tìm kiếm
+            NavigationManager.NavigateTo($"/sanpham?search={searchQuery}");
+        }
+        else
+        {
+            // Nếu không có từ khóa, chuyển đến trang sản phẩm không có tham số tìm kiếm
+            NavigationManager.NavigateTo("/sanpham");
+        }
     }
 
     private async Task CheckTokenAndLoadAccountInfo()

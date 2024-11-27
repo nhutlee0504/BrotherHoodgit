@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace API.Models
 {
@@ -17,6 +19,9 @@ namespace API.Models
         public string Status { get; set; }
         public bool IsDeleted { get; set; }
         public string TypeContent { get; set; }
+        [JsonIgnore]
         public Conversation conversation { get; set; }
+        [JsonInclude]
+        public ICollection<ConversationParticipant> conversationParticipants { get; set; }
     }
 }

@@ -14,14 +14,14 @@ namespace SanGiaoDich_BrotherHood.Server.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
-        public VnPayService(IConfiguration configuration , ApplicationDbContext context)
+        public VnPayService(IConfiguration configuration, ApplicationDbContext context)
         {
             _configuration = configuration;
             _context = context;
         }
         public string CreatePaymentUrl(PaymentRequestModel model, HttpContext context)
         {
-      
+
             var timeZoneById = TimeZoneInfo.FindSystemTimeZoneById(_configuration["TimeZoneId"]);
             var timeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneById);
             var tick = model.CreatedDate.Ticks.ToString();
@@ -34,7 +34,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             pay.AddRequestData("vnp_Amount", ((int)model.Amount * 100).ToString());
             pay.AddRequestData("vnp_CreateDate", model.CreatedDate.ToString("yyyyMMddHHmmss"));
             pay.AddRequestData("vnp_CurrCode", _configuration["Vnpay:CurrCode"]);
-            pay.AddRequestData("vnp_IpAddr",pay.GetIpAddress(context));
+            pay.AddRequestData("vnp_IpAddr", pay.GetIpAddress(context));
             pay.AddRequestData("vnp_Locale", _configuration["Vnpay:Locale"]);
             pay.AddRequestData("vnp_OrderInfo", $"{model.OrderDescription}");
             pay.AddRequestData("vnp_OrderType", "other");
@@ -58,7 +58,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 .FirstOrDefault(pr => pr.OrderId == response.OrderId);
             if (paymentResponse != null && paymentResponse.IsProcessed)
             {
-                return paymentResponse; 
+                return paymentResponse;
             }
 
             var paymentRequest = _context.PaymentRequests
@@ -84,7 +84,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 PaymentId = response.PaymentId,
                 OrderDescription = paymentRequest.OrderDescription,
                 PaymentReqID = paymentRequest.PaymentReqID,
-                IsProcessed = false 
+                IsProcessed = false
             };
 
             _context.PaymentResponses.Add(paymentResponse);
@@ -112,7 +112,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 if (userAccount != null)
                 {
                     userAccount.PreSystem += amount;
-                    _context.Accounts.Update(userAccount); 
+                    _context.Accounts.Update(userAccount);
                     _context.SaveChanges();
                 }
                 else

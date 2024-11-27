@@ -42,9 +42,9 @@ namespace API.Services
             }
         }
 
-        public async Task<IEnumerable<Cart>> GetCartsByUserName(string userName)
+        public async Task<Cart> GetCartsByUserName(string userName)
         {
-            return await _context.Carts.Where(x => x.UserName == userName).ToListAsync();
+            return await _context.Carts.FirstOrDefaultAsync(x => x.UserName == userName);
         }
 
         public async Task<Cart> UpdateCart(int IDCart, Cart cart)
@@ -66,5 +66,6 @@ namespace API.Services
                 return null;
             }
         }
+
     }
 }

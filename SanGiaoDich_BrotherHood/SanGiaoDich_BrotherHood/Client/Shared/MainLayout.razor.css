@@ -128,3 +128,245 @@
 }
 
 
+
+
+.navbar-nav .nav-link {
+    color: black;
+    text-decoration: none;
+    padding: 10px 15px;
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+    .navbar-nav .nav-link:hover {
+        color: white;
+        background-color: green;
+        border-radius: 5px;
+    }
+
+body {
+    font-family: Arial, sans-serif;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    border-bottom: 1px solid #ddd;
+}
+
+.logo img {
+    width: 50px;
+    height: auto;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 15px;
+    padding: 5px;
+    background-color: #f9f9f9;
+}
+
+    .search-bar input {
+        border: none;
+        outline: none;
+        padding: 5px;
+    }
+
+    .search-bar button {
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+
+.menu {
+    display: flex;
+    gap: 15px;
+}
+
+    .menu a {
+        text-decoration: none;
+        color: black;
+        padding: 10px 15px;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+
+        .menu a:hover {
+            background-color: lightgray;
+        }
+
+.auth-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+    .auth-buttons .register {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .auth-buttons .login {
+        background-color: #333;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .auth-buttons button:hover {
+        opacity: 0.8;
+    }
+
+footer {
+    background-color: #ffffff;
+    padding: 20px 0;
+    border-top: 1px solid #ccc;
+}
+
+ul {
+    padding-left: 0;
+    margin: 0;
+}
+
+    ul > li > a {
+        text-decoration: none;
+        color: black;
+    }
+
+    ul > li {
+        list-style: none;
+    }
+
+.social-icons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 10px;
+    padding-right: 150px;
+    padding-bottom: 90px;
+}
+
+    .social-icons a {
+        color: #28a745;
+        top: 20px;
+    }
+
+.navbar-toggler-icon {
+    background-image: url('/AnhGiaoDien/menu.png');
+}
+
+.page {
+    font-family: 'Playfair Display', serif;
+}
+
+.content {
+    font-family: 'Playfair Display', serif;
+}
+
+#scrollToTopBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    border-radius: 50%;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+/* Kiểu cho nút dropdown */
+.user-dropdown {
+    margin-right: 15px;
+}
+
+.user-dropdown-toggle {
+    background: none;
+    border: none;
+    color: #333;
+    font-size: 1.8em; /* Tăng kích thước biểu tượng */
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+/* Mở rộng dropdown menu */
+.dropdown-menu {
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 15px 0;
+    min-width: 260px; /* Tăng chiều rộng */
+}
+
+/* Card thông tin người dùng */
+.user-info-card {
+    padding: 15px; /* Tăng padding cho card */
+    background-color: #f8f9fa;
+    border: none;
+    border-bottom: 1px solid #eaeaea;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 5px;
+}
+
+/* Ảnh đại diện người dùng */
+.user-avatar {
+    width: 60px; /* Tăng kích thước ảnh đại diện */
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Text trong card */
+.user-info-card .card-title {
+    font-size: 1.1em; /* Tăng kích thước font tên người dùng */
+    font-weight: bold;
+    margin-bottom: 0.2rem;
+}
+
+.user-info-card .card-text {
+    font-size: 0.9em; /* Tăng kích thước font cho chức danh */
+    color: #666;
+}
+
+/* Kiểu cho từng item trong dropdown */
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Tăng khoảng cách giữa icon và text */
+    padding: 10px 20px; /* Tăng padding cho các item */
+    color: #333;
+    font-size: 1em; /* Tăng kích thước font */
+    transition: background-color 0.3s;
+}
+
+    .dropdown-item:hover {
+        background-color: #f1f1f1;
+    }
+
+    /* Kiểu riêng cho item đăng xuất */
+    .dropdown-item.text-danger {
+        color: #f44336;
+    }
+
+        .dropdown-item.text-danger:hover {
+            background-color: #ffe6e6;
+        }
+
+/* Divider trong dropdown */
+.dropdown-divider {
+    margin: 10px 0;
+    border-top: 1px solid #eaeaea;
+}
+
+

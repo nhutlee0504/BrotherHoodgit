@@ -59,7 +59,13 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 PreSystem = 10000,
                 IsActived = true
             };
+            var newCart = new Cart
+            {
+                UserName = newAdmin.UserName,
+            };
+            
             await _context.Accounts.AddAsync(newAdmin);
+            await _context.Carts.AddAsync(newCart);
             await _context.SaveChangesAsync();
             return newAdmin;
         }
@@ -116,10 +122,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             if (user == null)
             {
                 throw new UnauthorizedAccessException("Không tìm thấy người dùng.");
-            }
-            if (!IsValidPhone(infoAccountDto.Phone))
-            {
-                throw new ArgumentException("Số điện thoại không hợp lệ");
             }
             user.FullName = infoAccountDto.FullName;
             user.Email = infoAccountDto.Email;

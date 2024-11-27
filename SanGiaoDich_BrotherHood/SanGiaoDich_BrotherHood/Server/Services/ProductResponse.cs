@@ -9,8 +9,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Security.Principal;
+using System.Text.Json;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace SanGiaoDich_BrotherHood.Server.Services
@@ -20,11 +23,13 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration; // Thêm IConfiguration
-        public ProductResponse(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
+        private readonly HttpClient _httpClient;
+        public ProductResponse(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, HttpClient httpClient)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
+            _httpClient = httpClient;
         }
 
         public async Task<Product> AddProduct(ProductDto product)
@@ -42,7 +47,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 throw new InvalidOperationException("Người dùng không tồn tại");
             }
 
-            // Xác định số tiền cần trừ dựa trên mức ưu tiên
+         
             int deductionAmount;
             if (product.ProrityLevel == "Ưu tiên")
             {
@@ -67,8 +72,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             existingUser.PreSystem -= deductionAmount;
             _context.Accounts.Update(existingUser);
 
-
-            var newProd = new Product
+			var newProd = new Product
             {
                 Name = product.Name,
                 Quantity = product.Quantity,
@@ -134,19 +138,19 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 		public async Task<Product> DeleteProductById(int id)//Xóa sản phẩm
         {
             var user = GetUserInfoFromClaims();
-            if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null || user.IDCard == null)
-            {
-                throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
-            }
+            //if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null || user.IDCard == null)
+            //{
+            //    throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
+            //}
             var product = await _context.Products.FirstOrDefaultAsync(x => x.IDProduct == id);
             if(product == null)
             {
                 throw new NotImplementedException("Không tìm thấy sản phẩm");
             }
-            if(product.UserName != user.UserName)
-            {
-                throw new UnauthorizedAccessException("Bạn không có quyền xóa sản phẩm này");
-            }
+            //if(product.UserName != user.UserName)
+            //{
+            //    throw new UnauthorizedAccessException("Bạn không có quyền xóa sản phẩm này");
+            //}
             product.Status = "Đã xóa";
             await _context.SaveChangesAsync();
             return product;
@@ -198,6 +202,17 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             return existingProduct;
         }
 
+        public async Task<Product> AcceptProduct(int idproduct)
+        {
+            var existingProduct = await _context.Products.FirstOrDefaultAsync(x => x.IDProduct == idproduct);
+            if (existingProduct == null)
+            {
+                throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
+            }
+            existingProduct.Status = "Đã duyệt";
+            _context.SaveChanges();
+            return existingProduct;
+        }
         public async Task<Product> CancleProduct(int idproduct)
         {
             var existingProduct = await _context.Products.FirstOrDefaultAsync(x => x.IDProduct == idproduct);
@@ -267,7 +282,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                         // Log or handle the invalid date format here if needed
                     }
                 }
-
                 return (
                     userNameClaim?.Value,
                     emailClaim?.Value,
@@ -285,17 +299,45 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             throw new UnauthorizedAccessException("Vui lòng đăng nhập vào hệ thống.");
         }
 
-        public async Task<Product> AcceptProduct(int idproduct)
-        {
-            var existingProduct = await _context.Products.FirstOrDefaultAsync(x => x.IDProduct == idproduct);
-            if (existingProduct == null)
-            {
-                throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
-            }
+		public async Task<Product> UpdateProrityLevel(int id)
+		{
+			var prodFind = await _context.Products.FindAsync(id);
 
-            existingProduct.Status = "Đã duyệt";
-            _context.SaveChanges();
-            return existingProduct;
-        }
-    }
+			if (prodFind == null)
+			{
+				throw new NotImplementedException("Không tìm thấy sản phẩm");
+			}
+
+			if (prodFind.ProrityLevel == "Ưu tiên")
+			{
+				throw new InvalidOperationException("Sản phẩm đã ở mức ưu tiên");
+			}
+
+			// Trừ tiền của người dùng
+			var user = GetUserInfoFromClaims();
+			var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
+
+			if (existingUser == null)
+			{
+				throw new InvalidOperationException("Người dùng không tồn tại");
+			}
+
+			const int upgradeCost = 50000; // Giá nâng cấp lên ưu tiên
+			if (existingUser.PreSystem < upgradeCost)
+			{
+				throw new InvalidOperationException("Số dư không đủ để nâng cấp sản phẩm");
+			}
+
+			existingUser.PreSystem -= upgradeCost;
+			_context.Accounts.Update(existingUser);
+
+			// Cập nhật mức độ ưu tiên
+			prodFind.ProrityLevel = "Ưu tiên";
+			prodFind.UpdatedDate = DateTime.Now;
+
+			await _context.SaveChangesAsync();
+			return prodFind;
+		}
+	}
+      
 }

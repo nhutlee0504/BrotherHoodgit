@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using System;
-
 namespace API.Models
 {
     public class Conversation
@@ -13,7 +13,11 @@ namespace API.Models
         public string UserName { get; set; }
         public DateTime CreatedDate { get; set; }
         public bool IsDeleted { get; set; }
-        //public Account Account { get; set; }
-        //public ICollection<Message> message { get; set; }
+        [JsonIgnore]
+        public Account Account { get; set; }
+        [JsonIgnore]
+        public ICollection<Message> message { get; set; }
+        [JsonInclude]
+        public ICollection<ConversationParticipant> conversationParticipants { get; set; }
     }
 }

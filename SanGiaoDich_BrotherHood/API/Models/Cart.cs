@@ -3,6 +3,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace API.Models
 {
@@ -14,6 +15,7 @@ namespace API.Models
         [ForeignKey("Account")]
         public string UserName { get; set; }
         public Account Account { get; set; }
-        public ICollection<CartItem> cartitem { get; set; }
+        [JsonIgnore]
+        public ICollection<CartItem> cartItem { get; set; }
     }
 }

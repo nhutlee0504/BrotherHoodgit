@@ -180,5 +180,43 @@ namespace API.Services
             }
             throw new UnauthorizedAccessException("Vui lòng đăng nhập vào hệ thống.");
         }
+        public async Task<ImageProduct> UpdateImage(int imageId, IFormFile file)
+        {
+            var user = GetUserInfoFromClaims();
+            //if (user.Role != "Người dùng")
+            //{
+            //    throw new UnauthorizedAccessException("Chỉ người bán mới có thể cập nhật ảnh sản phẩm");
+            //}
+
+            var imageProduct = await _context.ImageProducts.FindAsync(imageId);
+            if (imageProduct == null)
+            {
+                throw new KeyNotFoundException("Ảnh không tồn tại.");
+            }
+
+            var product = await _context.Products.FindAsync(imageProduct.IDProduct);
+            if (product.UserName != user.UserName)
+            {
+                throw new UnauthorizedAccessException("Bạn không có quyền cập nhật ảnh này.");
+            }
+
+            var fileName = Path.GetFileName(file.FileName);
+            var filePath = Path.Combine(_imagePath, fileName);
+
+            // Lưu tệp vào thư mục
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // Cập nhật ảnh trong cơ sở dữ liệu
+            imageProduct.Image = fileName;
+            _context.ImageProducts.Update(imageProduct);
+            await _context.SaveChangesAsync();
+
+            return imageProduct;
+        }
+
+
     }
 }

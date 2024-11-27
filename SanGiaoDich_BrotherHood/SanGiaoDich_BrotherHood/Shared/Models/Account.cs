@@ -20,7 +20,6 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         public string Email { get; set; } 
 
         [Column(TypeName = "varchar(12)")]
-        [RegularExpression(@"^(0[3|5|7|8|9])([0-9]{8})$|^(02)([0-9]{8})$", ErrorMessage = "Số điện thoại không hợp lệ")]
         public string PhoneNumber { get; set; }
 
         [Column(TypeName = "nvarchar(6)")]

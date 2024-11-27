@@ -1,0 +1,182 @@
+﻿@page "/NhanTin"
+
+<!-- Font Awesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet" />
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+      rel="stylesheet" />
+<!-- MDB -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/8.1.0/mdb.min.css"
+      rel="stylesheet" />
+
+@code {
+
+}
+<div class="chat-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="search-bar">
+            <h3>Đoạn chat</h3>
+            <div class="search-area">
+                <!-- Search input with icon inside -->
+                <div class="input-with-icon">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Tìm kiếm.......">
+                </div>
+
+                <!-- Settings dropdown -->
+                <div class="dropdown">
+                    <button class="btn-settings" type="button">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a href="#">Cài đặt 1</a></li>
+                        <li><a href="#">Cài đặt 2</a></li>
+                        <li><a href="#">Cài đặt 3</a></li>
+                    </ul>
+                </div>
+
+                <!-- Tools dropdown -->
+                @* <div class="dropdown">
+                    <button class="btn-settings" type="button">
+                        <i class="fa-solid fa-briefcase"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a href="#">Công cụ 1</a></li>
+                        <li><a href="#">Công cụ 2</a></li>
+                        <li><a href="#">Công cụ 3</a></li>
+                    </ul>
+                </div> *@
+            </div>
+        </div>
+
+        <div class="chat-list">
+            <!-- Repeat chat-item for each user -->
+            <div class="chat-item">
+                <div class="avatar"></div>
+                <div class="chat-info">
+                    <p class="user-name">Người dùng 1</p>
+                    <p class="last-message">Bạn: Anh gửi chi tiết ạ</p>
+                </div>
+                <div class="time">4 phút</div>
+            </div>
+
+            <div class="chat-item">
+                <div class="avatar"></div>
+                <div class="chat-info">
+                    <p class="user-name">Người dùng 2</p>
+                    <p class="last-message">Bạn: Anh gửi chi tiết ạ</p>
+                </div>
+                <div class="time">4 phút</div>
+            </div>
+
+            <div class="chat-item">
+                <div class="avatar"></div>
+                <div class="chat-info">
+                    <p class="user-name">Người dùng 3</p>
+                    <p class="last-message">Bạn: Anh gửi chi tiết ạ</p>
+                </div>
+                <div class="time">4 phút</div>
+            </div>
+
+            <div class="chat-item">
+                <div class="avatar"></div>
+                <div class="chat-info">
+                    <p class="user-name">Người dùng 4</p>
+                    <p class="last-message">Bạn: Anh gửi chi tiết ạ</p>
+                </div>
+                <div class="time">4 phút</div>
+            </div>
+
+            <div class="chat-item">
+                <div class="avatar"></div>
+                <div class="chat-info">
+                    <p class="user-name">Người dùng 5</p>
+                    <p class="last-message">Bạn: Anh gửi chi tiết ạ</p>
+                </div>
+                <div class="time">4 phút</div>
+            </div>
+
+            <div class="chat-item">
+                <div class="avatar"></div>
+                <div class="chat-info">
+                    <p class="user-name">Người dùng 6</p>
+                    <p class="last-message">Bạn: Anh gửi chi tiết ạ</p>
+                </div>
+                <div class="time">4 phút</div>
+            </div>
+
+            <div class="chat-item">
+                <div class="avatar"></div>
+                <div class="chat-info">
+                    <p class="user-name">Người dùng 7</p>
+                    <p class="last-message">Bạn: Anh gửi chi tiết ạ</p>
+                </div>
+                <div class="time">4 phút</div>
+            </div>
+
+            <div class="chat-item">
+                <div class="avatar"></div>
+                <div class="chat-info">
+                    <p class="user-name">Người dùng 8</p>
+                    <p class="last-message">Bạn: Anh gửi chi tiết ạ</p>
+                </div>
+                <div class="time">4 phút</div>
+            </div>
+
+            <div class="chat-item">
+                <div class="avatar"></div>
+                <div class="chat-info">
+                    <p class="user-name">Người dùng 9</p>
+                    <p class="last-message">Bạn: Anh gửi chi tiết ạ</p>
+                </div>
+                <div class="time">4 phút</div>
+            </div>
+
+            <div class="chat-item">
+                <div class="avatar"></div>
+                <div class="chat-info">
+                    <p class="user-name">Người dùng 10</p>
+                    <p class="last-message">Bạn: Anh gửi chi tiết ạ</p>
+                </div>
+                <div class="time">4 phút</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Section -->
+    <div class="chat-section">
+        <div class="chat-header">
+            <div class="header-info">
+                <div class="avatar-large"></div>
+                <div>
+                    <p class="chat-user-name">Tên người dùng</p>
+                    <p class="status">Trạng thái hoạt động: Đang hoạt động</p>
+                </div>
+            </div>
+            <button class="close-btn">X</button>
+        </div>
+        <div class="chat-messages">
+            <div class="message sent">
+                <p>Anh còn sản phẩm này không?</p>
+                <span class="time">13:00:00</span>
+            </div>
+            <div class="message received">
+                <p>Còn nha em</p>
+                <span class="time">13:00:02</span>
+            </div>
+            <div class="message sent">
+                <p>Anh gửi chi tiết ạ</p>
+                <span class="time">13:01:01</span>
+            </div>
+        </div>
+        <div class="chat-input">
+            <input type="text" placeholder="Nhập tin nhắn">
+            <button>➤</button>
+        </div>
+    </div>
+</div>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/8.1.0/mdb.umd.min.js"></script>
+    

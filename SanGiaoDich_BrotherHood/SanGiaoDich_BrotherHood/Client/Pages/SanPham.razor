@@ -3,10 +3,8 @@
 @using SanGiaoDich_BrotherHood.Shared.Models
 @inject NavigationManager navigation
 @inject HttpClient http
+@inject NavigationManager NavigationManager
 
-@code {
-    // Thêm các biến và phương thức cần thiết ở đây
-}
 
 <style>
     /* Thêm CSS từ giao diện cũ nếu cần */
@@ -106,7 +104,9 @@
                         <span class="input-group-text" style=" background-color: #f8f9fa; border: 1px solid #ced4da;">
                             <i class="fas fa-search text-success"></i>
                         </span>
-                        <input type="text" class="form-control" placeholder="Tìm kiếm sản phẩm" style=" height: 35px; border: 1px solid #ced4da;">
+                        <input type="text" class="form-control" placeholder="Tìm kiếm sản phẩm"
+                               style="height: 35px; border: 1px solid #ced4da;"
+                               @bind="searchQuery" @oninput="OnSearchChanged">
                     </div>
                 </div>
 
@@ -185,7 +185,7 @@
                                     <p class="card-text text-danger"><strong>@product.Price.ToString("N0") VND</strong></p>
                                     <div class="d-flex justify-content-between mt-auto">
                                         <p class="card-text">Cần Thơ</p>
-                                        <p class="card-text text-muted">@product.StartDate.ToString("dd/MM/yyyy")</p>
+                                        <p class="card-text text-muted">@product.StartDate?.ToString("dd/MM/yyyy")</p>
                                     </div>
                                     <button @onclick="() => AddToCart(product.IDProduct)" class="btn btn-success mt-3 w-100" style="border-radius: 15px;">
                                         <i class="fas fa-shopping-cart"></i> Thêm vào giỏ
@@ -241,6 +241,7 @@
             var response = await http.PostAsync($"api/Cart/AddCart/{productId}", null);
             if (response.IsSuccessStatusCode)
             {
+            
                 Console.WriteLine("Product added to cart successfully!");
             }
             else
@@ -253,4 +254,8 @@
             Console.WriteLine($"An error occurred: {ex.Message}");
         }
     }
+
 }
+
+
+

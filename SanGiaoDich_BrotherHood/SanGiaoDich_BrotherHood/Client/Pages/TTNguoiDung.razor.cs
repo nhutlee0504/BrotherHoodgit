@@ -28,14 +28,14 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		private string productErrorMessage;
 		private Dictionary<int, string> categoryNames = new Dictionary<int, string>();
 		private Dictionary<int, string> productImages = new Dictionary<int, string>();
-        private FirebaseStorage _firebaseStorage;
-        private IBrowserFile selectedFile;
-            public string DataUrl { get; set; }
+		private FirebaseStorage _firebaseStorage;
+		private IBrowserFile selectedFile;
+		public string DataUrl { get; set; }
 
-        protected override async Task OnInitializedAsync()
+		protected override async Task OnInitializedAsync()
 		{
-            _firebaseStorage = new FirebaseStorage("dbbrotherhood-ac2f1.appspot.com");
-            await LoadUserData();
+			_firebaseStorage = new FirebaseStorage("dbbrotherhood-ac2f1.appspot.com");
+			await LoadUserData();
 			await LoadProducts();
 			await LoadCategoryNames(userProducts);
 		}
@@ -102,15 +102,15 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			}
 		}
 
-        private async Task OnFileSelected(InputFileChangeEventArgs e)
-        {
-            selectedFile = e.File;
-            using var stream = new MemoryStream();
-            await selectedFile.OpenReadStream().CopyToAsync(stream);
-            DataUrl = $"data:{selectedFile.ContentType};base64,{Convert.ToBase64String(stream.ToArray())}";
-        }
+		private async Task OnFileSelected(InputFileChangeEventArgs e)
+		{
+			selectedFile = e.File;
+			using var stream = new MemoryStream();
+			await selectedFile.OpenReadStream().CopyToAsync(stream);
+			DataUrl = $"data:{selectedFile.ContentType};base64,{Convert.ToBase64String(stream.ToArray())}";
+		}
 
-        private string GetImage(int id)
+		private string GetImage(int id)
 		{
 			return productImages.ContainsKey(id) ? productImages[id] : "/images/defaultImg.png";
 		}
@@ -142,9 +142,12 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			}
 		}
 
+		private Dictionary<string, string> fieldErrors = new Dictionary<string, string>();
+
 
 		private async Task UpdateAccountInfo()
 		{
+			fieldErrors.Clear();
 			try
 			{
 				var response = await HttpClient.PutAsJsonAsync("api/user/UpdateAccountInfo", infoAccountDto);
@@ -165,57 +168,124 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				errorMessage = "Lỗi xảy ra: " + ex.Message;
 			}
 		}
-        private async Task UploadFile()
+		private async Task UploadFile()
+		{
+			if (selectedFile == null)
+			{
+				errorMessage = "Vui lòng chọn một tệp để tải lên.";
+				return;
+			}
+
+			const long maxFileSize = 10 * 1024 * 1024;
+			if (selectedFile.Size > maxFileSize)
+			{
+				errorMessage = "Tệp tải lên không được lớn hơn 10MB.";
+				return;
+			}
+
+			try
+			{
+				using var stream = selectedFile.OpenReadStream();
+				var content = new MultipartFormDataContent();
+				var fileContent = new StreamContent(stream);
+				fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+				content.Add(fileContent, "imageFile", selectedFile.Name);
+				var response = await HttpClient.PutAsync("api/user/UpdateProfileImage", content);
+
+				if (response.IsSuccessStatusCode)
+				{
+					var updatedUser = await response.Content.ReadFromJsonAsync<Account>();
+					if (updatedUser != null)
+					{
+						userAccount = updatedUser;
+						errorMessage = null;
+						NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+					}
+					else
+					{
+						errorMessage = "Không thể cập nhật thông tin tài khoản.";
+					}
+				}
+				else
+				{
+					var errorDetails = await response.Content.ReadAsStringAsync();
+					errorMessage = $"Tải ảnh lên không thành công. Chi tiết: {errorDetails}";
+				}
+			}
+			catch (Exception ex)
+			{
+				errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
+			}
+
+			if (string.IsNullOrWhiteSpace(infoAccountDto.FullName))
+			{
+				fieldErrors["FullName"] = "Họ tên không được để trống.";
+			}
+
+			if (string.IsNullOrWhiteSpace(infoAccountDto.Email) || !IsValidEmail(infoAccountDto.Email))
+			{
+				fieldErrors["Email"] = "Email không hợp lệ.";
+			}
+			if (string.IsNullOrWhiteSpace(infoAccountDto.Phone) || !IsValidPhoneNumber(infoAccountDto.Phone))
+			{
+				fieldErrors["Phone"] = "Số điện thoại không hợp lệ. Vui lòng nhập số di động Việt Nam (10 chữ số).";
+			}
+			if (!infoAccountDto.Birthday.HasValue || !IsAgeValid(infoAccountDto.Birthday.Value))
+			{
+				fieldErrors["Birthday"] = "Người dùng phải trên 18 tuổi.";
+			}
+			if (fieldErrors.Count > 0)
+			{
+				return;
+			}
+
+			try
+			{
+				var response = await HttpClient.PutAsJsonAsync("api/user/UpdateAccountInfo", infoAccountDto);
+				if (response.IsSuccessStatusCode)
+				{
+					var updatedUser = await response.Content.ReadFromJsonAsync<Account>();
+					userAccount = updatedUser;
+					fieldErrors.Clear();
+					NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+				}
+				else
+				{
+					var errorDetails = await response.Content.ReadAsStringAsync();
+					fieldErrors["General"] = $"Cập nhật không thành công. Chi tiết: {errorDetails}";
+				}
+			}
+			catch (Exception ex)
+			{
+				fieldErrors["General"] = $"Đã xảy ra lỗi trong quá trình cập nhật: {ex.Message}";
+			}
+		}
+	
+
+     
+        private bool IsValidEmail(string email)
         {
-            if (selectedFile == null)
-            {
-                errorMessage = "Vui lòng chọn một tệp để tải lên.";
-                return;
-            }
-
-            const long maxFileSize = 10 * 1024 * 1024;
-            if (selectedFile.Size > maxFileSize)
-            {
-                errorMessage = "Tệp tải lên không được lớn hơn 10MB.";
-                return;
-            }
-
             try
             {
-                using var stream = selectedFile.OpenReadStream();
-                var content = new MultipartFormDataContent();
-                var fileContent = new StreamContent(stream);
-                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
-                content.Add(fileContent, "imageFile", selectedFile.Name);
-                var response = await HttpClient.PutAsync("api/user/UpdateProfileImage", content);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var updatedUser = await response.Content.ReadFromJsonAsync<Account>();
-                    if (updatedUser != null)
-                    {
-                        userAccount = updatedUser;
-                        errorMessage = null;
-                        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
-                    }
-                    else
-                    {
-                        errorMessage = "Không thể cập nhật thông tin tài khoản.";
-                    }
-                }
-                else
-                {
-                    var errorDetails = await response.Content.ReadAsStringAsync();
-                    errorMessage = $"Tải ảnh lên không thành công. Chi tiết: {errorDetails}";
-                }
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
             }
-            catch (Exception ex)
+            catch
             {
-                errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
+                return false;
             }
         }
-
-
+        private bool IsValidPhoneNumber(string phoneNumber)
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(phoneNumber, @"^(0[3|5|7|8|9])+([0-9]{8})$");
+        }
+        private bool IsAgeValid(DateTime birthday)
+        {
+            var today = DateTime.Today;
+            var age = today.Year - birthday.Year;
+            if (birthday.Date > today.AddYears(-age)) age--;
+            return age >= 18;
+        }
 
     }
 }

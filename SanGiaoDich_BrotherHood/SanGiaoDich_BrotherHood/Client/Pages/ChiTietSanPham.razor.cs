@@ -105,39 +105,45 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             }
         }
 
-        private async Task ToggleFavorite(ChangeEventArgs e)
+        private async Task ToggleFavorite()
         {
-            isFavorite = (bool)e.Value;
+            isFavorite = !isFavorite; // Chuyển trạng thái yêu thích (bỏ hoặc thêm)
 
             var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
             if (!string.IsNullOrEmpty(token))
             {
-                if (isFavorite)
+                try
                 {
-                    var response = await httpclient.GetAsync($"api/favorite/AddFavorite/{ProductId}");
-
-                    if (response.IsSuccessStatusCode)
+                    if (isFavorite)
                     {
-                        // Nếu thêm thành công, có thể xử lý hoặc thông báo
+                        var response = await httpclient.GetAsync($"api/favorite/AddFavorite/{ProductId}");
+
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            errorMessage = "Không thể thêm sản phẩm vào danh sách yêu thích.";
+                        }
                     }
                     else
                     {
-                        // Xử lý lỗi nếu có (ví dụ, đăng nhập không thành công, lỗi server, etc.)
-                        errorMessage = "Không thể thêm sản phẩm vào danh sách yêu thích.";
+                        var response = await httpclient.DeleteAsync($"api/favorite/DeleteFavorite/{ProductId}");
+
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            errorMessage = "Không thể xóa sản phẩm khỏi danh sách yêu thích.";
+                        }
                     }
                 }
-                else
+                catch (Exception ex)
                 {
-                    // Gọi API để xóa sản phẩm khỏi danh sách yêu thích
-                    await httpclient.DeleteAsync($"api/favorite/DeleteFavorite/{ProductId}");
+                    errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
                 }
             }
             else
             {
-                // Nếu không có token, không thực hiện hành động gì
                 errorMessage = "Bạn cần đăng nhập để thực hiện hành động này.";
             }
         }
+
 
 
     }

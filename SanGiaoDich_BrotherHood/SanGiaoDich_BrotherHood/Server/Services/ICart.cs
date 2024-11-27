@@ -7,8 +7,8 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 {
     public interface ICart
     {
-        public Task<IEnumerable<Cart>> GetCartsByUserName(string userName);
-        public Task<Cart> AddCart(Cart cart);
+        public Task<CartItem> AddCart(int idProduct);
+        public Task<Cart> GetCartsByUserName(string userName);
         public Task<Cart> UpdateCart(int IDCart, Cart cart);
         public Task<Cart> DeleteCart(int IDCart);
     }

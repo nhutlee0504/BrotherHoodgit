@@ -73,5 +73,10 @@ namespace API.Services
                 return null;
             }
         }
+        public async Task<Category> GetCategoryByName(string name)
+        {
+            return await _context.Categories.FirstOrDefaultAsync(c => c.NameCate == name);
+        }
+
     }
 }

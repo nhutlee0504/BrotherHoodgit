@@ -5,6 +5,32 @@
 @using System.Text
 @inject HttpClient httpclient
 @inject IJSRuntime JSRuntime
+<style>
+    .old-price {
+        color: black;
+    }
+
+    .new-price {
+        color: red;
+        font-weight: bold;
+    }
+
+    /* Thêm style cho trái tim */
+    .favorite-heart i {
+        font-size: 30px;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .heart-checked {
+        color: #28a745; /* Xanh lá khi đã yêu thích */
+    }
+
+    .heart-unchecked {
+        color: gray; /* Màu xám khi chưa yêu thích */
+    }
+</style>
+
 
 <div class="container">
     <ul class="breadcrumb">
@@ -78,12 +104,16 @@
                     </p>
                 </div>
             </div>
-            <!-- Checkbox để toggle trạng thái yêu thích -->
-            <input type="checkbox" checked="@(isFavorite)" @onchange="ToggleFavorite" />
+            <!-- Thay thế checkbox bằng hình trái tim -->
+            <div class="favorite-heart">
+                <i class="fas fa-heart @((isFavorite) ? "heart-checked" : "heart-unchecked")" @onclick="ToggleFavorite"></i>
+            </div>
+
+
             <h3 style="font-weight:bolder">@product?.Name</h3>
             <h4 class="text-success mb-2"><i class="bi bi-cash-coin"></i>@product?.Price.ToString("N0") VND</h4>
             <p><strong>Loại sản phẩm:</strong> @categoryName</p>
-            <p><i class="bi bi-clock"></i> Đăng vào lúc: @(product?.StartDate.ToString("dd/MM/yyyy") ?? "Chưa xác định")</p>
+            <p><i class="bi bi-clock"></i> Đăng vào lúc: @(product?.StartDate?.ToString("dd/MM/yyyy") ?? "Chưa xác định")</p>
 
             <button class="btn btn-danger rounded-pill mb-2 w-100"><i class="bi bi-person-circle"></i> Liên hệ người bán</button>
             <button class="btn btn-success rounded-pill mb-2 w-100"><i class="bi bi-telephone-forward"></i> Liên hệ qua @user?.PhoneNumber </button>
@@ -96,13 +126,7 @@
             <h4 class="card-title">Mô tả sản phẩm</h4>
         </div>
         <div class="card-body">
-            <ul class="list-unstyled">
-                <li><i class="bi bi-check-circle"></i> <strong>Chất liệu:</strong> 100% cotton, mềm mại và thoáng khí.</li>
-                <li><i class="bi bi-check-circle"></i> <strong>Thiết kế:</strong> Cổ áo đứng lịch sự, tay dài dễ gấp lên dễ dàng.</li>
-                <li><i class="bi bi-check-circle"></i> <strong>Màu sắc:</strong> Trắng, xanh dương, xám.</li>
-                <li><i class="bi bi-check-circle"></i> <strong>Kích thước:</strong> S, M, L, XL.</li>
-                <li><i class="bi bi-check-circle"></i> <strong>Chất lượng:</strong> Dệt chắc chắn, không phai màu sau nhiều lần giặt.</li>
-            </ul>
+            <p></p>
         </div>
     </div>
 
@@ -125,16 +149,3 @@
     </div>
 </div>
 
-<style>
-    .old-price {
-        color: black;
-    }
-
-    .new-price {
-        color: red;
-        font-weight: bold;
-    }
-</style>
-
-@code {
-}

@@ -18,6 +18,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
     public class ProductController : ControllerBase
     {
         private IProduct prod;
+
         public ProductController(IProduct prods)
         {
             prod = prods;
@@ -45,7 +46,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             return await prod.GetProductById(id);
         }
 
-        [HttpGet("name")]
+        [HttpGet("GetProductByName/{name}")]
         public async Task<IEnumerable<Product>> GetProductByName(string name)
         {
             return await prod.GetProductByName(name);
@@ -71,8 +72,9 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             }
         }
 
-        [HttpPut("{id}")] // Specify that {id} is a route parameter for the update method
-        public async Task<IActionResult> UpdateProductById(int id, [FromForm] ProductDto productDto)//Cập nhật product
+        [HttpPut]
+        [Route("UpdateProduct/{Id}")]// Specify that {id} is a route parameter for the update method
+        public async Task<IActionResult> UpdateProductById(int id, ProductDto productDto)//Cập nhật product
         {
 
             try
@@ -172,5 +174,45 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 			}
 		}
 
-	}
+		[HttpDelete("DeleteProduct/{id}")]
+		public async Task<IActionResult> DeleteProduct(int id)
+		{
+			try
+			{
+				var deletedProduct = await prod.DeleteProductById(id);
+				return Ok(deletedProduct);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, "Đã xảy ra lỗi khi xóa sản phẩm.");
+			}
+		}
+
+		[HttpPut("UpgradeProrityLevel/{id}")]
+		public async Task<IActionResult> UpgradeProrityLevel(int id)
+		{
+			try
+			{
+				var upgradedProduct = await prod.UpdateProrityLevel(id);
+				return Ok(upgradedProduct);
+			}
+			catch (NotImplementedException ex)
+			{
+				return NotFound(ex.Message);
+			}
+			catch (InvalidOperationException ex)
+			{
+				return BadRequest(ex.Message);
+			}
+			catch (UnauthorizedAccessException ex)
+			{
+				return Forbid(ex.Message);
+			}
+			catch (Exception ex)
+			{
+				// Log the exception as needed
+				return StatusCode(500, "An error occurred while upgrading the product priority level.");
+			}
+		}
+    }
 }

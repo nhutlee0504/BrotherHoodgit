@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SanGiaoDich_BrotherHood.Server.Data;
@@ -81,7 +80,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             }
 
             var imageProducts = new List<ImageProduct>();
-
             foreach (var file in files)
             {
                 var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
@@ -121,7 +119,39 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             await _context.SaveChangesAsync();
             return imageProduct;
         }
+       // public async Task<ImageProduct> UpdateImage(int imageId, IFormFile newFile)
+       // {
+       //     var user = GetUserInfoFromClaims();
+       //     var imageProduct = await _context.ImageProducts.FindAsync(imageId);
 
+       //     if (imageProduct == null)
+       //         throw new KeyNotFoundException("Ảnh không tồn tại.");
+
+       //     var product = await _context.Products.FindAsync(imageProduct.IDProduct);
+       //     if (product == null || product.UserName != user.UserName)
+       //         throw new UnauthorizedAccessException("Bạn không có quyền cập nhật ảnh này.");
+
+       //if (!Directory.Exists(_imagePath))
+       //         Directory.CreateDirectory(_imagePath);
+
+       //     var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(newFile.FileName)}";
+       //     var newFilePath = Path.Combine(_imagePath, uniqueFileName);
+
+       //     using (var stream = new FileStream(newFilePath, FileMode.Create))
+       //     {
+       //         await newFile.CopyToAsync(stream);
+       //     }
+
+       //     var oldFilePath = Path.Combine(_imagePath, imageProduct.Image);
+       //     if (File.Exists(oldFilePath))
+       //         File.Delete(oldFilePath);
+
+       //     imageProduct.Image = uniqueFileName;
+       //     _context.ImageProducts.Update(imageProduct);
+       //     await _context.SaveChangesAsync();
+
+       //     return imageProduct;
+       // }
         //Phương thức ngoài
         private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()
         {
@@ -170,5 +200,9 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             throw new UnauthorizedAccessException("Vui lòng đăng nhập vào hệ thống.");
         }
 
+        public Task<ImageProduct> UpdateImage(int idImage, IFormFile file)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

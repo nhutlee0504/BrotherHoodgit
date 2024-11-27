@@ -24,8 +24,8 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             return Ok(await billDetail.GetBillDetails());
         }
 
-        [HttpGet("IDBill")]
-        public async Task<ActionResult> GetBillDetailsByIDBill(int IDBill)
+        [HttpGet("GetBillDetailsByIDBill/{IDBill}")]
+        public async Task<IActionResult> GetBillDetailsByIDBill(int IDBill)
         {
             return Ok(await billDetail.GetBillDetailsByIDBill(IDBill));
         }
