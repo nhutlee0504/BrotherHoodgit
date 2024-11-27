@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using Firebase.Storage;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using SanGiaoDich_BrotherHood.Shared.Dto;
 using SanGiaoDich_BrotherHood.Shared.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -26,12 +28,14 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		private string productErrorMessage;
 		private Dictionary<int, string> categoryNames = new Dictionary<int, string>();
 		private Dictionary<int, string> productImages = new Dictionary<int, string>();
+        private FirebaseStorage _firebaseStorage;
+        private IBrowserFile selectedFile;
+            public string DataUrl { get; set; }
 
-		// Đối tượng để lưu tệp
-		private IBrowserFile selectedFile;
-		protected override async Task OnInitializedAsync()
+        protected override async Task OnInitializedAsync()
 		{
-			await LoadUserData();
+            _firebaseStorage = new FirebaseStorage("dbbrotherhood-ac2f1.appspot.com");
+            await LoadUserData();
 			await LoadProducts();
 			await LoadCategoryNames(userProducts);
 		}
@@ -81,27 +85,32 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			try
 			{
 				var images = await HttpClient.GetFromJsonAsync<List<ImageProduct>>($"api/imageproduct/GetImageProduct/{id}");
-
-				// Lấy ảnh đầu tiên hoặc ảnh mặc định nếu không có
 				if (images != null && images.Count > 0)
 				{
-					var imageUrl = images.First().Image; // Lấy ảnh đầu tiên
+					var imageUrl = images.First().Image;
 					productImages[id] = imageUrl;
 				}
 				else
 				{
-					productImages[id] = "/defaultImg.png"; // Ảnh mặc định
+					productImages[id] = "/defaultImg.png";
 				}
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine(ex.Message);
-				productImages[id] = "/defaultImg.png"; // Ảnh mặc định nếu có lỗi
+				productImages[id] = "/defaultImg.png";
 			}
 		}
 
+        private async Task OnFileSelected(InputFileChangeEventArgs e)
+        {
+            selectedFile = e.File;
+            using var stream = new MemoryStream();
+            await selectedFile.OpenReadStream().CopyToAsync(stream);
+            DataUrl = $"data:{selectedFile.ContentType};base64,{Convert.ToBase64String(stream.ToArray())}";
+        }
 
-		private string GetImage(int id)
+        private string GetImage(int id)
 		{
 			return productImages.ContainsKey(id) ? productImages[id] : "/images/defaultImg.png";
 		}
@@ -142,8 +151,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				if (response.IsSuccessStatusCode)
 				{
 					var updatedUser = await response.Content.ReadFromJsonAsync<Account>();
-					userAccount = updatedUser; // Update local user account with the new information
-					errorMessage = null; // Clear error message
+					userAccount = updatedUser;
+					errorMessage = null;
 					NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
 				}
 				else
@@ -156,35 +165,57 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				errorMessage = "Lỗi xảy ra: " + ex.Message;
 			}
 		}
-		private async Task UploadFile()
-		{
-			if (selectedFile != null)
-			{
-				const long maxFileSize = 10 * 1024 * 1024; // 10MB
-				if (selectedFile.Size > maxFileSize)
-				{
-					errorMessage = "Tệp tải lên không được lớn hơn 10MB.";
-					return;
-				}
-				var content = new MultipartFormDataContent();
-				var streamContent = new StreamContent(selectedFile.OpenReadStream(maxFileSize)); // Thay đổi ở đây
-				streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
-				content.Add(streamContent, "imageFile", selectedFile.Name);
+        private async Task UploadFile()
+        {
+            if (selectedFile == null)
+            {
+                errorMessage = "Vui lòng chọn một tệp để tải lên.";
+                return;
+            }
 
-				var response = await HttpClient.PutAsync("api/user/UpdateProfileImage", content);
-				if (response.IsSuccessStatusCode)
-				{
-					var updatedUser = await response.Content.ReadFromJsonAsync<Account>();
-					userAccount = updatedUser;
-					errorMessage = null;
-					NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
-				}
-				else
-				{
-					var errorDetails = await response.Content.ReadAsStringAsync();
-					errorMessage = $"Tải ảnh lên không thành công. Chi tiết: {errorDetails}";
-				}
-			}
-		}
-	}
+            const long maxFileSize = 10 * 1024 * 1024;
+            if (selectedFile.Size > maxFileSize)
+            {
+                errorMessage = "Tệp tải lên không được lớn hơn 10MB.";
+                return;
+            }
+
+            try
+            {
+                using var stream = selectedFile.OpenReadStream();
+                var content = new MultipartFormDataContent();
+                var fileContent = new StreamContent(stream);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+                content.Add(fileContent, "imageFile", selectedFile.Name);
+                var response = await HttpClient.PutAsync("api/user/UpdateProfileImage", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var updatedUser = await response.Content.ReadFromJsonAsync<Account>();
+                    if (updatedUser != null)
+                    {
+                        userAccount = updatedUser;
+                        errorMessage = null;
+                        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+                    }
+                    else
+                    {
+                        errorMessage = "Không thể cập nhật thông tin tài khoản.";
+                    }
+                }
+                else
+                {
+                    var errorDetails = await response.Content.ReadAsStringAsync();
+                    errorMessage = $"Tải ảnh lên không thành công. Chi tiết: {errorDetails}";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
+            }
+        }
+
+
+
+    }
 }

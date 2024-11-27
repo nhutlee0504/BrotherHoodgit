@@ -34,8 +34,6 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
 
         [Column(TypeName = "ntext")]
         public string Introduce { get; set; }
-
-        [Column(TypeName = "varchar(150)")]
         public string ImageAccount { get; set; }
 
         public DateTime CreatedTime { get; set; }

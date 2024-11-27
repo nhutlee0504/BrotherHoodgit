@@ -62,39 +62,47 @@
                         <div class="mb-3">
                             <label class="form-label">Chọn số tiền (VNĐ)</label>
                             <div class="row g-2">
+                                 <div class="col-6">
+                                    <button type="button" class="btn btn-light w-100 py-3 border" 
+                                            @onclick="() => SelectAmount(10000)" 
+                                            style="@(OrderInfo.Amount == 10000 ? "background-color: #28a745; color: white;" : "")">
+                                        <i class="bi bi-cash-coin me-2"></i>10,000 VND
+                                    </button>
+                                </div
                                 <div class="col-6">
                                     <button type="button" class="btn btn-light w-100 py-3 border" 
                                             @onclick="() => SelectAmount(25000)" 
                                             style="@(OrderInfo.Amount == 25000 ? "background-color: #28a745; color: white;" : "")">
-                                        <i class="bi bi-cash-coin me-2"></i>25,000
+                                        <i class="bi bi-cash-coin me-2"></i>25,000 VND
                                     </button>
                                 </div>
                                 <div class="col-6">
                                     <button type="button" class="btn btn-light w-100 py-3 border" 
                                             @onclick="() => SelectAmount(50000)" 
                                             style="@(OrderInfo.Amount == 50000 ? "background-color: #28a745; color: white;" : "")">
-                                        <i class="bi bi-cash-coin me-2"></i>50,000
+                                        <i class="bi bi-cash-coin me-2"></i>50,000 VND
                                     </button>
                                 </div>
                                 <div class="col-6">
                                     <button type="button" class="btn btn-light w-100 py-3 border" 
                                             @onclick="() => SelectAmount(100000)" 
                                             style="@(OrderInfo.Amount == 100000 ? "background-color: #28a745; color: white;" : "")">
-                                        <i class="bi bi-cash-coin me-2"></i>100,000
+                                        <i class="bi bi-cash-coin me-2"></i>100,000 VND
                                     </button>
                                 </div>
                                 <div class="col-6">
                                     <button type="button" class="btn btn-light w-100 py-3 border" 
                                             @onclick="() => SelectAmount(200000)" 
                                             style="@(OrderInfo.Amount == 200000 ? "background-color: #28a745; color: white;" : "")">
-                                        <i class="bi bi-cash-coin me-2"></i>200,000
+                                        <i class="bi bi-cash-coin me-2"></i>200,000 VND
                                     </button>
                                 </div>
+
                                 <div class="col-6">
                                     <button type="button" class="btn btn-light w-100 py-3 border"
                                             @onclick="() => SelectAmount(500000)"
                                             style="@(OrderInfo.Amount == 500000 ? "background-color: #28a745; color: white;" : "")">
-                                        <i class="bi bi-cash-coin me-2"></i>500,000
+                                        <i class="bi bi-cash-coin me-2"></i>500,000 VND
                                     </button>
                                 </div>
                             </div>
@@ -107,7 +115,7 @@
                           <div class="mb-3">
                             <label class="form-label">Chọn loại thanh toán</label>
                             <div class="row g-2">
-                                @foreach (var paymentOption in new[] { "MoMo", "VNPay" })
+                                @foreach (var paymentOption in new[] { "VNPay" })
                                 {
                                     <div class="col-md-6">
                                         <div class="card payment-option" 

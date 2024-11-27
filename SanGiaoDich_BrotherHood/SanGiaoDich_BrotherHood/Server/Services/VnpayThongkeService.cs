@@ -26,10 +26,10 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
         public async Task<List<PaymentRequestModel>> GetAllPaymentRequestsWithUser(string username)
         {
-            // Lấy danh sách PaymentRequests kèm PaymentResponse
             var paymentRequests = await _context.PaymentRequests
-                .Include(pr => pr.PaymentResponse) // Bao gồm PaymentResponse
-                .Where(pr => pr.UserName == username) // Lọc theo UserName
+                .Include(pr => pr.PaymentResponse) 
+                .Where(pr => pr.UserName == username)
+                .OrderByDescending(a =>a.CreatedDate)
                 .Select(pr => new PaymentRequestModel
                 {
                     PaymentReqID = pr.PaymentReqID,

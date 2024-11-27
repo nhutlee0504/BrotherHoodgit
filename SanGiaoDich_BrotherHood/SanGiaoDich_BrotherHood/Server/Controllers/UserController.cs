@@ -80,7 +80,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 
         [HttpGet]
         [Route("GetMyInfo")]
-        public async Task<IActionResult> GetAccountInfo()//Lấy thông tim bản thân
+        public async Task<IActionResult> GetAccountInfo()
         {
             try
             {
@@ -95,7 +95,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         
         [HttpGet]
         [Route("GetAccountInfoByName/{username}")]
-        public async Task<IActionResult> GetAccountByName(string username)//Xem thông tin tài khoản người khác
+        public async Task<IActionResult> GetAccountByName(string username)
         {
             try
             {
@@ -115,7 +115,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 			try
 			{
 				var updatedUser = await _user.UpdateAccountInfo(infoAccountDto);
-				return Ok(updatedUser); // Return updated user info
+				return Ok(updatedUser);
 			}
 			catch (UnauthorizedAccessException ex)
 			{
@@ -131,14 +131,13 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 			}
 		}
 
-		[HttpPut]
-        [Route("UpdateProfileImage")]
+		[HttpPut("UpdateProfileImage")]
 		public async Task<IActionResult> UpdateProfileImage(IFormFile imageFile)
 		{
 			try
 			{
 				var updatedUser = await _user.UpdateProfileImage(imageFile);
-				return Ok(updatedUser); // Return updated user info
+				return Ok(updatedUser);
 			}
 			catch (UnauthorizedAccessException ex)
 			{

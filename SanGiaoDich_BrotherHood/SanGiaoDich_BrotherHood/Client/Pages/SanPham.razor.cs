@@ -91,7 +91,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 
         private void UpdatePageProducts()
         {
-            var prods = products.Where(x => x.Status.ToLower().Contains("bán")).ToList();
+            var prods = products.Where(x => x.Status.ToLower().Contains("đã duyệt")).ToList();
             totalPages = (int)Math.Ceiling((double)prods.Count / pageSize);
             pagedProducts = prods.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
         }

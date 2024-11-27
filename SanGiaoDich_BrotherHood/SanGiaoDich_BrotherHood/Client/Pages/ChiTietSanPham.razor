@@ -47,7 +47,7 @@
             <div class="profile-card mb-3">
                 <div class="profile-avatar">
                     <a href="ThongTinNguoiDung">
-                        <img src="/AnhAvatar/@user?.ImageAccount" alt="Người bán" class="img-fluid rounded-circle" style="max-width: 100px;" />
+                        <img src="@user?.ImageAccount" alt="Người bán" class="img-fluid rounded-circle" style="max-width: 100px;" />
                     </a>
 
                 </div>
@@ -86,7 +86,7 @@
             <p><i class="bi bi-clock"></i> Đăng vào lúc: @(product?.StartDate.ToString("dd/MM/yyyy") ?? "Chưa xác định")</p>
 
             <button class="btn btn-danger rounded-pill mb-2 w-100"><i class="bi bi-person-circle"></i> Liên hệ người bán</button>
-            <button class="btn btn-success rounded-pill mb-2 w-100"><i class="bi bi-telephone-forward"></i> Liên hệ qua 011*****</button>
+            <button class="btn btn-success rounded-pill mb-2 w-100"><i class="bi bi-telephone-forward"></i> Liên hệ qua @user?.PhoneNumber </button>
         </div>
     </div>
 
