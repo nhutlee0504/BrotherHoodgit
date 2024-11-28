@@ -66,7 +66,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 IsDelete = false,
                 CreatedTime = DateTime.Now,
                 Role = "Người dùng",
-                PreSystem = 10000,
+                PreSystem = 25000,
                 IsActived = true,
                 ImageAccount = "https://firebasestorage.googleapis.com/v0/b/dbbrotherhood-ac2f1.appspot.com/o/ImageTest%2Favatar-default.svg?alt=media&token=fb4e7099-b322-412e-9da7-0f80d2311785"
             };
