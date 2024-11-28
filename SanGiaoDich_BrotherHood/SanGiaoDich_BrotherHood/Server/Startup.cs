@@ -124,6 +124,8 @@ namespace SanGiaoDich_BrotherHood.Server
             services.AddScoped<IVnPayService, VnPayService>();
             services.AddScoped<IVnpayThongkeService,VnpayThongkeService>();
             services.AddScoped<IMessage,MessageResponse>();
+            services.AddSingleton<ProfanityFilterService>();
+
             services.AddHttpClient();
 
             // Đăng ký các dịch vụ của bạn (ví dụ: ESMSService)

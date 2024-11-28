@@ -20,6 +20,29 @@
     </ul>
 </div>
 <style>
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 2s linear infinite;
+    }
+
     .text-danger {
         color: #dc3545;
         font-size: 0.9rem;
@@ -158,7 +181,14 @@
 
 </style>
 
-
+@if (isLoading)
+{
+    <div class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Đang xử lý, vui lòng đợi...</p>
+    </div>
+}
+    
 <div class="container">
     <div class="row">
         <div class="col-md-6">
@@ -292,7 +322,10 @@
             <div class="form-group">
                 <label for="ProductDescription"><i class="fas fa-info-circle"></i> Mô tả sản phẩm chi tiết:</label>
                 <textarea @bind="Description" class="form-control" id="ProductDescription" rows="4" placeholder="Nhập mô tả chi tiết về sản phẩm..."></textarea>
-
+                @if (!string.IsNullOrWhiteSpace(ProductDescriptionError))
+                {
+                    <div class="text-danger">@ProductDescriptionError</div>
+                }
                 <small class="form-text text-muted">
                     <i class="fas fa-lightbulb"></i> Gợi ý:
                     <ul>
@@ -307,6 +340,7 @@
 
         </div>
     </div>
+
 @* 
     <div class="modal fade" id="policyModal" tabindex="-1" aria-labelledby="policyModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -392,6 +426,9 @@
     private string ProductNameError { get; set; }
     private string ProductCategoryError { get; set; }
     private string ProductPriceError { get; set; }
+    private bool isLoading = false;
+
+    private string ProductDescriptionError  { get; set; }
     private string ProductQuantityError { get; set; }
     private string ProrityLevelError { get; set; }
     private void SelectPriority(string selectedPriority)
@@ -477,12 +514,15 @@
     }
     private async Task SaveProduct()
     {
+      
+
         // Reset lỗi
         ProductNameError = string.Empty;
         ProductCategoryError = string.Empty;
         ProductPriceError = string.Empty;
         ProductQuantityError = string.Empty;
         ProrityLevelError = string.Empty;
+        ProductDescriptionError = string.Empty;
 
         // Kiểm tra dữ liệu
         if (string.IsNullOrWhiteSpace(ProductName))
@@ -509,6 +549,20 @@
         {
             ProrityLevelError = "Vui lòng chọn mức độ ưu tiên.";
         }
+
+        // Kiểm tra từ ngữ tục tiểu trong tên và mô tả sản phẩm qua API
+        var productNameCheckResult = await CheckProfanity(ProductName);
+        if (!string.IsNullOrEmpty(productNameCheckResult))
+        {
+            ProductNameError = productNameCheckResult;
+        }
+
+        var productDescriptionCheckResult = await CheckProfanity(Description);
+        if (!string.IsNullOrEmpty(productDescriptionCheckResult))
+        {
+            ProductDescriptionError = productDescriptionCheckResult;
+        }
+
         var selectedImageCount = selectedFiles.Count(file => file != null);
         if (selectedImageCount < 1 || selectedImageCount > 3)
         {
@@ -522,14 +576,17 @@
             !string.IsNullOrWhiteSpace(ProductCategoryError) ||
             !string.IsNullOrWhiteSpace(ProductPriceError) ||
             !string.IsNullOrWhiteSpace(ProductQuantityError) ||
-            !string.IsNullOrWhiteSpace(ProrityLevelError))
+            !string.IsNullOrWhiteSpace(ProrityLevelError) ||
+            !string.IsNullOrWhiteSpace(ProductDescriptionError))
         {
+            isLoading = false; // Ẩn loading nếu có lỗi
             return;
         }
 
         // Tiếp tục lưu sản phẩm
         try
         {
+            isLoading = true;
             var productDto = new ProductDto
                 {
                     Name = ProductName,
@@ -566,6 +623,38 @@
         {
             await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra khi thêm sản phẩm: {ex.Message}");
         }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task<string> CheckProfanity(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+
+        try
+        {
+            var response = await HttpClient.PostAsJsonAsync("api/profanityfilter/check-profanity", text);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadAsStringAsync();
+                if (result.Contains("Văn bản có từ ngữ tục tiểu."))
+                {
+                    return "Văn bản chứa từ ngữ tục tiểu.";
+                }
+                if (result.Contains("Văn bản có khả năng chứa từ ngữ tục tiểu."))
+                {
+                    return "Văn bản có khả năng chứa từ ngữ không phù hợp.";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            return $"Có lỗi xảy ra khi kiểm tra từ ngữ tục tiểu: {ex.Message}";
+        }
+
+        return null;
     }
     private async Task UploadImages(int productId)
     {

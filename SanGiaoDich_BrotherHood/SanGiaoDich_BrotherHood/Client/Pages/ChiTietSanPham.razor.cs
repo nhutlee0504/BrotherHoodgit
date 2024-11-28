@@ -258,7 +258,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                     if (response.IsSuccessStatusCode)
                     {
                         // Sau khi gửi tin nhắn thành công, điều hướng đến trang tin nhắn
-                        Navigation.NavigateTo($"/message?productName={Uri.EscapeDataString(product.Name)}");
+                        Navigation.NavigateTo($"/nhantin?productName={Uri.EscapeDataString(product.Name)}");
                     }
                     else
                     {

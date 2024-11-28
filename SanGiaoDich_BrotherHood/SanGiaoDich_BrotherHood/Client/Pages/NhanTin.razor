@@ -4,12 +4,6 @@
 @inject IJSRuntime jsruntime
 @inject NavigationManager Navigation
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-<!-- CSS only -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-
 <style>
     body {
         background-color: #f4f7f6;
@@ -155,6 +149,24 @@
                 border-top: 1px solid #ced4da;
                 
             }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        overflow: hidden;
+        border-radius: 50%; 
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+        .user-avatar .user-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center; 
+        }
+
 </style>
 
 <div class="container">
@@ -172,21 +184,25 @@
                     </form>
                     <hr>
                     <ul class="users-list">
-                        @* Danh sách user *@
                         @foreach (var conversation in filteredConversationList)
                         {
+                            var otherUser = conversation.Username == username ? conversation.UserGive : conversation.Username;
+                            var userInfo = userInfoCache.ContainsKey(otherUser) ? userInfoCache[otherUser] : ("default-image.png", "Unknown User");
+
                             <li class="list-group-item user-profile conversation-item d-flex align-items-center @(selectedUser == conversation.Username ? "active" : "")"
                                 @onclick="() => LoadMessages(conversation)">
                                 <div class="user-avatar me-3">
-                                    <img src="https://plhold.com/avatar/60?text=@(conversation.Username)" alt="@conversation.Username" />
+                                    <img src="@userInfo.Item1" alt="User Image" class="user-image" />
                                 </div>
+
                                 <div class="d-flex flex-column">
                                     <strong class="user-name">
-                                        @(conversation.Username)
-                                    </strong>                                  
+                                        @userInfo.Item2
+                                    </strong>
                                 </div>
                             </li>
                         }
+
                     </ul>
                 </div>
             </div>
@@ -260,13 +276,10 @@
     </div>
 </div>
 
-<!-- JavaScript Bundle with Popper -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8" crossorigin="anonymous"></script>
-
 
 @code{
-    private string searchTerm = string.Empty; // Từ khóa tìm kiếm
-    private string selectedFilter = string.Empty; // Bộ lọc
+    private string searchTerm = string.Empty; 
+    private string selectedFilter = string.Empty;
     private List<Conversation> filteredConversationList = new();
     private string productName;
 
@@ -276,12 +289,10 @@
     private bool IsLoggedIn { get; set; } = false;
     private List<Conversation> conversationList = new();
     private List<Messages> messageList = new();
-    private string username; // Tên người dùng đăng nhập
+    private string username;
     private string selectedUser;
     private string messageContent;
     private System.Timers.Timer refreshTimer;
-
-    // Khởi tạo khi component được render lần đầu
     protected override async Task OnInitializedAsync()
     {
         await CheckTokenAndLoadAccountInfo();
@@ -309,8 +320,6 @@
             IsLoggedIn = false;
         }
     }
-
-    // Hàm tải thông tin tài khoản
     private async Task LoadAccountInfo()
     {
         isLoading = true;
@@ -323,7 +332,7 @@
             if (response.IsSuccessStatusCode)
             {
                 accountInfo = await response.Content.ReadFromJsonAsync<AccountInfoDto>();
-                username = accountInfo.UserName; // Lấy username
+                username = accountInfo.UserName;
                 IsLoggedIn = true;
             }
             else
@@ -344,13 +353,30 @@
             isLoading = false;
         }
     }
+    private Dictionary<string, (string Image, string FullName)> userInfoCache = new();
 
-    // Hàm tải danh sách hội thoại
+
     private async Task LoadConversations()
     {
         try
         {
+
             conversationList = await http.GetFromJsonAsync<List<Conversation>>($"api/Conversation/GetConversations/{username}");
+
+            foreach (var conversation in conversationList)
+            {
+
+                var otherUser = conversation.Username == username ? conversation.UserGive : conversation.Username;
+
+     
+                if (!userInfoCache.ContainsKey(otherUser))
+                {
+                    var (image, fullName) = await GetUserInfoFromAccount(otherUser);
+
+                    // Lưu vào cache
+                    userInfoCache[otherUser] = (image, fullName);
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -358,7 +384,33 @@
         }
     }
 
-    // Hàm tải danh sách tin nhắn
+    private async Task<(string Image, string FullName)> GetUserInfoFromAccount(string username)
+    {
+        try
+        {
+            var response = await http.GetAsync($"api/User/GetAccountInfoByName/{username}");
+            if (response.IsSuccessStatusCode)
+            {
+                var account = await response.Content.ReadFromJsonAsync<Account>();
+                var image = account?.ImageAccount ?? "default-image.png";
+                var fullName = account?.FullName ?? "Unknown User"; 
+                return (image, fullName);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi khi lấy thông tin cho {username}: {ex.Message}");
+        }
+        return ("default-image.png", "Unknown User");
+    }
+
+    public class Account
+    {
+        public string Username { get; set; }
+        public string ImageAccount { get; set; }
+        public string FullName { get; set; }  // Thêm thuộc tính FullName
+    }
+
     private async Task LoadMessages(Conversation conversation)
     {
         try
@@ -372,8 +424,6 @@
             Console.WriteLine($"Lỗi khi tải tin nhắn: {ex.Message}");
         }
     }
-
-    // Gửi tin nhắn
     private async Task SendMessage()
     {
         try
@@ -430,8 +480,8 @@
     {
         await InvokeAsync(async () =>
         {
-            await LoadConversations(); // Làm mới hội thoại
-            if (!string.IsNullOrEmpty(selectedUser)) // Nếu đã chọn người dùng, làm mới tin nhắn
+            await LoadConversations();
+            if (!string.IsNullOrEmpty(selectedUser)) 
             {
                 var selectedConversation = conversationList.FirstOrDefault(c =>
                     (c.Username == username && c.UserGive == selectedUser) ||
