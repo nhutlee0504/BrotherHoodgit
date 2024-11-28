@@ -6,9 +6,19 @@
 
 <h3>Quản lý người dùng</h3>
 
-@if (users == null)
+<div class="mb-3 d-flex">
+    <input @bind="searchKeyword" class="form-control me-2" placeholder="Tìm kiếm người dùng..." />
+    <button class="btn btn-primary" @onclick="OnSearchKeywordChanged">Tìm kiếm</button>
+</div>
+
+
+@if (filteredUsers == null)
 {
     <p>Đang tải dữ liệu...</p>
+}
+else if (!filteredUsers.Any())
+{
+    <p>Không tìm thấy người dùng nào phù hợp.</p>
 }
 else
 {
@@ -23,7 +33,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var user in users)
+            @foreach (var user in filteredUsers)
             {
                 <tr>
                     <td>@user.UserName</td>
@@ -31,8 +41,9 @@ else
                     <td>@user.Email</td>
                     <td class="text-center">@user.PhoneNumber</td>
                     <td class="text-center">
-                        <button class="btn btn-primary">Chỉnh sửa</button>
+                       @*  <button class="btn btn-primary">Chỉnh sửa</button>
                         <button class="btn btn-danger">Xóa</button>
+ *@
                     </td>
                 </tr>
             }
@@ -42,11 +53,37 @@ else
 
 @code {
     private List<Account> users;
+    private List<Account> filteredUsers;
+    private string searchKeyword = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         users = await httpClient.GetFromJsonAsync<List<Account>>("api/user/GetAccounts");
+        filteredUsers = users; // Gán danh sách ban đầu
     }
 
-    
+    private void OnSearchKeywordChanged()
+    {
+        if (string.IsNullOrWhiteSpace(searchKeyword))
+        {
+            filteredUsers = users; // Hiển thị tất cả người dùng khi không có từ khóa
+        }
+        else
+        {
+            filteredUsers = users.Where(u =>
+                (u.UserName?.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (u.FullName?.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (u.Email?.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (u.PhoneNumber?.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ?? false)
+            ).ToList();
+        }
+    }
+
+    // Lắng nghe sự thay đổi từ input
+    private void OnInputChanged(ChangeEventArgs e)
+    {
+        searchKeyword = e.Value?.ToString() ?? string.Empty;
+        OnSearchKeywordChanged();
+    }
 }
+

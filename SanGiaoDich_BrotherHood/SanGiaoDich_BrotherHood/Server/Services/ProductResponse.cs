@@ -168,7 +168,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
 		public async Task<IEnumerable<Product>> GetAllProductsAsync()//Lấy tất cả sản phẩm
         {
-            var getP = await _context.Products.ToListAsync();
+            var getP = await _context.Products.OrderByDescending(cre => cre.CreatedDate).ToListAsync();
             if (getP == null)
             {
                 throw new NotImplementedException("Không có sản phẩm hoặc không tìm thấy sản phẩm của bạn");
