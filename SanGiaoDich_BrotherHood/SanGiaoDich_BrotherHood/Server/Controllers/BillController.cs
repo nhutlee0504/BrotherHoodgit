@@ -67,5 +67,11 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             return Ok(await bill.UpdateBill(IDBill, bl));
         }
+
+        [HttpPost("AcceptBill/{idBill}")]
+        public async Task<IActionResult> AcceptBill(int idBill)
+        {
+            return Ok(await bill.AcceptBill(idBill));
+        }
     }
 }

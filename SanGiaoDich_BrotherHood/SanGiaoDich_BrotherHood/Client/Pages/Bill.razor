@@ -4,69 +4,144 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime jsrunetime
 
-<h3>Danh sách hóa đơn</h3>
+<h3>Quản lý hóa đơn</h3>
 
-<!-- Tìm kiếm -->
-<div class="mb-3">
-    <div class="row">
-        <div class="col-md-6">
-            <label for="searchByFullName">Tìm kiếm theo Họ và tên:</label>
-            <input id="searchByFullName" type="text" @bind="searchFullName" class="form-control" placeholder="Nhập họ và tên" />
+<!-- Nav Tabs -->
+<ul class="nav nav-tabs" id="billTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="purchase-tab" data-bs-toggle="tab" data-bs-target="#purchase" type="button" role="tab" aria-controls="purchase" aria-selected="true">
+            Đơn mua
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="sale-tab" data-bs-toggle="tab" data-bs-target="#sale" type="button" role="tab" aria-controls="sale" aria-selected="false">
+            Đơn bán
+        </button>
+    </li>
+</ul>
+
+<!-- Tab Content -->
+<div class="tab-content mt-3" id="billTabContent">
+    <!-- Đơn mua -->
+    <div class="tab-pane fade show active" id="purchase" role="tabpanel" aria-labelledby="purchase-tab">
+        <!-- Nội dung tab Đơn mua -->
+        <div class="mb-3">
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="searchByFullName">Tìm kiếm theo Họ và tên:</label>
+                    <input id="searchByFullName" type="text" @bind="searchFullName" class="form-control" placeholder="Nhập họ và tên" />
+                </div>
+                <div class="col-md-4">
+                    <label for="searchByIDBill">Tìm kiếm theo ID Hóa đơn:</label>
+                    <input id="searchByIDBill" type="number" @bind="searchIDBill" class="form-control" placeholder="Nhập ID hóa đơn" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary" @onclick="SearchBills">Tìm kiếm</button>
+                </div>
+            </div>
         </div>
-        <div class="col-md-4">
-            <label for="searchByIDBill">Tìm kiếm theo ID Hóa đơn:</label>
-            <input id="searchByIDBill" type="number" @bind="searchIDBill" class="form-control" placeholder="Nhập ID hóa đơn" />
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
-            <button class="btn btn-primary" @onclick="SearchBills">Tìm kiếm</button>
-        </div>
+
+        @if (bills == null)
+        {
+            <p>Đang tải dữ liệu...</p>
+        }
+        else if (!bills.Any())
+        {
+            <p>Không có hóa đơn nào.</p>
+        }
+        else
+        {
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Họ và tên</th>
+                        <th>Số điện thoại</th>
+                        <th>Địa chỉ giao hàng</th>
+                        <th>Ngày đặt hàng</th>
+                        <th>Hình thức thanh toán</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var bill in bills.Where(x => x.UserName == userName))
+                    {
+                        <tr>
+                            <td>@bill.IDBill</td>
+                            <td>@bill.FullName</td>
+                            <td>@bill.PhoneNumber</td>
+                            <td>@bill.DeliveryAddress</td>
+                            <td>@bill.OrderDate.ToString("dd/MM/yyyy")</td>
+                            <td>@bill.PaymentType</td>
+                            <td>@bill.Total.ToString("C")</td>
+                            <td>@bill.Status</td>
+                            <td>
+                                <button class="btn btn-primary" @onclick="() => NavigateToBillDetails(bill.IDBill)">Xem chi tiết</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <div class="tab-pane fade" id="sale" role="tabpanel" aria-labelledby="sale-tab">
+        @if (saleBills == null)
+        {
+            <p>Đang tải dữ liệu...</p>
+        }
+        else if (!saleBills.Any())
+        {
+            <p>Không có hóa đơn nào do bạn bán.</p>
+        }
+        else
+        {
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Họ và tên người mua</th>
+                        <th>Số điện thoại</th>
+                        <th>Địa chỉ giao hàng</th>
+                        <th>Ngày đặt hàng</th>
+                        <th>Hình thức thanh toán</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var bill in saleBills)
+                    {
+                        <tr>
+                            <td>@bill.IDBill</td>
+                            <td>@bill.FullName</td>
+                            <td>@bill.PhoneNumber</td>
+                            <td>@bill.DeliveryAddress</td>
+                            <td>@bill.OrderDate.ToString("dd/MM/yyyy")</td>
+                            <td>@bill.PaymentType</td>
+                            <td>@bill.Total.ToString("C")</td>
+                            <td>@bill.Status</td>
+                            <td>
+                                @if (bill.Status != "Đã xác nhận")
+                                {
+                                    <button class="btn btn-success" @onclick="() => AcceptBill(bill.IDBill)">Xác nhận</button>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Đã xác nhận</span>
+                                }
+                                <button class="btn btn-primary" @onclick="() => NavigateToBillDetails(bill.IDBill)">Xem chi tiết</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
     </div>
 </div>
-
-@if (bills == null)
-{
-    <p>Đang tải dữ liệu...</p>
-}
-else if (!bills.Any())
-{
-    <p>Không có hóa đơn nào.</p>
-}
-else
-{
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Họ và tên</th>
-                <th>Số điện thoại</th>
-                <th>Địa chỉ giao hàng</th>
-                <th>Ngày đặt hàng</th>
-                <th>Hình thức thanh toán</th>
-                <th>Tổng tiền</th>
-                <th>Trạng thái</th>
-                <th>Hành động</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var bill in bills.Where(x => x.UserName == userName))
-            {
-                <tr>
-                    <td>@bill.IDBill</td>
-                    <td>@bill.FullName</td>
-                    <td>@bill.PhoneNumber</td>
-                    <td>@bill.DeliveryAddress</td>
-                    <td>@bill.OrderDate.ToString("dd/MM/yyyy")</td>
-                    <td>@bill.PaymentType</td>
-                    <td>@bill.Total.ToString("C")</td>
-                    <td>@bill.Status</td>
-                    <td>
-                        <button class="btn btn-primary" @onclick="() => NavigateToBillDetails(bill.IDBill)">Xem chi tiết</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
 
 @code {
     private string userName;
@@ -79,22 +154,14 @@ else
     private List<BillModel> allBills;
     private string searchFullName;
     private int? searchIDBill;
+    private List<BillDetailModel> allBillDetails = new List<BillDetailModel>();
+    private List<BillModel> saleBills = new List<BillModel>();
 
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            await CheckTokenAndLoadAccountInfo();
-            // Lấy tất cả hóa đơn khi trang được khởi tạo
-            allBills = await httpClient.GetFromJsonAsync<List<BillModel>>("api/Bill/GetBill");
-            bills = new List<BillModel>(allBills); // Hiển thị tất cả hóa đơn khi chưa tìm kiếm
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Lỗi khi tải dữ liệu: " + ex.Message);
-            bills = new List<BillModel>();
-        }
+        await LoadBill();
     }
+
 
     // Phương thức tìm kiếm hóa đơn
     private async Task SearchBills()
@@ -125,6 +192,78 @@ else
         }
     }
 
+    private async Task LoadBill()
+    {
+        try
+        {
+            await CheckTokenAndLoadAccountInfo();
+
+            // Lấy tất cả hóa đơn
+            allBills = await httpClient.GetFromJsonAsync<List<BillModel>>("api/Bill/GetBill");
+            bills = new List<BillModel>(allBills);
+
+            // Lấy tất cả chi tiết hóa đơn và phân loại hóa đơn do người dùng bán
+            foreach (var bill in allBills)
+            {
+                var billDetails = await httpClient.GetFromJsonAsync<List<BillDetailModel>>($"api/BillDetail/GetBillDetailsByIDBill/{bill.IDBill}");
+                bill.BillDetails = billDetails ?? new List<BillDetailModel>();
+
+                // Kiểm tra từng sản phẩm trong BillDetails
+                foreach (var detail in bill.BillDetails)
+                {
+                    // Lấy thông tin sản phẩm từ API dựa trên IDProduct
+                    var product = await httpClient.GetFromJsonAsync<ProductModel>($"api/Product/GetProductById/{detail.IDProduct}");
+
+                    // Kiểm tra nếu sản phẩm được bán bởi người đang đăng nhập
+                    if (product != null && product.UserName == userName)
+                    {
+                        // Nếu có ít nhất một sản phẩm do người dùng bán, thêm hóa đơn vào saleBills
+                        saleBills.Add(bill);
+                        break; // Không cần kiểm tra tiếp các sản phẩm khác của hóa đơn này
+                    }
+                }
+
+                // Thêm chi tiết vào danh sách chung
+                allBillDetails.AddRange(billDetails);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi khi tải dữ liệu: " + ex.Message);
+            bills = new List<BillModel>();
+            saleBills = new List<BillModel>();
+            allBillDetails = new List<BillDetailModel>();
+        }
+    }
+
+    private async Task AcceptBill(int idBill)
+    {
+        try
+        {
+            // Gọi API để xác nhận đơn hàng
+            var response = await httpClient.PostAsync($"api/Bill/AcceptBill/{idBill}", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Cập nhật lại danh sách đơn bán sau khi xác nhận
+                var result = await response.Content.ReadAsStringAsync();
+                await jsrunetime.InvokeVoidAsync("alert", "Đơn hàng đã được xác nhận!");
+                NavigationManager.NavigateTo("/bill", forceLoad: true);
+            }
+            else
+            {
+                // Thông báo lỗi nếu có lỗi khi xác nhận
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                await jsrunetime.InvokeVoidAsync("alert", errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Thông báo lỗi nếu có lỗi khi gọi API
+            await jsrunetime.InvokeVoidAsync("alert", $"Lỗi: {ex.Message}");
+        }
+    }
+
     // Điều hướng tới trang chi tiết hóa đơn
     private void NavigateToBillDetails(int IDBill)
     {
@@ -132,6 +271,17 @@ else
     }
 
     // Class Bill mô tả thông tin hóa đơn
+    public class BillDetailModel
+    {
+        public int IDDetail { get; set; }
+        public int IDBill { get; set; }
+        public string ProductName { get; set; }
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+        public int IDProduct { get; set; } // Thêm thuộc tính này
+    }
+
+
     public class BillModel
     {
         public int IDBill { get; set; }
@@ -142,8 +292,21 @@ else
         public string PaymentType { get; set; }
         public decimal Total { get; set; }
         public string Status { get; set; }
-        public string UserName { get; set; }
+        public string UserName { get; set; } // Người mua
+        public string SellerUserName { get; set; } // Người bán
+        public List<BillDetailModel> BillDetails { get; set; } = new List<BillDetailModel>();
     }
+
+    public class ProductModel
+    {
+        public int IDProduct { get; set; }
+        public string ProductName { get; set; }
+        public string UserName { get; set; } // Người bán sản phẩm
+        public decimal Price { get; set; }
+        public string Description { get; set; }
+    }
+
+
 
     private async Task CheckTokenAndLoadAccountInfo()
     {

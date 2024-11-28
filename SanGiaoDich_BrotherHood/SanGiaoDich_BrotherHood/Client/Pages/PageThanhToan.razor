@@ -8,6 +8,7 @@
     private Bill bill = new Bill();
     private List<CartItemUser> selectedCartItems = new();
     private decimal totalPrice = 0;
+    private SellerInfo sellerInfo;
 
     protected override async Task OnInitializedAsync()
     {
@@ -23,12 +24,24 @@
 
             // Lấy thông tin người dùng
             bill.UserName = await jsruntime.InvokeAsync<string>("localStorage.getItem", "username") ?? string.Empty;
+
+            // Lấy thông tin người bán dựa trên username của sản phẩm
+            var firstProduct = selectedCartItems.FirstOrDefault();
+            if (firstProduct != null)
+            {
+                var response = await http.GetFromJsonAsync<SellerInfo>($"api/User/GetAccountInfoByName/{firstProduct.UserName}");
+                if (response != null)
+                {
+                    sellerInfo = response;
+                }
+            }
         }
         catch (Exception ex)
         {
             await jsruntime.InvokeVoidAsync("alert", $"Đã xảy ra lỗi khi tải dữ liệu: {ex.Message}");
         }
     }
+
 
     private async Task PlaceOrder()
     {
@@ -38,30 +51,54 @@
             return;
         }
 
-        // Chuẩn bị dữ liệu đơn hàng
         bill.Total = totalPrice;
         bill.OrderDate = DateTime.Now;
         bill.Status = "Chờ xác nhận";
         bill.PaymentType = "Thanh toán bằng tiền mặt";
 
-        // Tạo chi tiết hóa đơn từ giỏ hàng
-        bill.BillDetails = selectedCartItems.Select(item => new BillDetail
-            {
-                IDProduct = item.IDProduct,
-                Quantity = item.Quantity,
-                Price = item.Price,
-                CreatedDate = DateTime.Now
-            }).ToList();
-
         try
         {
-            // Gửi yêu cầu POST tới API
             var response = await http.PostAsJsonAsync("api/Bill/AddBill", bill);
 
             if (response.IsSuccessStatusCode)
             {
-                await jsruntime.InvokeVoidAsync("alert", "Đặt hàng thành công!");
-                navigation.NavigateTo("/"); // Quay về trang chủ
+                var createdBill = await response.Content.ReadFromJsonAsync<Bill>();
+
+                foreach (var item in selectedCartItems)
+                {
+                    var billDetail = new BillDetail
+                        {
+                            IDBill = createdBill.IdBill,
+                            IDProduct = item.IdProduct,
+                            Quantity = item.Quantity,
+                            Price = item.Price,
+                            CreatedDate = DateTime.Now
+                        };
+
+                    var billDetailResponse = await http.PostAsJsonAsync("api/BillDetail/AddBillDetail", billDetail);
+                    if (!billDetailResponse.IsSuccessStatusCode)
+                    {
+                        var error = await billDetailResponse.Content.ReadAsStringAsync();
+                        await jsruntime.InvokeVoidAsync("alert", $"Đã có lỗi khi thêm chi tiết đơn hàng: {error}");
+                    }
+                }
+
+                // Xóa từng sản phẩm khỏi giỏ hàng sau khi thanh toán thành công
+                foreach (var item in selectedCartItems)
+                {
+                    var deleteResponse = await http.DeleteAsync($"api/CartItem/delete/{item.CartItemID}");
+                    if (!deleteResponse.IsSuccessStatusCode)
+                    {
+                        var error = await deleteResponse.Content.ReadAsStringAsync();
+                        await jsruntime.InvokeVoidAsync("alert", $"Không thể xóa sản phẩm {item.ProductName} khỏi giỏ hàng: {error}");
+                    }
+                }
+
+                // Cập nhật giao diện
+                selectedCartItems.Clear();
+                totalPrice = 0;
+                await jsruntime.InvokeVoidAsync("alert", "Đặt hàng thành công");
+                navigation.NavigateTo("/");
             }
             else
             {
@@ -75,8 +112,10 @@
         }
     }
 
+
     public class Bill
     {
+        public int IdBill { get; set; }
         public string UserName { get; set; }
         public decimal Total { get; set; }
         public DateTime OrderDate { get; set; }
@@ -91,97 +130,36 @@
 
     public class CartItemUser
     {
-        public int IDProduct { get; set; }
-        public int Quantity { get; set; }
-        public decimal Price { get; set; }
-        public string ImageUrl { get; set; }
+        public int CartItemID { get; set; }
+        public int IdCart { get; set; }
+        public int IdProduct { get; set; }
         public string ProductName { get; set; }
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
+        public string ImageUrl { get; set; }
+        public string CategoryName { get; set; }
+        public bool IsSelected { get; set; }
+        public string UserName { get; set; }
     }
 
     public class BillDetail
     {
+        public int IDBill { get; set; }
         public int IDProduct { get; set; }
         public int Quantity { get; set; }
         public decimal Price { get; set; }
         public DateTime CreatedDate { get; set; }
     }
+    public class SellerInfo
+    {
+        public string FullName { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Email { get; set; }
+        public string AvatarUrl { get; set; }
+    }
 }
 <style>
-    .checkout-container {
-        background-color: #f8f9fa;
-    }
 
-    .modern-input {
-        border: 1px solid #28a745;
-        border-radius: 0.5rem;
-        background-color: #dff0d8;
-        padding: 0.5rem;
-    }
-
-        .modern-input:focus {
-            border-color: #28a745;
-            box-shadow: 0 0 0.2rem rgba(40, 167, 69, 0.25);
-        }
-
-    .form-group {
-        margin-bottom: 0.5rem;
-    }
-
-    .submit-btn {
-        background-color: #28a745;
-        color: white;
-        border: none;
-        padding: 0.5rem 2rem;
-        border-radius: 0.5rem;
-        cursor: pointer;
-    }
-
-        .submit-btn:hover {
-            background-color: #218838;
-        }
-
-    .title {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #ffffff;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-    }
-
-    .subtitle {
-        font-size: 1.5rem;
-        color: rgb(255, 255, 255);
-        display: flex;
-        align-items: center;
-        margin-top: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .icon {
-        color: #ffffff;
-        font-size: 1.5rem;
-        margin-right: 10px;
-    }
-
-    .payment-options input[type="radio"] {
-        appearance: none; /* Ẩn nút radio mặc định */
-        width: 20px;
-        height: 20px;
-        border: 2px solid #28a745; /* Màu viền cho nút */
-        border-radius: 50%; /* Định hình tròn */
-        position: relative;
-        outline: none;
-        cursor: pointer;
-    }
-
-        .payment-options input[type="radio"]:checked {
-            background-color: #28a745; /* Màu nền cho nút được chọn */
-            border: 2px solid #28a745; /* Màu viền */
-        }
-
-    .payment-options label:hover {
-        background-color: #f8f9fa; /* Màu nền khi hover */
-        transition: background-color 0.3s; /* Hiệu ứng chuyển đổi */
-    }
 
 </style>
 
@@ -250,35 +228,35 @@
             </h2>
             <div class="product-info">
                 <!-- Product Container -->
-                <div class="product-container bg-white p-4 rounded shadow-sm mb-4">
-                    <!-- Product Item -->
-                    @if (selectedCartItems != null && selectedCartItems.Any())
-                    {
-                        @foreach (var item in selectedCartItems)
+                <div class="product-info">
+                    <div class="product-container bg-white p-4 rounded shadow-sm mb-4">
+                        @if (selectedCartItems != null && selectedCartItems.Any())
                         {
-                            <div class="product-item mb-3 d-flex align-items-center border-bottom pb-3">
-                                <img src="~/AnhSanPham/@item.ImageUrl" alt="Product Image" class="img-fluid rounded" style="max-width: 90px; margin-right: 15px;">
-                                <div class="product-details">
-                                    <span class="product-name" style="font-weight: bolder;">@item.ProductName</span>
-                                    <div class="product-price-quantity d-flex align-items-center mt-2">
-                                        <i class="fas fa-tag text-success mr-2"></i>
-                                        <span class="product-price">Giá: @($"{item.Price:N0} VNĐ")</span>
-                                    </div>
-                                    <div class="product-quantity d-flex align-items-center mt-2">
-                                        <i class="fas fa-box text-success mr-2"></i>
-                                        <span>Số lượng: @item.Quantity</span>
+                            @foreach (var item in selectedCartItems)
+                            {
+                                <div class="product-item mb-3 d-flex align-items-center border-bottom pb-3">
+                                    <img src="@item.ImageUrl" alt="Product Image" class="img-fluid rounded" style="max-width: 90px; margin-right: 15px;">
+                                    <div class="product-details">
+                                        <span class="product-name" style="font-weight: bolder;">@item.ProductName</span>
+                                        <div class="product-price-quantity d-flex align-items-center mt-2">
+                                            <i class="fas fa-tag text-success mr-2"></i>
+                                            <span class="product-price">Giá: @($"{item.Price:N0} VNĐ")</span>
+                                        </div>
+                                        <div class="product-quantity d-flex align-items-center mt-2">
+                                            <i class="fas fa-box text-success mr-2"></i>
+                                            <span>Số lượng: @item.Quantity</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            }
+
+                            <h4>Tổng cộng: @($"{selectedCartItems.Sum(i => i.Price):N0} VNĐ")</h4>
                         }
-
-                        <h4>Tổng cộng: @($"{selectedCartItems.Sum(i => i.Price):N0} VNĐ")</h4>
-
-                    }
-                    else
-                    {
-                        <p>Không có sản phẩm nào được chọn để thanh toán.</p>
-                    }
+                        else
+                        {
+                            <p>Không có sản phẩm nào được chọn để thanh toán.</p>
+                        }
+                    </div>
                 </div>
 
                 <div class="seller-info-total-amount mt-4">
@@ -290,18 +268,18 @@
                     </div>
                     <div class="seller-info position-relative p-2 bg-white border rounded shadow-sm d-flex align-items-center">
                         <div class="position-relative">
-                            <img src="/AnhAvatar/images (2).jpg" alt="Seller Image" class="rounded-circle me-4" style="width: 45px; height: 45px; object-fit: cover;">
+                            <img src="@sellerInfo?.AvatarUrl" alt="Seller Image" class="rounded-circle me-4" style="width: 45px; height: 45px; object-fit: cover;">
 
                         </div>
                         <div>
                             <p class="mb-2 font-weight-bold text-dark" style="font-size: 1.1em;">
-                                <i class="fas fa-user mr-2 text-primary"></i>Nguyễn Văn A  <span class="badge bg-success"s>Đối tác</span>
+                                <i class="fas fa-user mr-2 text-primary"></i>@sellerInfo?.FullName<span class="badge bg-success" s>Đối tác</span>
                             </p>
                             <p class="mb-2 text-muted">
-                                <i class="fas fa-phone-alt mr-2 text-success"></i>0123-456-789
+                                <i class="fas fa-phone-alt mr-2 text-success"></i>@sellerInfo?.PhoneNumber
                             </p>
                             <p class="mb-0 text-muted">
-                                <i class="fas fa-envelope mr-2 text-warning"></i>nguyenvana@example.com
+                                <i class="fas fa-envelope mr-2 text-warning"></i>@sellerInfo?.Email
                             </p>
                         </div>
                     </div>

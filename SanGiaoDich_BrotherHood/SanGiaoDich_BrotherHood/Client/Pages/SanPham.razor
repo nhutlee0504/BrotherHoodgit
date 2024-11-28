@@ -4,144 +4,156 @@
 @inject NavigationManager navigation
 @inject HttpClient http
 @inject NavigationManager NavigationManager
+@inject IJSRuntime jsruntime
 
 
 <style>
-    /* Thêm CSS từ giao diện cũ nếu cần */
-    .prod:hover {
-        transform: scale(1.05);
-    }
-    /* CSS từ giao diện mới */
-    /* ... */
-    .dropdown-item {
-        display: flex;
-        align-items: center;
-    }
+	/* Thêm CSS từ giao diện cũ nếu cần */
+	.prod:hover {
+		transform: scale(1.05);
+	}
+	/* CSS từ giao diện mới */
+	/* ... */
+	.dropdown-item {
+		display: flex;
+		align-items: center;
+	}
 
-        .dropdown-item input {
-            margin-right: 10px;
-        }
+		.dropdown-item input {
+			margin-right: 10px;
+		}
 
-    .list-unstyled li {
-        font-size: 0.85rem; /* Kích thước chữ nhỏ hơn cho gợi ý */
-    }
+	.list-unstyled li {
+		font-size: 0.85rem; /* Kích thước chữ nhỏ hơn cho gợi ý */
+	}
 
-    .flex {
-        display: flex;
-    }
+	.flex {
+		display: flex;
+	}
 
-    .justify-center {
-        justify-content: center;
-    }
+	.justify-center {
+		justify-content: center;
+	}
 
-    .mt-4 {
-        margin-top: 1rem;
-    }
+	.mt-4 {
+		margin-top: 1rem;
+	}
 
-    .space-x-1 > * + * {
-        margin-left: 0.25rem;
-    }
+	.space-x-1 > * + * {
+		margin-left: 0.25rem;
+	}
 
-    .page-item {
-        list-style-type: none;
-    }
+	.page-item {
+		list-style-type: none;
+	}
 
-    .page-link {
-        display: inline-block;
-        text-align: center;
-        padding: 0.5rem 1rem;
-        font-size: 0.875rem;
-        font-weight: 600;
-        border-radius: 0.375rem;
-    }
+	.page-link {
+		display: inline-block;
+		text-align: center;
+		padding: 0.5rem 1rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		border-radius: 0.375rem;
+	}
 
-    .bg-green-600 {
-        background-color: #2f855a;
-    }
+	.bg-green-600 {
+		background-color: #2f855a;
+	}
 
-    .hover\:bg-green-700:hover {
-        background-color: #276749;
-    }
+	.hover\:bg-green-700:hover {
+		background-color: #276749;
+	}
 
-    .rounded-l {
-        border-top-left-radius: 0.375rem;
-        border-bottom-left-radius: 0.375rem;
-    }
+	.rounded-l {
+		border-top-left-radius: 0.375rem;
+		border-bottom-left-radius: 0.375rem;
+	}
 
-    .text-white {
-        color: #fff;
-    }
+	.text-white {
+		color: #fff;
+	}
 
-    .text-gray-700 {
-        color: #4a5568;
-    }
+	.text-gray-700 {
+		color: #4a5568;
+	}
 
-    .bg-gray-300 {
-        background-color: #e2e8f0;
-    }
+	.bg-gray-300 {
+		background-color: #e2e8f0;
+	}
 
-    .disabled .page-link {
-        pointer-events: none;
-        opacity: 0.6;
-    }
+	.disabled .page-link {
+		pointer-events: none;
+		opacity: 0.6;
+	}
 </style>
 
 <div class="container-fluid">
-    <ul class="breadcrumb">
-        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
-        <li class="breadcrumb-item active">Sản phẩm</li>
-    </ul>
+	<ul class="breadcrumb">
+		<li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
+		<li class="breadcrumb-item active">Sản phẩm</li>
+	</ul>
 </div>
 
 <div class="container-fluid mt-3">
-    <div class="row">
-        <!-- Sidebar Filters -->
-        <div class="col-lg-3">
-            <div class="card shadow-sm p-3 mb-3" style="border-radius: 15px;">
-                <!-- Input Tìm kiếm -->
-                <div class="mb-3">
-                    <div class="input-group">
-                        <span class="input-group-text" style=" background-color: #f8f9fa; border: 1px solid #ced4da;">
-                            <i class="fas fa-search text-success"></i>
-                        </span>
-                        <input type="text" class="form-control" placeholder="Tìm kiếm sản phẩm"
-                               style="height: 35px; border: 1px solid #ced4da;"
-                               @bind="searchQuery" @oninput="OnSearchChanged">
-                    </div>
-                </div>
+	@if (showErrorModal)
+	{
+		<div class="modal fade show d-block" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-dialog-centered" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title text-danger" id="errorModalLabel">Lỗi</h5>
+						<button type="button" class="btn-close" aria-label="Close" @onclick="() => showErrorModal = false"></button>
+					</div>
+					<div class="modal-body">
+						<p>@modalMessage</p>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-danger" @onclick="() => showErrorModal = false">Đóng</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	}
 
-                <h5 class="mb-3 text-success">Lọc theo</h5>
+	<div class="row">
+		<!-- Sidebar Filters -->
+		<div class="col-lg-3">
+			<div class="card shadow-sm p-3 mb-3" style="border-radius: 15px;">
+				<!-- Input Tìm kiếm -->
+				<div class="mb-3">
+					<div class="input-group">
+						<span class="input-group-text" style=" background-color: #f8f9fa; border: 1px solid #ced4da;">
+							<i class="fas fa-search text-success"></i>
+						</span>
+						<input type="text" class="form-control" placeholder="Tìm kiếm sản phẩm"
+							   style="height: 35px; border: 1px solid #ced4da;"
+							   @bind="searchQuery" @oninput="OnSearchChanged">
+					</div>
+				</div>
 
-                <!-- Dropdown Loại -->
-                <div class="mb-3">
-                    <button class="btn btn-light dropdown-toggle w-100" type="button" id="loaiDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="height: 35px;">
-                        <i class="fas fa-tags"></i> Loại sản phẩm
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="loaiDropdown">
-                        @if (categories != null)
-                        {
-                            foreach (var x in categories)
-                            {
-                                <li>
-                                    <a class="dropdown-item">
-                                        <input class="form-check-input" type="checkbox" value="@x.IDCategory" id="@x.IDCategory"
-                                               @onchange="@(e => FilterByCategories(x.IDCategory, (bool)((ChangeEventArgs)e).Value))">
-                                        @x.NameCate
-                                    </a>
-                                </li>
-                            }
-                        }
-                    </ul>
-                </div>
+				<h5 class="mb-3 text-success">Lọc theo</h5>
 
-                <!-- Gợi ý giá -->
-                <h6 class="text-muted">Gợi ý mức giá:</h6>
-                <div class="mb-3">
-                    <span class="badge bg-light text-success">Dưới 500.000 VND</span>
-                    <span class="badge bg-light text-success">500.000 - 1.000.000 VND</span>
-                    <span class="badge bg-light text-success">Trên 1.000.000 VND</span>
-                </div>
-
+				<!-- Dropdown Loại -->
+				<div class="mb-3">
+					<button class="btn btn-light dropdown-toggle w-100" type="button" id="loaiDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="height: 35px;">
+						<i class="fas fa-tags"></i> Loại sản phẩm
+					</button>
+					<ul class="dropdown-menu" aria-labelledby="loaiDropdown">
+						@if (categories != null)
+						{
+							foreach (var x in categories)
+							{
+								<li>
+									<a class="dropdown-item">
+										<input class="form-check-input" type="checkbox" value="@x.IDCategory" id="@x.IDCategory"
+											   @onchange="@(e => FilterByCategories(x.IDCategory, (bool)((ChangeEventArgs)e).Value))">
+										@x.NameCate
+									</a>
+								</li>
+							}
+						}
+					</ul>
+				</div>
                 <!-- Giá Tiền -->
                 <h5 class="mt-2 text-success">Giá tiền</h5>
                 <div class="d-flex align-items-center mb-3">
@@ -149,25 +161,39 @@
                     <input type="text" class="form-control me-2" placeholder="Cao" @bind="highPrice">
                     <button class="btn btn-success" @onclick="FilterByPrice">Lọc</button>
                 </div>
+				<!-- Gợi ý giá -->
+				<h6 class="text-muted">Gợi ý mức giá:</h6>
+				<div class="mb-3">
+					<span class="badge bg-light text-success">Dưới 500.000 VND</span>
+					<span class="badge bg-light text-success">500.000 - 1.000.000 VND</span>
+					<span class="badge bg-light text-success">Trên 1.000.000 VND</span>
+				</div>
 
-                <!-- Dropdown Sắp xếp -->
-                <div class="mb-3">
-                    <button class="btn btn-light dropdown-toggle w-100" type="button" id="sapXepDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="height: 35px;">
-                        <i class="fas fa-sort"></i> Sắp xếp theo
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="sapXepDropdown">
-                        <li><a class="dropdown-item">  <input class="form-check-input" type="radio" name="sortOrder" id="giaTangDan" value="priceLowToHigh" @onchange="@(e=>SortOrder("priceLowToHigh"))"> Giá tăng dần</a></li>
-                        <li><a class="dropdown-item"> <input class="form-check-input" type="radio" name="sortOrder" id="giaGiamDan" value="priceHighToLow" @onchange="@(e=>SortOrder("priceHighToLow"))"> Giá giảm dần</a></li>
-                    </ul>
-                </div>
+				<!-- Giá Tiền -->
+				<h5 class="mt-2 text-success">Giá tiền</h5>
+				<div class="d-flex align-items-center mb-3">
+					<input type="text" class="form-control me-2" placeholder="Thấp" @bind="lowPrice">
+					<input type="text" class="form-control me-2" placeholder="Cao" @bind="highPrice">
+					<button class="btn btn-success" @onclick="FilterByPrice">Filter</button>
+				</div>
+
+				<!-- Dropdown Sắp xếp -->
+				<div class="mb-3">
+					<button class="btn btn-light dropdown-toggle w-100" type="button" id="sapXepDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="height: 35px;">
+						<i class="fas fa-sort"></i> Sắp xếp theo
+					</button>
+					<ul class="dropdown-menu" aria-labelledby="sapXepDropdown">
+						<li><a class="dropdown-item">  <input class="form-check-input" type="radio" name="sortOrder" id="giaTangDan" value="priceLowToHigh" @onchange="@(e=>SortOrder("priceLowToHigh"))"> Giá tăng dần</a></li>
+						<li><a class="dropdown-item"> <input class="form-check-input" type="radio" name="sortOrder" id="giaGiamDan" value="priceHighToLow" @onchange="@(e=>SortOrder("priceHighToLow"))"> Giá giảm dần</a></li>
+					</ul>
+				</div>
 
 
-                <button class="btn btn-success w-100" style="border-radius: 15px; height: 35px;">
-                    <i class="fas fa-filter"></i> Lọc
-                </button>
-            </div>
-        </div>
-
+				<button class="btn btn-success w-100" style="border-radius: 15px; height: 35px;">
+					<i class="fas fa-filter"></i> Lọc
+				</button>
+			</div>
+		</div>
         <!-- Product Grid -->
         <div class="col-lg-9">
             <div class="row">
@@ -234,28 +260,71 @@
     </div>
 </div>
 @code {
-    private async Task AddToCart(int productId)
-    {
-        try
-        {
-            var response = await http.PostAsync($"api/Cart/AddCart/{productId}", null);
-            if (response.IsSuccessStatusCode)
-            {
-            
-                Console.WriteLine("Product added to cart successfully!");
-            }
-            else
-            {
-                Console.WriteLine("Failed to add product to cart.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred: {ex.Message}");
-        }
-    }
+	private string modalMessage = string.Empty;
+	private bool showErrorModal = false;
 
+	private class AccountInfoDto
+	{
+		public string UserName { get; set; }
+		public string FullName { get; set; }
+		public string PhoneNumber { get; set; }
+		public string Gender { get; set; }
+		public DateTime? Birthday { get; set; }
+		public string ImageAccount { get; set; }
+	}
+
+	private async Task AddToCart(int productId)
+	{
+		try
+		{
+			var token = await jsruntime.InvokeAsync<string>("localStorage.getItem", "token");
+			if (string.IsNullOrEmpty(token))
+			{
+				navigation.NavigateTo("/login");
+				return;
+			}
+			http.DefaultRequestHeaders.Authorization =
+				new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+			var userResponse = await http.GetAsync("api/User/GetMyInfo");
+			if (!userResponse.IsSuccessStatusCode)
+			{
+				modalMessage = "Không thể lấy thông tin tài khoản. Vui lòng thử lại.";
+				showErrorModal = true;
+				return;
+			}
+			var currentUser = await userResponse.Content.ReadFromJsonAsync<AccountInfoDto>();
+			var productResponse = await http.GetAsync($"api/Product/GetProductById/{productId}");
+			if (!productResponse.IsSuccessStatusCode)
+			{
+				modalMessage = "Không tìm thấy thông tin sản phẩm.";
+				showErrorModal = true;
+				return;
+			}
+			var product = await productResponse.Content.ReadFromJsonAsync<Product>();
+
+			if (product.UserName == currentUser.UserName)
+			{
+				modalMessage = "Bạn không thể mua sản phẩm của chính mình.";
+				showErrorModal = true;
+				return;
+			}
+
+			var addToCartResponse = await http.PostAsync($"api/Cart/AddCart/{productId}", null);
+			if (addToCartResponse.IsSuccessStatusCode)
+			{
+				modalMessage = "Sản phẩm đã được thêm vào giỏ hàng thành công!";
+			}
+			else
+			{
+				modalMessage = "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng.";
+			}
+			showErrorModal = true;
+		}
+		catch (Exception ex)
+		{
+			modalMessage = $"Đã xảy ra lỗi: {ex.Message}";
+			showErrorModal = true;
+		}
+	}
 }
-
-
 

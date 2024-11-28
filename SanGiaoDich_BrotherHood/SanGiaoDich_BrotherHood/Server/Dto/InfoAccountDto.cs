@@ -5,6 +5,7 @@ namespace SanGiaoDich_BrotherHood.Server.Dto
 {
     public class InfoAccountDto
     {
+        public string UserName { get; set; }
         public string Email { get; set; }
         public string FullName { get; set; }
         public string Phone {  get; set; }

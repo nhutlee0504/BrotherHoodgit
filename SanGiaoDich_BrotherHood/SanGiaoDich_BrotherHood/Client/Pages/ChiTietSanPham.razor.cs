@@ -22,8 +22,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         private bool isLoading = true;
         AccountInfoDto accountInfo;
         private bool IsLoggedIn { get; set; } = false;
-
-
+        private string name = string.Empty;
         protected override async Task OnInitializedAsync()
         {
             await CheckTokenAndLoadAccountInfo();
@@ -157,8 +156,13 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             {
                 return null;
             }
-            return await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
-        }
+			var account = await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
+			if (account != null)
+			{
+				name = account.UserName; // Gán tên người dùng vào biến name
+			}
+			return account;
+		}
 
         private async Task<List<ImageProduct>> GetImagesByProductId(int id)
         {
@@ -226,6 +230,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                 errorMessage = "Bạn cần đăng nhập để thực hiện hành động này.";
             }
         }
+
 
         private async Task GoToMessagingPage()
         {
@@ -323,6 +328,5 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                 return null;
             }
         }
-
     }
 }
