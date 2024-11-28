@@ -18,10 +18,6 @@
         </div>
     </div>
 }
-else if (!string.IsNullOrEmpty(errorMessage))
-{
-    <p class="text-danger">@errorMessage</p>
-}
 else
 {
     <div class="container-fluid">
@@ -67,30 +63,41 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (var req in PaginatedPaymentRequests)
+                @if (PaginatedPaymentRequests == null || !PaginatedPaymentRequests.Any())
                 {
                     <tr>
-                        <td>@req.TxnRef</td>
-                        <td class="text-center">@req.Amount.ToString("N0") đồng</td>
-                        <td class="text-center">
-                            @if (req.PaymentResponse?.VnPayResponseCode == "00")
-                            {
-                                <span class="badge bg-success">Thành công</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-danger">Thất bại</span>
-                            }
-                        </td>
-                        <td class="text-center">@req.OrderDescription</td>
-                        <td class="text-center">@req.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>
-                      
-                        <td class="text-center">
-                            <button class="btn btn-primary" @onclick="() => ShowTransactionDetails(req.TxnRef)">Xem chi tiết</button>
+                        <td colspan="6" class="text-center text-muted">
+                            Bạn chưa có giao dịch nào.
                         </td>
                     </tr>
                 }
+                else
+                {
+                    @foreach (var req in PaginatedPaymentRequests)
+                    {
+                        <tr>
+                            <td>@req.TxnRef</td>
+                            <td class="text-center">@req.Amount.ToString("N0") đồng</td>
+                            <td class="text-center">
+                                @if (req.PaymentResponse?.VnPayResponseCode == "00")
+                                {
+                                    <span class="badge bg-success">Thành công</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Thất bại</span>
+                                }
+                            </td>
+                            <td class="text-center">@req.OrderDescription</td>
+                            <td class="text-center">@req.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-center">
+                                <button class="btn btn-primary" @onclick="() => ShowTransactionDetails(req.TxnRef)">Xem chi tiết</button>
+                            </td>
+                        </tr>
+                    }
+                }
             </tbody>
+
         </table>
     </div>
 

@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SanGiaoDich_BrotherHood.Server.Services;
 using System.Threading.Tasks;
 using System;
-using SanGiaoDich_BrotherHood.Server.Services;
-using SanGiaoDich_BrotherHood.Shared.Dto;
-using System.Linq;
+using SanGiaoDich_BrotherHood.Shared.Models;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -12,98 +11,72 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
     [ApiController]
     public class MessageController : ControllerBase
     {
-        private readonly IMessage _messageService;
-
-        public MessageController(IMessage messageService)
+        private readonly IMessage _message;
+        public MessageController(IMessage message)
         {
-            _messageService = messageService;
+            _message = message;
         }
-
-        [HttpPost("create-conversation")]
-        public async Task<IActionResult> CreateConversation([FromQuery] string username1, [FromQuery] string username2)
+        [HttpPost("CreateMess")]
+        public async Task<IActionResult> Create([FromQuery] string username, [FromQuery] string userGive, [FromBody] Messages model)
         {
             try
             {
-                var conversation = await _messageService.CreateConversationAsync(username1, username2);
-                return Ok(conversation); // Trả về đối tượng cuộc trò chuyện trực tiếp
+                if (model == null || string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(userGive))
+                {
+                    return BadRequest("Invalid data: Message model, username, or userGive is null or empty.");
+                }
+
+                var createdMessage = await _message.AddMessageWithConversation(username, userGive, model);
+
+                if (createdMessage == null)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, "Error creating message or conversation.");
+                }
+
+                return Ok(createdMessage);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message }); // Chỉ trả về thông báo lỗi
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error: {ex.Message}");
             }
         }
 
-        [HttpGet("get-conversations/{username}")]
-        public async Task<IActionResult> GetConversationsForUser(string username)
+        [HttpGet("GetMessages/{conversationId}")]
+        public async Task<IActionResult> GetMessages(int conversationId)
         {
             try
             {
-                var conversations = await _messageService.GetConversationsForUserAsync(username);
+                var messages = await _message.GetMessagesByConversationIdAsync(conversationId);
+                if (messages == null || messages.Count == 0)
+                {
+                    return NotFound("No messages found for this conversation.");
+                }
 
-                // Kiểm tra và đảm bảo định dạng trả về là JSON
-                Response.ContentType = "application/json";
-
-                var participants = conversations
-                    .SelectMany(conversation => conversation.conversationParticipants)
-                    .Where(participant => participant.UserName != null)
-                    .ToList();
-
-                return Ok(participants);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-
-
-        [HttpGet("messages-by-conversation/{conversationId}")]
-        public async Task<IActionResult> GetMessagesByConversationId(int conversationId)
-        {
-            try
-            {
-                var messages = await _messageService.GetMessagesByConversationIdAsync(conversationId);
-                return Ok(messages); // Trả về danh sách tin nhắn trực tiếp
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message }); // Trả về thông báo lỗi
-            }
-        }
-
-        [HttpGet("messages-between/{username1}/{username2}")]
-        public async Task<IActionResult> GetMessagesBetweenUsers([FromRoute] string username1, [FromRoute] string username2)
-        {
-            try
-            {
-                var messages = await _messageService.GetMessagesBetweenUsersAsync(username1, username2);
                 return Ok(messages);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
-
-        [HttpPost("send-message")]
-        public async Task<IActionResult> SendMessage([FromBody] SendMessageDto messageDto)
+        [HttpGet("GetMessagesBetween")]
+        public async Task<IActionResult> GetMessagesBetween(string username, string selectedUser)
         {
             try
             {
-                var message = await _messageService.SendMessageAsync(
-                    messageDto.ConversationId,
-                    messageDto.UserSend,
-                    messageDto.Content,
-                    messageDto.TypeContent
-                );
+                if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(selectedUser))
+                {
+                    return BadRequest("Username hoặc SelectedUser không hợp lệ.");
+                }
 
-                return Ok(message); // Trả về tin nhắn trực tiếp
+                var messages = await _message.GetMessagesBetweenUsers(username, selectedUser);
+                return Ok(messages);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message }); // Trả về thông báo lỗi
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Lỗi: {ex.Message}");
             }
         }
+
     }
 }

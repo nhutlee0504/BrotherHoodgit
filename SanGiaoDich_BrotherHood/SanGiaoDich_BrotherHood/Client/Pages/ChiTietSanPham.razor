@@ -5,6 +5,7 @@
 @using System.Text
 @inject HttpClient httpclient
 @inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
 <style>
     .old-price {
         color: black;
@@ -115,7 +116,9 @@
             <p><strong>Loại sản phẩm:</strong> @categoryName</p>
             <p><i class="bi bi-clock"></i> Đăng vào lúc: @(product?.StartDate?.ToString("dd/MM/yyyy") ?? "Chưa xác định")</p>
 
-            <button class="btn btn-danger rounded-pill mb-2 w-100"><i class="bi bi-person-circle"></i> Liên hệ người bán</button>
+            <button class="btn btn-danger rounded-pill mb-2 w-100" @onclick="GoToMessagingPage">
+                <i class="bi bi-person-circle"></i> Liên hệ người bán
+            </button>
             <button class="btn btn-success rounded-pill mb-2 w-100"><i class="bi bi-telephone-forward"></i> Liên hệ qua @user?.PhoneNumber </button>
         </div>
     </div>
@@ -148,4 +151,3 @@
         </div>
     </div>
 </div>
-

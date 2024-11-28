@@ -31,7 +31,7 @@ namespace SanGiaoDich_BrotherHood.Server.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<Favorite> Favorites { get; set; }
         public DbSet<ImageProduct> ImageProducts { get; set; }
-        public DbSet<Message> Messages { get; set; }
+        public DbSet<Messages> Messages { get; set; }
         public DbSet<Rating> Ratings { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Conversation> Conversations { get; set; }

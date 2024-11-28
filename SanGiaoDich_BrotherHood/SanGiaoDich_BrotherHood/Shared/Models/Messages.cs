@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace SanGiaoDich_BrotherHood.Shared.Models
 {
-    public class Message
+    public class Messages
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -14,14 +14,12 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         [ForeignKey("Conversation")]
         public int ConversationID { get; set; }
         public string UserSend { get; set; }
-        public string CreatedDate { get; set; }
+        public DateTime CreatedDate { get; set; }
         public string Content { get; set; }
         public string Status { get; set; }
         public bool IsDeleted { get; set; }
         public string TypeContent {  get; set; }
         [JsonIgnore]
         public Conversation conversation { get; set; }
-        [JsonIgnore]
-        public ICollection<ConversationParticipant> conversationParticipants { get; set; }
     }
 }

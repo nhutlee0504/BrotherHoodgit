@@ -109,9 +109,9 @@ namespace SanGiaoDich_BrotherHood.Server
             services.AddScoped<IProduct, ProductResponse>();
             services.AddScoped<IFavorite, FavoriteResponse>();
             services.AddScoped<IImageProduct, ImageProductResponse>();
-            services.AddScoped<IMessage, MessageResponse>();
             services.AddScoped<IUser, UserService>();
             services.AddScoped<IAdmin, AdminService>();
+            services.AddScoped<IConversation, ConversationRespone>();
             services.AddScoped<IRating, RatingService>();
             services.AddScoped<IAddressDetail, AddressDetailResponse>();
             services.AddScoped<IBill, BillResponse>();
@@ -123,6 +123,7 @@ namespace SanGiaoDich_BrotherHood.Server
             services.AddScoped<FirebaseStorageService>();
             services.AddScoped<IVnPayService, VnPayService>();
             services.AddScoped<IVnpayThongkeService,VnpayThongkeService>();
+            services.AddScoped<IMessage,MessageResponse>();
             services.AddHttpClient();
 
             // Đăng ký các dịch vụ của bạn (ví dụ: ESMSService)

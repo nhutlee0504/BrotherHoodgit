@@ -33,6 +33,15 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             _configuration = configuration;
             _firebaseService = firebaseService;
         }
+        public string HashFullName(string input)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+                string hashString = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+                return hashString.Substring(0, 10);
+            }
+        }
         public async Task<Account> RegisterUser(RegisterDto registerDto)
         {
             if (!IsValidPassword(registerDto.Password))
@@ -51,13 +60,15 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             }
             var newAdmin = new Account
             {
+                FullName = HashFullName(registerDto.UserName),
                 UserName = registerDto.UserName,
                 Password = HashPassword(registerDto.Password),
                 IsDelete = false,
                 CreatedTime = DateTime.Now,
                 Role = "Người dùng",
                 PreSystem = 10000,
-                IsActived = true
+                IsActived = true,
+                ImageAccount = "https://firebasestorage.googleapis.com/v0/b/dbbrotherhood-ac2f1.appspot.com/o/ImageTest%2Favatar-default.svg?alt=media&token=fb4e7099-b322-412e-9da7-0f80d2311785"
             };
             var newCart = new Cart
             {
