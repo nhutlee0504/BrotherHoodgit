@@ -167,7 +167,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public async Task<Product> GetProductById(int id) // Xem chi tiết sản phẩm
         {
             var product = await _context.Products
-                .Include(p => p.imageProducts)
                 .FirstOrDefaultAsync(x => x.IDProduct == id);
 
             if (product == null)

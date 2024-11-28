@@ -112,17 +112,15 @@
 </style>
 <div class="search-filter-container">
     <div class="search-container">
-        <input type="text" @bind="searchQuery" class="search-input" placeholder="Tìm kiếm theo tên hoặc ID sản phẩm...">
+        <input type="text" @bind="searchQuery" class="search-input" placeholder="Nhâp tên hoặc ID sản phẩm.">
         <button class="btn btn-search" @onclick="Search">Tìm kiếm</button>
     </div>
-    @if (!string.IsNullOrWhiteSpace(errorMessage))
+   @if (!string.IsNullOrWhiteSpace(errorMessage))
     {
-        <div class="alert alert-danger">
+        <div class="alert alert-danger mt-2">
             @errorMessage
         </div>
     }
-   
-
     <div class="filter-container">
         <div class="dropdown">
             <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
@@ -155,7 +153,7 @@
             <tr>
                 <td>@product.Name</td>
                 <td class="text-center">@product.UserName</td>
-                <td class="text-center">@product.StartDate?.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                <td class="text-center">@product.StartDate?.ToString("dd/MM/yyyy | HH:mm:ss")</td>
                 <td class="text-center">@product.ProrityLevel</td>
                 <td class="text-center">@product.Status</td>
                 <td class="text-center">@product.AccountAccept</td>
@@ -220,7 +218,18 @@
             if (int.TryParse(searchQuery, out int productId))
             {
                 var response = await httpClient.GetAsync($"api/product/GetProductById/{productId}");
-                if (response.IsSuccessStatusCode)
+
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    errorMessage = "Không tìm thấy sản phẩm với ID này.";
+                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                {
+                    errorMessage = "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.";
+                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống
+                }
+                else if (response.IsSuccessStatusCode)
                 {
                     var product = await response.Content.ReadFromJsonAsync<Product>();
                     if (product != null)
@@ -230,19 +239,25 @@
                     else
                     {
                         errorMessage = "Không tìm thấy sản phẩm theo ID.";
-                        products = new List<Product>();
+                        products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống
                     }
                 }
                 else
                 {
                     errorMessage = $"Lỗi API: {response.ReasonPhrase}";
+                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống khi có lỗi khác
                 }
             }
             else
             {
                 // Tìm kiếm theo tên
                 var response = await httpClient.GetAsync($"api/product/GetProductByName/{searchQuery}");
-                if (response.IsSuccessStatusCode)
+                if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                {
+                    errorMessage = "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.";
+                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống
+                }
+                else if (response.IsSuccessStatusCode)
                 {
                     var result = await response.Content.ReadFromJsonAsync<List<Product>>();
                     if (result != null && result.Any())
@@ -251,18 +266,21 @@
                     }
                     else
                     {
-                        errorMessage = "Không tìm thấy sản phẩm theo tên.";
+                        errorMessage = "Không tìm thấy tên sản phẩm này.";
+                        products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống khi không có kết quả
                     }
                 }
                 else
                 {
                     errorMessage = $"Lỗi API: {response.ReasonPhrase}";
+                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống khi có lỗi khác
                 }
             }
         }
         catch (Exception ex)
         {
             errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
+            products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống khi xảy ra lỗi
         }
     }
 

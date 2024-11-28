@@ -47,9 +47,9 @@ namespace API.Controllers
 				}
 				return Ok(product);
 			}
-			catch (Exception ex)
+			catch (NotImplementedException ex)
 			{
-				return StatusCode(500, "Đã xảy ra lỗi khi lấy sản phẩm.");
+				return BadRequest(ex.Message);
 			}
 		}
 
