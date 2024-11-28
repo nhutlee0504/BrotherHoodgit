@@ -22,6 +22,17 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
+        public async Task<Bill> AcceptBill(int IdBill)
+        {
+            var BillFind = await _context.Bills.FindAsync(IdBill);
+            if (BillFind != null)
+            {
+                BillFind.Status = "Đã xác nhận";
+            }
+            await _context.SaveChangesAsync();
+            return BillFind;
+        }
+
         public async Task<Bill> AddBill(BillDto bill)
         {
             var user = GetUserInfoFromClaims();

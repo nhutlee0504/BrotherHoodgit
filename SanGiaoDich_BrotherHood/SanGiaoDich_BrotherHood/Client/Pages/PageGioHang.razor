@@ -30,6 +30,7 @@
         public string CategoryName { get; set; }
         public string ImageUrl { get; set; }
         public bool IsSelected { get; set; }
+        public string UserName { get; set; }
     }
 
 
@@ -83,10 +84,11 @@
             var cartItemsResponse = await http.GetAsync($"api/CartItem/GetAllCartItems/{cartId}");
             if (cartItemsResponse.IsSuccessStatusCode)
             {
-                var cartItems = await cartItemsResponse.Content.ReadFromJsonAsync<List<CartItemUser>>();
-                foreach (var item in cartItems)
+                itemUsers = await cartItemsResponse.Content.ReadFromJsonAsync<List<CartItemUser>>();
+
+                // Tiến hành xử lý chi tiết cho mỗi sản phẩm
+                foreach (var item in itemUsers)
                 {
-                    // Lấy thông tin sản phẩm
                     var product = await GetProductById(item.IdProduct);
                     if (product != null)
                     {
@@ -95,22 +97,25 @@
                         item.Price = product.Price;
                         item.CategoryName = await GetCategoryNameById(product.IDCategory);
                         var images = await GetImagesByProductId(item.IdProduct);
-                        // item.ImageUrl = images.FirstOrDefault()?.Image ?? "/path/to/default-image.png";
-                        item.ImageUrl = $"{http.BaseAddress}{images.FirstOrDefault()?.Image}";
+                        item.ImageUrl = images.FirstOrDefault()?.Image;
+                        item.UserName = product.UserName; // Giả sử API trả về thông tin chủ shop
                     }
                 }
-                itemUsers = cartItems;
+                foreach (var shopKey in itemUsers.Select(i => i.UserName).Distinct())
+                {
+                    shopLockStates[shopKey] = false;
+                }
+
+                UpdateSelectedTotal();
             }
             else
             {
                 errorMessage = "Không thể tải các sản phẩm trong giỏ hàng.";
-                itemUsers = Enumerable.Empty<CartItemUser>();
             }
         }
         catch (Exception ex)
         {
             errorMessage = $"Có lỗi xảy ra khi tải sản phẩm giỏ hàng: {ex.Message}";
-            itemUsers = Enumerable.Empty<CartItemUser>();
         }
     }
 
@@ -219,22 +224,95 @@
             .Sum(item => item.Price) ?? 0;
     }
 
+    private string selectedShop; // Lưu shop đang được chọn
+    private Dictionary<string, bool> shopLockStates = new Dictionary<string, bool>();
 
-    private void ToggleSelectAll(bool isSelected)
+    private async void OnItemSelectionChanged(bool isSelected, CartItemUser cartItem)
     {
-        foreach (var item in itemUsers)
+        if (isSelected)
         {
-            item.IsSelected = isSelected;
+            // Nếu chưa chọn shop nào, chọn shop của sản phẩm này
+            if (string.IsNullOrEmpty(selectedShop))
+            {
+                selectedShop = cartItem.UserName;
+
+                // Khóa các shop khác
+                foreach (var shopKey in itemUsers.Select(i => i.UserName).Distinct())
+                {
+                    shopLockStates[shopKey] = shopKey != selectedShop;
+                }
+            }
+            // Nếu shop của sản phẩm này khác shop đã chọn, bỏ chọn sản phẩm này
+            else if (cartItem.UserName != selectedShop)
+            {
+                cartItem.IsSelected = false;
+                return; // Dừng lại nếu chọn sản phẩm của shop khác khi đã có shop được chọn
+            }
         }
-        UpdateSelectedTotal(); // Cập nhật lại tổng số tiền
+        else
+        {
+            // Khi bỏ chọn một sản phẩm, kiểm tra xem còn sản phẩm nào khác của shop này được chọn không
+            var remainingSelected = itemUsers.Where(item => item.IsSelected && item.UserName == cartItem.UserName).ToList();
+
+            // Nếu không còn sản phẩm nào được chọn trong shop này, bỏ khóa các shop khác
+            if (!remainingSelected.Any())
+            {
+                selectedShop = null;
+
+                // Mở khóa tất cả các shop
+                foreach (var shopKey in itemUsers.Select(i => i.UserName).Distinct())
+                {
+                    shopLockStates[shopKey] = false;
+                }
+            }
+        }
+
+        // Cập nhật trạng thái chọn cho sản phẩm
+        cartItem.IsSelected = isSelected;
+
+        // Cập nhật tổng tiền đã chọn
+        UpdateSelectedTotal();
+        StateHasChanged();  // Cập nhật lại giao diện
     }
 
-
-    private void OnItemSelectionChanged(bool isSelected, CartItemUser cartItem)
+    private void ToggleSelectAll(bool isSelected, string shopKey)
     {
-        cartItem.IsSelected = isSelected;
+        if (isSelected)
+        {
+            selectedShop = shopKey;
+
+            // Chọn tất cả sản phẩm của shop này
+            foreach (var item in itemUsers.Where(i => i.UserName == shopKey))
+            {
+                item.IsSelected = true;
+            }
+
+            // Khóa tất cả các shop khác
+            foreach (var shop in itemUsers.Select(i => i.UserName).Distinct())
+            {
+                shopLockStates[shop] = shop != selectedShop;
+            }
+        }
+        else
+        {
+            // Bỏ chọn tất cả sản phẩm
+            foreach (var item in itemUsers)
+            {
+                item.IsSelected = false;
+            }
+            selectedShop = null;
+
+            // Mở khóa tất cả các shop
+            foreach (var shopKey1 in itemUsers.Select(i => i.UserName).Distinct())
+            {
+                shopLockStates[shopKey1] = false;
+            }
+        }
+
+        // Cập nhật tổng tiền sau khi thay đổi
         UpdateSelectedTotal();
     }
+
 
     private async Task ProcessPayment()
     {
@@ -260,26 +338,38 @@
 
     private async Task RemoveItem(CartItemUser item)
     {
+        Console.WriteLine($"Đang xóa sản phẩm: {item.CartItemID}");
         try
         {
-            // Gọi API để xóa sản phẩm khỏi cơ sở dữ liệu
-            var response = await http.DeleteAsync($"api/CartItem/RemoveItem/{item.CartItemID}");
-
+            var response = await http.DeleteAsync($"api/CartItem/delete/{item.CartItemID}");
             if (response.IsSuccessStatusCode)
             {
-                // Xóa sản phẩm khỏi danh sách giỏ hàng trong ứng dụng
+                Console.WriteLine("API trả về thành công.");
                 itemUsers = itemUsers.Where(i => i.CartItemID != item.CartItemID).ToList();
-                UpdateSelectedTotal(); // Cập nhật lại tổng tiền
+                UpdateSelectedTotal();
+                StateHasChanged();
             }
             else
             {
-                errorMessage = "Không thể xóa sản phẩm: " + await response.Content.ReadAsStringAsync();
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"API trả về lỗi: {error}");
+                errorMessage = "Không thể xóa sản phẩm: " + error;
             }
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Lỗi khi gọi API: {ex.Message}");
             errorMessage = "Lỗi khi xóa sản phẩm: " + ex.Message;
         }
+    }
+
+    private async Task ShowErrorMessage(string message, int durationMs = 3000)
+    {
+        errorMessage = message;
+        StateHasChanged(); // Cập nhật giao diện ngay sau khi hiển thị thông báo
+        await Task.Delay(durationMs); // Chờ trong khoảng thời gian chỉ định
+        errorMessage = null; // Xóa thông báo sau khi hết thời gian
+        StateHasChanged(); // Cập nhật lại giao diện
     }
 }
 
@@ -304,7 +394,7 @@
                         <th class="text-center align-middle" style="width:50px">
                             <div class="checkbox-wrapper-30 text-center">
                                 <span class="checkbox">
-                                    <input type="checkbox" @onchange="(e) => ToggleSelectAll((bool)e.Value)">
+                                  
                                     <svg>
                                         <use xlink:href="#checkbox-30" class="checkbox"></use>
                                     </svg>
@@ -326,46 +416,71 @@
                 <tbody>
                     @if (itemUsers != null && itemUsers.Any())
                     {
-                        @foreach (var item in itemUsers)
+                        // Nhóm sản phẩm theo shop (UserName)
+                        var groupedItems = itemUsers.GroupBy(item => item.UserName);
+
+                        foreach (var shop in groupedItems)
                         {
+                            <!-- Tên shop -->
                             <tr>
-                                <!-- Cột checkbox -->
-                                <td class="text-center align-middle">
-                                    <div class="checkbox-wrapper-30">
-                                        <span class="checkbox">
-                                            <input type="checkbox" checked="@item.IsSelected" @onchange="(e) => OnItemSelectionChanged((bool)e.Value, item)">
-                                            <svg>
-                                                <use xlink:href="#checkbox-30" class="checkbox"></use>
-                                            </svg>
-                                        </span>
+                                <td colspan="6" class="text-left font-weight-bold bg-light">
+                                    <div class="d-flex align-items-center">
+                                        <!-- Checkbox của shop -->
+                                        <input type="checkbox" @onchange="(e) => ToggleSelectAll((bool)e.Value, shop.Key)"
+                                               disabled="@shopLockStates.GetValueOrDefault(shop.Key, false)">
+                                        <i class="bi bi-shop ms-2 me-2"></i> Shop: @shop.Key
                                     </div>
                                 </td>
-
-                                <!-- Cột hình ảnh -->
-                                <td class="text-center align-middle">
-                                    <img src="~/AnhSanPham/@item.ImageUrl" alt="Product Image" style="width:100px;" />
-                                </td>
-
-                                <!-- Cột tên sản phẩm -->
-                                <td class="text-center align-middle">
-                                    <h5 class="m-0" style="font-weight:bolder">@item.ProductName</h5>
-                                </td>
-
-                                <!-- Cột loại sản phẩm -->
-                                <td class="text-center align-middle">
-                                    <h5 class="m-0" style="font-weight:bolder">@item.CategoryName</h5>
-                                </td>
-
-                                <!-- Cột giá sản phẩm -->
-                                <td class="text-center align-middle">
-                                    <div style="color:green; font-weight:bolder">@($"{item.Price:N0} VNĐ")</div>
-                                </td>
-
-                                <!-- Cột tùy chọn (nút xóa) -->
-                                <td class="text-center align-middle">
-                                    <i class="bi bi-trash3-fill text-danger" style="cursor:pointer;" @onclick="async () => await RemoveItem(item)"></i>
-                                </td>
                             </tr>
+
+
+                            <!-- Danh sách sản phẩm của shop -->
+                            @foreach (var item in shop)
+                            {
+                                <tr class="mb-2">
+                                    <!-- Cột checkbox -->
+                                    <!-- Cột checkbox cho từng sản phẩm -->
+                                    <td class="text-center align-middle">
+                                        <div class="checkbox-wrapper-30">
+                                            <span class="checkbox">
+                                                <input type="checkbox" checked="@item.IsSelected"
+                                                       @onchange="(e) => OnItemSelectionChanged((bool)e.Value, item)"
+                                                       disabled="@shopLockStates.GetValueOrDefault(item.UserName, false)">
+                                                <svg>
+                                                    <use xlink:href="#checkbox-30" class="checkbox"></use>
+                                                </svg>
+                                            </span>
+                                        </div>
+                                    </td>
+
+
+
+                                    <!-- Cột hình ảnh -->
+                                    <td class="text-center align-middle">
+                                        <img src="@item.ImageUrl" alt="Product Image" style="width:100px;" />
+                                    </td>
+
+                                    <!-- Cột tên sản phẩm -->
+                                    <td class="text-center align-middle">
+                                        <h5 class="m-0" style="font-weight:bolder">@item.ProductName</h5>
+                                    </td>
+
+                                    <!-- Cột loại sản phẩm -->
+                                    <td class="text-center align-middle">
+                                        <h5 class="m-0" style="font-weight:bolder">@item.CategoryName</h5>
+                                    </td>
+
+                                    <!-- Cột giá sản phẩm -->
+                                    <td class="text-center align-middle">
+                                        <div style="color:green; font-weight:bolder">@($"{item.Price:N0} VNĐ")</div>
+                                    </td>
+
+                                    <!-- Cột tùy chọn (nút xóa) -->
+                                    <td class="text-center align-middle">
+                                        <i class="bi bi-trash3-fill text-danger" style="cursor:pointer;" @onclick="async () => await RemoveItem(item)"></i>
+                                    </td>
+                                </tr>
+                            }
                         }
                     }
                     else
@@ -373,6 +488,7 @@
                         <tr><td colspan="6" class="text-center">Không có sản phẩm trong giỏ hàng.</td></tr>
                     }
                 </tbody>
+
                 <tfoot>
                     <tr>
                         <td colspan="4" class="text-right font-weight-bold">Tổng tiền cửa hàng:</td>
@@ -385,9 +501,12 @@
             <!-- Nút thanh toán -->
             @if (!string.IsNullOrEmpty(errorMessage))
             {
-                <div class="alert alert-danger" role="alert">
-                    @errorMessage
-                </div>
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @errorMessage
+                    </div>
+                }
             }
             <div class="text-end mt-3">
                 <button class="btn btn-success" @onclick="ProcessPayment">

@@ -104,17 +104,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
 		public async Task<Product> AddProduct(ProductDto product)
 		{
-			// Kiểm duyệt tên sản phẩm
-			if (!await ContainsProfanityAsync(product.Name))
-			{
-				throw new InvalidOperationException("Tên sản phẩm chứa nội dung không phù hợp.");
-			}
-
-			// Kiểm duyệt mô tả sản phẩm
-			if (!await ContainsProfanityAsync(product.Description))
-			{
-				throw new InvalidOperationException("Mô tả sản phẩm chứa nội dung không phù hợp.");
-			}
 
 			// Phần còn lại của logic thêm sản phẩm
 			var user = GetUserInfoFromClaims();

@@ -203,7 +203,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 issuer: _configuration["JWT:ValidIssuer"],
                 audience: _configuration["JWT:ValidAudience"],
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
+                expires: DateTime.Now.AddHours(12),
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
