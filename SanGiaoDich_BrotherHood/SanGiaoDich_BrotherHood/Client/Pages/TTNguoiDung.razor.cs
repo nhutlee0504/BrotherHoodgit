@@ -24,19 +24,28 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		private IEnumerable<Bill> userBill;
 		private int countBill;
 		private IEnumerable<Product> userProducts;
-		private string productErrorMessage;
+        private string productErrorMessage;
 		private Dictionary<int, string> categoryNames = new Dictionary<int, string>();
 		private Dictionary<int, string> productImages = new Dictionary<int, string>();
 
-		// Đối tượng để lưu tệp
-		private IBrowserFile selectedFile;
+
+        private int currentPage = 1;
+        private int itemsPerPage = 4; // Số sản phẩm hiển thị mỗi trang
+        private int totalPosts = 0; // Tổng số bài đăng
+        private List<Product> products = new List<Product>();
+
+        // Đối tượng để lưu tệp
+        private IBrowserFile selectedFile;
 		protected override async Task OnInitializedAsync()
 		{
 			await LoadUserData();
 			await LoadProducts();
 			await LoadCategoryNames(userProducts);
 			await LoadFavoriteAccounts();
-		}
+            totalPosts = products.Count;
+            UpdatePageProducts();
+
+        }
 		private async Task LoadUserData()
 		{
 			try
@@ -62,6 +71,56 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				errorMessage = "Không thể lấy thông tin tài khoản: " + ex.Message;
 			}
 		}
+        // Khi chuyển sang tab "Bài đăng của bạn"
+        private async Task SwitchTabToPosts()
+        {
+            activeTab = "posts";
+        }
+
+        // Khi chuyển sang tab "Sản phẩm yêu thích"
+        private async Task SwitchTabToFavorites()
+        {
+            activeTab = "favorites";
+        }
+        private int CalculateTotalPages(int totalPosts, int itemsPerPage)
+        {
+            // Đảm bảo không có lỗi chia cho 0
+            if (itemsPerPage == 0)
+            {
+                return 0;
+            }
+
+            int totalPages = (int)Math.Ceiling((double)totalPosts / itemsPerPage);
+
+            Console.WriteLine($"Tổng số trang: {totalPages}");
+
+            return itemsPerPage > 0 ? (int)Math.Ceiling((double)totalPosts / itemsPerPage) : 0; ;
+        }
+        private void UpdatePageProducts()
+        {
+
+            // Phân trang
+            userProducts = products
+     .Skip((currentPage - 1) * itemsPerPage) // Bỏ qua sản phẩm của các trang trước
+     .Take(itemsPerPage) // Lấy số sản phẩm cho trang hiện tại
+     .ToList();
+
+            Console.WriteLine($"Trang {currentPage}: Hiển thị {userProducts.Count()} sản phẩm");
+        }
+        private void ChangePage(int page)
+        {
+            int totalPages = CalculateTotalPages(totalPosts, itemsPerPage);
+
+            if (page < 1 || page > totalPages)
+            {
+                return;
+            }
+
+            currentPage = page;
+            UpdatePageProducts(); // Cập nhật danh sách sản phẩm hiển thị
+            StateHasChanged(); // Đảm bảo cập nhật giao diện
+            Console.WriteLine($"Chuyển sang trang {currentPage}");
+        }
 
         private async Task DeleteProduct(int productId)
         {
@@ -130,15 +189,6 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         }
         private string activeTab = "posts"; // Tab mặc định là bài đăng
 
-        private void SwitchTabToPosts()
-        {
-            activeTab = "posts";
-        }
-
-        private void SwitchTabToFavorites()
-        {
-            activeTab = "favorites";
-        }
         private List<Favorite> favorites = new List<Favorite>();
         private Dictionary<int, Product> favoriteProducts = new Dictionary<int, Product>(); // Lưu thông tin sản phẩm yêu thích
         private string favoriteErrorMessage;
@@ -148,14 +198,12 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         {
             try
             {
-                isLoadingFavorites = true; // Bắt đầu tải dữ liệu
+                isLoadingFavorites = true;
                 var response = await HttpClient.GetFromJsonAsync<List<Favorite>>("api/Favorite/GetFavoriteAccount");
 
                 if (response != null)
                 {
                     favorites = response;
-
-                    // Lấy thông tin sản phẩm yêu thích cho từng sản phẩm
                     foreach (var favorite in favorites)
                     {
                         var product = await HttpClient.GetFromJsonAsync<Product>($"api/product/GetProductById/{favorite.IDProduct}");
@@ -170,11 +218,6 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                     favoriteErrorMessage = "Danh sách yêu thích trống.";
                 }
             }
-            catch (HttpRequestException ex)
-            {
-                favoriteErrorMessage = "Không thể kết nối đến API: " + ex.Message;
-                Console.WriteLine(ex);
-            }
             catch (Exception ex)
             {
                 favoriteErrorMessage = "Đã xảy ra lỗi khi tải danh sách yêu thích: " + ex.Message;
@@ -182,11 +225,9 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             }
             finally
             {
-                isLoadingFavorites = false; // Kết thúc quá trình tải
+                isLoadingFavorites = false;
             }
         }
-
-
 
         public class FavoriteAccountDto
         {
@@ -195,22 +236,30 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         }
 
         private async Task LoadProducts()
-		{
-			try
-			{
-				userProducts = await HttpClient.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
-				foreach (var product in userProducts)
-				{
-					productImages[product.IDProduct] = "/defaultImg.png";
-					_ = LoadImagesByIdProduct(product.IDProduct);
-				}
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine(ex.Message);
-			}
-		}
-		private async Task LoadImagesByIdProduct(int id)
+        {
+            try
+            {
+                var response = await HttpClient.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
+
+                if (response == null || response.Count == 0)
+                {
+                    Console.WriteLine("API không trả về sản phẩm.");
+                    return;
+                }
+
+                products = response;
+                totalPosts = products.Count;
+
+                Console.WriteLine($"Số lượng sản phẩm: {totalPosts}");
+
+                UpdatePageProducts();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi tải sản phẩm: {ex.Message}");
+            }
+        }
+        private async Task LoadImagesByIdProduct(int id)
 		{
 			try
 			{
@@ -328,29 +377,24 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             {
                 if (selectedForDeletion.Contains(productId))
                 {
-                    // Nếu sản phẩm đã được chọn để xóa, bỏ chọn và giữ lại sản phẩm trong danh sách yêu thích
                     selectedForDeletion.Remove(productId);
                 }
                 else
                 {
-                    // Nếu sản phẩm chưa được chọn để xóa, chúng ta sẽ thêm vào danh sách xóa
                     selectedForDeletion.Add(productId);
                 }
 
-                // Chỉ xóa khi có sản phẩm đã được chọn trong selectedForDeletion
                 if (selectedForDeletion.Count > 0)
                 {
-                    // Gửi yêu cầu xóa sản phẩm sau khi người dùng xác nhận (nếu cần)
                     var response = await HttpClient.DeleteAsync($"api/favorite/DeleteFavorite/{productId}");
                     if (response.IsSuccessStatusCode)
                     {
-                        // Cập nhật danh sách yêu thích sau khi xóa
                         favorites.RemoveAll(f => selectedForDeletion.Contains(f.IDProduct));
                         foreach (var productIdToRemove in selectedForDeletion)
                         {
                             favoriteProducts.Remove(productIdToRemove);
                         }
-                        selectedForDeletion.Clear(); // Sau khi xóa, dọn dẹp trạng thái
+                        selectedForDeletion.Clear();
                     }
                     else
                     {
@@ -364,8 +408,5 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                 Console.WriteLine($"Lỗi xảy ra khi thay đổi trạng thái yêu thích: {ex.Message}");
             }
         }
-
-
-
     }
 }

@@ -235,6 +235,30 @@ else if (userAccount != null)
 					{
 						<p class="text-muted">Không có sản phẩm nào được đăng.</p>
 					}
+					<!-- Pagination -->
+					<nav aria-label="Page navigation">
+						<ul class="pagination justify-content-center">
+							<li class="page-item @(currentPage == 1 ? "disabled" : "")">
+								<a class="page-link text-black" aria-label="Previous" @onclick="() => ChangePage(currentPage - 1)">
+									<span aria-hidden="true">&laquo;</span>
+								</a>
+							</li>
+							@for (var i = 1; i <= CalculateTotalPages(totalPosts, itemsPerPage); i++)
+							{
+								<li class="page-item @(currentPage == i ? "active" : "")">
+									<a class="page-link text-black" @onclick="() => ChangePage(i)">
+										@i
+									</a>
+								</li>
+							}
+							<li class="page-item @(currentPage == CalculateTotalPages(totalPosts, itemsPerPage) ? "disabled" : "")">
+								<a class="page-link text-black" aria-label="Next" @onclick="() => ChangePage(currentPage + 1)">
+									<span aria-hidden="true">&raquo;</span>
+								</a>
+							</li>
+						</ul>
+					</nav>
+
 				}
 				else if (activeTab == "favorites")
 				{
@@ -290,23 +314,34 @@ else if (userAccount != null)
 					{
 						<p class="text-muted">Danh sách yêu thích trống.</p>
 					}
-				}
-				<!-- Pagination -->
-				<nav aria-label="Page navigation">
-					<ul class="pagination justify-content-center">
-						<li class="page-item"><a class="page-link" href="#">1</a></li>
-						<li class="page-item"><a class="page-link" href="#">2</a></li>
-						<li class="page-item"><a class="page-link" href="#">3</a></li>
-						<li class="page-item"><a class="page-link" href="#">...</a></li>
-						<li class="page-item"><a class="page-link" href="#">67</a></li>
-						<li class="page-item"><a class="page-link" href="#">68</a></li>
-					</ul>
-				</nav>
+@* 					<!-- Pagination -->
+					<nav aria-label="Page navigation">
+						<ul class="pagination justify-content-center">
+							<li class="page-item @(currentFavoritesPage == 1 ? "disabled" : "")">
+								<a class="page-link text-black" aria-label="Previous" @onclick="() => ChangeFavoritesPage(currentFavoritesPage - 1)">
+									<span aria-hidden="true">&laquo;</span>
+								</a>
+							</li>
+							@for (var i = 1; i <= CalculateFavoriteTotalPages(totalFavoriteProducts, itemsPerFavoritesPage); i++)
+							{
+								<li class="page-item @(currentFavoritesPage == i ? "active" : "")">
+									<a class="page-link text-black" @onclick="() => ChangeFavoritesPage(i)">
+										<span>@i</span>
+									</a>
+								</li>
+							}
+							<li class="page-item @(currentFavoritesPage == CalculateFavoriteTotalPages(totalFavoriteProducts, itemsPerFavoritesPage) ? "disabled" : "")">
+								<a class="page-link text-black" aria-label="Next" @onclick="() => ChangeFavoritesPage(currentFavoritesPage + 1)">
+									<span aria-hidden="true">&raquo;</span>
+								</a>
+							</li>
+						</ul>
+					</nav>
+ *@				}
 			</div>
 		</div>
 	</div>
 }
-
 <style>
 	.checked {
 		color: yellow;
@@ -335,7 +370,6 @@ else if (userAccount != null)
 		}
 	}
 }
-
 <script>
 	function triggerFileInput() {
 		document.getElementById('fileInput').click();
