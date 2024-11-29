@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static System.Net.WebRequestMethods;
 
@@ -21,7 +22,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		private bool isCurrentUser => string.Equals(currentUserName, username, StringComparison.OrdinalIgnoreCase);
 		[Parameter] public string username { get; set; }
 		private Account userAccount;
-		private InfoAccountDto infoAccountDto; 
+		private InfoAccountDto infoAccountDto;
 		private string errorMessage;
 		private IEnumerable<AddressDetail> userAddress;
 		private AddressDetail firstAddress;
@@ -32,6 +33,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		private Dictionary<int, string> categoryNames = new Dictionary<int, string>();
 		private Dictionary<int, string> productImages = new Dictionary<int, string>();
 
+
+		private Dictionary<int, List<string>> productImageLists = new Dictionary<int, List<string>>();
 
 		private int currentPage = 1;
 		private int itemsPerPage = 4; // Số sản phẩm hiển thị mỗi trang
@@ -46,6 +49,13 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			public string Gender { get; set; }
 			public DateTime? Birthday { get; set; }
 			public string ImageAccount { get; set; }
+		}
+
+		public class IProd
+		{
+			public int idImage { get; set; }
+			public int idProduct { get; set; }
+			public string url { get; set; }
 		}
 		// Đối tượng để lưu tệp
 		private IBrowserFile selectedFile;
@@ -63,7 +73,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
 				if (string.IsNullOrEmpty(token))
 				{
-					currentUserName = string.Empty; 
+					currentUserName = string.Empty;
 					return;
 				}
 
@@ -76,11 +86,11 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				}
 				else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
 				{
-					currentUserName = string.Empty; 
+					currentUserName = string.Empty;
 				}
 				else
 				{
-					currentUserName = string.Empty; 
+					currentUserName = string.Empty;
 				}
 			}
 			catch (HttpRequestException)
@@ -90,7 +100,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"Đã xảy ra lỗi: {ex.Message}"); 
+				Console.WriteLine($"Đã xảy ra lỗi: {ex.Message}");
 				currentUserName = string.Empty;
 			}
 
@@ -114,7 +124,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 					Birthday = userAccount.Birthday,
 					Introduce = userAccount.Introduce
 				};
-				
+
 			}
 			catch (Exception ex)
 			{
@@ -150,8 +160,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		{
 
 			userProducts = products
-	 .Skip((currentPage - 1) * itemsPerPage) 
-	 .Take(itemsPerPage) 
+	 .Skip((currentPage - 1) * itemsPerPage)
+	 .Take(itemsPerPage)
 	 .ToList();
 
 		}
@@ -283,65 +293,66 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			public string AccountName { get; set; }
 		}
 
-		private async Task LoadProducts()
-		{
-			try
-			{
+        private async Task LoadProducts()
+        {
+            try
+            {
                 var response = await HttpClient.GetFromJsonAsync<List<Product>>($"api/product/GetProductByNameAccount/{username}");
 
                 if (response == null || response.Count == 0)
-				{
-					Console.WriteLine("API không trả về sản phẩm.");
-					return;
-				}
-				 foreach (var product in products)
                 {
-                    productImages[product.IDProduct] = "/defaultImg.png";
-                    _ = LoadImagesByIdProduct(product.IDProduct);
+                    Console.WriteLine("API không trả về sản phẩm.");
+                    productErrorMessage = "Chưa có bài đăng nào được tạo"; // Gán thông báo lỗi
+                    userProducts = new List<Product>(); // Đảm bảo danh sách sản phẩm không null
+                    return;
                 }
 
-				products = response;
-				totalPosts = products.Count;
+                products = response;
+                totalPosts = products.Count;
+                productErrorMessage = null; // Xóa lỗi nếu có sản phẩm
 
-				Console.WriteLine($"Số lượng sản phẩm: {totalPosts}");
+                Console.WriteLine($"Số lượng sản phẩm: {totalPosts}");
+                UpdatePageProducts();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi tải sản phẩm: {ex.Message}");
+                productErrorMessage = "Đã xảy ra lỗi khi tải sản phẩm. Vui lòng thử lại sau.";
+            }
+        }
 
-				UpdatePageProducts();
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"Lỗi khi tải sản phẩm: {ex.Message}");
-			}
-		}
 
-		private async Task LoadProductImages()
+        private async Task LoadProductImages()
 		{
 			try
 			{
-
+				// Lặp qua danh sách sản phẩm để xử lý từng sản phẩm
 				foreach (var product in products)
-				{
-					productImages[product.IDProduct] = "/defaultImg.png"; // Ảnh mặc định
-				}
-
-				// Sử dụng Task.WhenAll để tải ảnh song song
-				var imageTasks = products.Select(async product =>
 				{
 					try
 					{
-						var images = await HttpClient.GetFromJsonAsync<List<ImageProduct>>($"api/imageproduct/GetImageProduct/{product.IDProduct}");
+						// Gọi API lấy danh sách ảnh của sản phẩm
+						var images = await HttpClient.GetFromJsonAsync<List<ImageProduct>>($"api/ImageProduct/GetImageProduct/{product.IDProduct}");
+
+						// Kiểm tra nếu API trả về danh sách ảnh
 						if (images != null && images.Count > 0)
 						{
+							// Lấy ảnh đầu tiên
 							productImages[product.IDProduct] = images.First().Image;
+						}
+						else
+						{
+							// Không có ảnh => gán ảnh mặc định
+							productImages[product.IDProduct] = "/defaultImg.png";
 						}
 					}
 					catch (Exception ex)
 					{
 						Console.WriteLine($"Lỗi khi tải ảnh cho sản phẩm ID: {product.IDProduct}, {ex.Message}");
-						productImages[product.IDProduct] = "/defaultImg.png"; // Nếu lỗi, dùng ảnh mặc định
+						// Lỗi trong quá trình gọi API => gán ảnh mặc định
+						productImages[product.IDProduct] = "/defaultImg.png";
 					}
-				});
-
-				await Task.WhenAll(imageTasks);
+				}
 			}
 			catch (Exception ex)
 			{
@@ -349,27 +360,29 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			}
 		}
 
-	 private async Task LoadImagesByIdProduct(int id)
-        {
-            try
-            {
-                var images = await HttpClient.GetFromJsonAsync<List<ImageProduct>>($"api/imageproduct/GetImageProduct/{id}");
-                if (images != null && images.Count > 0)
-                {
-                    var imageUrl = images.First().Image;
-                    productImages[id] = imageUrl;
-                }
-                else
-                {
-                    productImages[id] = "/defaultImg.png";
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                productImages[id] = "/defaultImg.png"; 
-            }
-        }
+
+
+		private async Task LoadImagesByIdProduct(int id)
+		{
+			try
+			{
+				var images = await HttpClient.GetFromJsonAsync<List<ImageProduct>>($"api/imageproduct/GetImageProduct/{id}");
+				if (images != null && images.Count > 0)
+				{
+					var imageUrl = images.First().Image;
+					productImages[id] = imageUrl;
+				}
+				else
+				{
+					productImages[id] = "/defaultImg.png";
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.Message);
+				productImages[id] = "/defaultImg.png";
+			}
+		}
 
 
 		private string GetImage(int id)
@@ -403,29 +416,106 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			}
 		}
 
+		private Dictionary<string, string> fieldErrors = new Dictionary<string, string>();
 
 		private async Task UpdateAccountInfo()
 		{
+			// Reset errors before validating
+			fieldErrors.Clear();
+
+			bool hasError = false;
+
+			// Validate FullName
+			if (string.IsNullOrWhiteSpace(infoAccountDto.FullName))
+			{
+				fieldErrors["FullName"] = "Họ và tên không được để trống.";
+				hasError = true;
+			}
+
+			// Validate Email
+			if (string.IsNullOrWhiteSpace(infoAccountDto.Email) || !IsValidEmail(infoAccountDto.Email))
+			{
+				fieldErrors["Email"] = "Email không hợp lệ.";
+				hasError = true;
+			}
+
+			// Validate Phone
+			if (string.IsNullOrWhiteSpace(infoAccountDto.Phone) || !IsValidPhoneNumber(infoAccountDto.Phone))
+			{
+				fieldErrors["Phone"] = "Số điện thoại không hợp lệ.";
+				hasError = true;
+			}
+
+			// Validate Gender
+			if (string.IsNullOrWhiteSpace(infoAccountDto.Gender))
+			{
+				fieldErrors["Gender"] = "Giới tính không được để trống.";
+				hasError = true;
+			}
+
+			// Validate Birthday
+			if (infoAccountDto.Birthday == null)
+			{
+				fieldErrors["Birthday"] = "Ngày sinh không được để trống.";
+				hasError = true;
+			}
+			else if (!IsAgeValid(infoAccountDto.Birthday))
+			{
+				fieldErrors["Birthday"] = "Bạn phải đủ 18 tuổi trở lên.";
+				hasError = true;
+			}
+
+			// If there are errors, do not submit
+			if (hasError)
+			{
+				return;
+			}
+
 			try
 			{
-				var response = await HttpClient.PutAsJsonAsync("api/user/UpdateAccountInfo", infoAccountDto);
+				var response = await HttpClient.PutAsJsonAsync("api/user/update", infoAccountDto);
+
 				if (response.IsSuccessStatusCode)
 				{
-					var updatedUser = await response.Content.ReadFromJsonAsync<Account>();
-					userAccount = updatedUser; // Update local user account with the new information
-					errorMessage = null; // Clear error message
-					NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+					// Handle success
+					NavigationManager.NavigateTo("/ThongTinNguoiDung");
 				}
 				else
 				{
-					errorMessage = "Cập nhật thông tin không thành công.";
+					errorMessage = "Có lỗi xảy ra khi cập nhật thông tin tài khoản.";
 				}
 			}
 			catch (Exception ex)
 			{
-				errorMessage = "Lỗi xảy ra: " + ex.Message;
+				errorMessage = $"Lỗi: {ex.Message}";
 			}
 		}
+
+		private bool IsValidEmail(string email)
+		{
+			return email.Contains("@") && email.Contains(".");
+		}
+
+		private bool IsValidPhoneNumber(string phone)
+		{
+			return phone.Length == 10 && phone.All(char.IsDigit);
+		}
+
+		// Hàm kiểm tra tuổi (phải lớn hơn 18)
+		// Hàm kiểm tra tuổi (phải lớn hơn 18)
+		private bool IsAgeValid(DateTime? birthday)
+		{
+			if (!birthday.HasValue)
+			{
+				return false; // Nếu ngày sinh null, trả về false
+			}
+
+			DateTime birthDate = birthday.Value;
+			int age = DateTime.Now.Year - birthDate.Year;
+			if (DateTime.Now < birthDate.AddYears(age)) age--;  // Điều chỉnh nếu chưa qua sinh nhật năm nay
+			return age >= 18;
+		}
+
 		private async Task UploadFile()
 		{
 			if (selectedFile != null)
@@ -496,6 +586,6 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				Console.WriteLine($"Lỗi xảy ra khi thay đổi trạng thái yêu thích: {ex.Message}");
 			}
 		}
-	
+
 	}
 }

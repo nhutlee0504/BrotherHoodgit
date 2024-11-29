@@ -53,6 +53,17 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             return newBill;
         }
 
+        public async Task<Bill> CancelBill(int IdBill)
+        {
+            var BillFind = await _context.Bills.FindAsync(IdBill);
+            if (BillFind != null)
+            {
+                BillFind.Status = "Đã hủy";
+            }
+            await _context.SaveChangesAsync();
+            return BillFind;
+        }
+
         public async Task<Bill> GetBillByIDBill(int IDBill)
         {
             try

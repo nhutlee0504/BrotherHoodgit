@@ -101,19 +101,22 @@
 			<div class="modal-dialog modal-dialog-centered" role="document">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h5 class="modal-title text-danger" id="errorModalLabel">Lỗi</h5>
+						<h5 class="modal-title @(isErrorModal ? "text-danger" : "text-success")" id="errorModalLabel">
+							@(isErrorModal ? "Lỗi" : "Thành công")
+						</h5>
 						<button type="button" class="btn-close" aria-label="Close" @onclick="() => showErrorModal = false"></button>
 					</div>
 					<div class="modal-body">
 						<p>@modalMessage</p>
 					</div>
 					<div class="modal-footer">
-						<button type="button" class="btn btn-danger" @onclick="() => showErrorModal = false">Đóng</button>
+						<button type="button" class="btn @(isErrorModal ? "btn-danger" : "btn-success")" @onclick="() => showErrorModal = false">Đóng</button>
 					</div>
 				</div>
 			</div>
 		</div>
 	}
+
 
 	<div class="row">
 		<!-- Sidebar Filters -->
@@ -262,6 +265,8 @@
 @code {
 	private string modalMessage = string.Empty;
 	private bool showErrorModal = false;
+	private bool isErrorModal = false;
+
 
 	private class AccountInfoDto
 	{
@@ -272,7 +277,6 @@
 		public DateTime? Birthday { get; set; }
 		public string ImageAccount { get; set; }
 	}
-
 	private async Task AddToCart(int productId)
 	{
 		try
@@ -283,48 +287,68 @@
 				navigation.NavigateTo("/login");
 				return;
 			}
+
+			// Thiết lập Authorization Header
 			http.DefaultRequestHeaders.Authorization =
 				new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+			// Lấy thông tin người dùng hiện tại
 			var userResponse = await http.GetAsync("api/User/GetMyInfo");
 			if (!userResponse.IsSuccessStatusCode)
 			{
+				isErrorModal = true;
 				modalMessage = "Không thể lấy thông tin tài khoản. Vui lòng thử lại.";
 				showErrorModal = true;
 				return;
 			}
+
 			var currentUser = await userResponse.Content.ReadFromJsonAsync<AccountInfoDto>();
 			var productResponse = await http.GetAsync($"api/Product/GetProductById/{productId}");
+
 			if (!productResponse.IsSuccessStatusCode)
 			{
+				isErrorModal = true;
 				modalMessage = "Không tìm thấy thông tin sản phẩm.";
 				showErrorModal = true;
 				return;
 			}
+
 			var product = await productResponse.Content.ReadFromJsonAsync<Product>();
 
+			// Kiểm tra xem người dùng có đang cố mua sản phẩm của chính mình không
 			if (product.UserName == currentUser.UserName)
 			{
+				isErrorModal = true;
 				modalMessage = "Bạn không thể mua sản phẩm của chính mình.";
 				showErrorModal = true;
 				return;
 			}
 
+			// Gọi API để thêm sản phẩm vào giỏ hàng
 			var addToCartResponse = await http.PostAsync($"api/Cart/AddCart/{productId}", null);
+
 			if (addToCartResponse.IsSuccessStatusCode)
 			{
-				modalMessage = "Sản phẩm đã được thêm vào giỏ hàng thành công!";
+				isErrorModal = false; // Thông báo thành công
+				modalMessage = "Sản phẩm đã được thêm vào giỏ hàng thành công";
 			}
 			else
 			{
-				modalMessage = "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng.";
+				// Xử lý lỗi trả về từ API khi sản phẩm đã có trong giỏ hàng
+				var errorMessage = await addToCartResponse.Content.ReadAsStringAsync();
+				isErrorModal = true;
+				modalMessage = errorMessage; // Hiển thị thông báo lỗi từ API
 			}
-			showErrorModal = true;
+
+			showErrorModal = true; // Hiển thị modal thông báo
 		}
 		catch (Exception ex)
 		{
+			isErrorModal = true;
 			modalMessage = $"Đã xảy ra lỗi: {ex.Message}";
 			showErrorModal = true;
 		}
 	}
+
 }
 

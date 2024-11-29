@@ -4,55 +4,94 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime jsrunetime
 
-<h3>Quản lý hóa đơn</h3>
+<h3 class="text-success">Quản lý hóa đơn</h3>
+<!-- Modal Chi Tiết Hóa Đơn -->
+<div class="modal fade" id="billDetailsModal" tabindex="-1" aria-labelledby="billDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="billDetailsModalLabel">Chi Tiết Hóa Đơn</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="spinner-border text-primary" role="status" style="display:none" id="loadingSpinner">
+                    <span class="visually-hidden">Đang tải...</span>
+                </div>
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Tên Sản Phẩm</th>
+                            <th>Số Lượng</th>
+                            <th>Đơn Giá</th>
+                            <th>Thành Tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody id="billDetailsTableBody">
+                        <!-- Dữ liệu chi tiết hóa đơn sẽ được thêm vào đây -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Nav Tabs -->
-<ul class="nav nav-tabs" id="billTabs" role="tablist">
+<ul class="nav nav-pills nav-justified" id="billTabs" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="purchase-tab" data-bs-toggle="tab" data-bs-target="#purchase" type="button" role="tab" aria-controls="purchase" aria-selected="true">
-            Đơn mua
+            <i class="bi bi-bag"></i> Đơn mua
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="sale-tab" data-bs-toggle="tab" data-bs-target="#sale" type="button" role="tab" aria-controls="sale" aria-selected="false">
-            Đơn bán
+            <i class="bi bi-bag-check"></i> Đơn bán
         </button>
     </li>
 </ul>
 
 <!-- Tab Content -->
-<div class="tab-content mt-3" id="billTabContent">
+<div class="tab-content mt-4" id="billTabContent">
     <!-- Đơn mua -->
     <div class="tab-pane fade show active" id="purchase" role="tabpanel" aria-labelledby="purchase-tab">
-        <!-- Nội dung tab Đơn mua -->
-        <div class="mb-3">
-            <div class="row">
+        <!-- Search Section -->
+        <div class="mb-4 bg-light p-3 rounded shadow-sm">
+            <div class="row gy-3">
                 <div class="col-md-6">
-                    <label for="searchByFullName">Tìm kiếm theo Họ và tên:</label>
+                    <label for="searchByFullName" class="form-label">Tìm kiếm theo Họ và tên:</label>
                     <input id="searchByFullName" type="text" @bind="searchFullName" class="form-control" placeholder="Nhập họ và tên" />
                 </div>
                 <div class="col-md-4">
-                    <label for="searchByIDBill">Tìm kiếm theo ID Hóa đơn:</label>
+                    <label for="searchByIDBill" class="form-label">Tìm kiếm theo ID Hóa đơn:</label>
                     <input id="searchByIDBill" type="number" @bind="searchIDBill" class="form-control" placeholder="Nhập ID hóa đơn" />
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
-                    <button class="btn btn-primary" @onclick="SearchBills">Tìm kiếm</button>
+                    <button class="btn btn-primary w-100" @onclick="SearchBills">
+                        <i class="bi bi-search"></i> Tìm kiếm
+                    </button>
                 </div>
             </div>
         </div>
 
+        <!-- Bills Table -->
         @if (bills == null)
         {
-            <p>Đang tải dữ liệu...</p>
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Đang tải dữ liệu...</span>
+                </div>
+            </div>
         }
         else if (!bills.Any())
         {
-            <p>Không có hóa đơn nào.</p>
+            <div class="alert alert-warning text-center">Không có hóa đơn nào.</div>
         }
         else
         {
-            <table class="table table-bordered">
-                <thead>
+            <table class="table table-striped table-hover table-bordered align-middle">
+                <thead class="table-primary">
                     <tr>
                         <th>#</th>
                         <th>Họ và tên</th>
@@ -76,9 +115,19 @@
                             <td>@bill.OrderDate.ToString("dd/MM/yyyy")</td>
                             <td>@bill.PaymentType</td>
                             <td>@bill.Total.ToString("C")</td>
-                            <td>@bill.Status</td>
                             <td>
-                                <button class="btn btn-primary" @onclick="() => NavigateToBillDetails(bill.IDBill)">Xem chi tiết</button>
+                                <span class="badge @GetStatusBadge(bill.Status)">@bill.Status</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-info btn-sm" @onclick="() => NavigateToBillDetails(bill.IDBill)">
+                                    <i class="bi bi-eye"></i> Xem chi tiết
+                                </button>
+                                @if (bill.Status == "Chờ xác nhận")
+                                {
+                                    <button class="btn btn-danger btn-sm" @onclick="() => CancelBill(bill.IDBill)">
+                                        <i class="bi bi-x-circle"></i> Hủy xác nhận
+                                    </button>
+                                }
                             </td>
                         </tr>
                     }
@@ -87,19 +136,24 @@
         }
     </div>
 
+    <!-- Đơn bán -->
     <div class="tab-pane fade" id="sale" role="tabpanel" aria-labelledby="sale-tab">
         @if (saleBills == null)
         {
-            <p>Đang tải dữ liệu...</p>
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Đang tải dữ liệu...</span>
+                </div>
+            </div>
         }
         else if (!saleBills.Any())
         {
-            <p>Không có hóa đơn nào do bạn bán.</p>
+            <div class="alert alert-warning text-center">Không có hóa đơn nào do bạn bán.</div>
         }
         else
         {
-            <table class="table table-bordered">
-                <thead>
+            <table class="table table-striped table-hover table-bordered align-middle">
+                <thead class="table-success">
                     <tr>
                         <th>#</th>
                         <th>Họ và tên người mua</th>
@@ -123,17 +177,22 @@
                             <td>@bill.OrderDate.ToString("dd/MM/yyyy")</td>
                             <td>@bill.PaymentType</td>
                             <td>@bill.Total.ToString("C")</td>
-                            <td>@bill.Status</td>
                             <td>
-                                @if (bill.Status != "Đã xác nhận")
+                                <span class="badge @GetStatusBadge(bill.Status)">@bill.Status</span>
+                            </td>
+                            <td>
+                                @if (bill.Status == "Chờ xác nhận")
                                 {
-                                    <button class="btn btn-success" @onclick="() => AcceptBill(bill.IDBill)">Xác nhận</button>
+                                    <button class="btn btn-success btn-sm" @onclick="() => AcceptBill(bill.IDBill)">
+                                        <i class="bi bi-check-circle"></i> Xác nhận
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" @onclick="() => CancelBill(bill.IDBill)">
+                                        <i class="bi bi-x-circle"></i> Hủy
+                                    </button>
                                 }
-                                else
-                                {
-                                    <span class="badge bg-success">Đã xác nhận</span>
-                                }
-                                <button class="btn btn-primary" @onclick="() => NavigateToBillDetails(bill.IDBill)">Xem chi tiết</button>
+                                <button class="btn btn-info btn-sm" @onclick="() => NavigateToBillDetails(bill.IDBill)">
+                                    <i class="bi bi-eye"></i> Chi tiết
+                                </button>
                             </td>
                         </tr>
                     }
@@ -142,7 +201,6 @@
         }
     </div>
 </div>
-
 @code {
     private string userName;
     private bool isLoading = true;
@@ -161,6 +219,13 @@
     {
         await LoadBill();
     }
+    private string GetStatusBadge(string status) => status switch
+    {
+        "Đã xác nhận" => "bg-success",
+        "Chờ xác nhận" => "bg-warning",
+        "Đã hủy" => "bg-danger",
+        _ => "bg-secondary"
+    };
 
 
     // Phương thức tìm kiếm hóa đơn
@@ -243,18 +308,52 @@
             // Gọi API để xác nhận đơn hàng
             var response = await httpClient.PostAsync($"api/Bill/AcceptBill/{idBill}", null);
 
+            // Kiểm tra mã trạng thái HTTP
             if (response.IsSuccessStatusCode)
             {
-                // Cập nhật lại danh sách đơn bán sau khi xác nhận
-                var result = await response.Content.ReadAsStringAsync();
+                // Sau khi xác nhận thành công, lấy danh sách chi tiết hóa đơn
+                var billDetails = await httpClient.GetFromJsonAsync<List<BillDetailModel>>($"api/BillDetail/GetBillDetailsByIDBill/{idBill}");
+
+                if (billDetails != null && billDetails.Any())
+                {
+                    // Duyệt qua các BillDetails và lấy idProduct
+                    foreach (var detail in billDetails)
+                    {
+                        var idProduct = detail.IDProduct;
+
+                        // Gọi API xử lý với idProduct
+                        var result = await httpClient.PostAsync($"api/CartItem/afterAccep/{idProduct}", null);
+                        if (result.IsSuccessStatusCode)
+                        {
+                            // Xử lý logic sau khi gọi API xử lý sản phẩm thành công (nếu cần)
+                            Console.WriteLine($"Sản phẩm với ID {idProduct} đã được xử lý thành công.");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Có lỗi khi xử lý sản phẩm với ID {idProduct}");
+                        }
+                    }
+                }
+
+                // Thông báo cho người dùng sau khi xác nhận hóa đơn
                 await jsrunetime.InvokeVoidAsync("alert", "Đơn hàng đã được xác nhận!");
                 NavigationManager.NavigateTo("/bill", forceLoad: true);
             }
             else
             {
-                // Thông báo lỗi nếu có lỗi khi xác nhận
-                var errorMessage = await response.Content.ReadAsStringAsync();
-                await jsrunetime.InvokeVoidAsync("alert", errorMessage);
+                // Kiểm tra nếu phản hồi không thành công
+                var errorContent = await response.Content.ReadAsStringAsync();
+                if (errorContent.Contains("<html"))
+                {
+                    // Nếu phản hồi chứa HTML (lỗi máy chủ hoặc trang đăng nhập), xử lý thích hợp
+                    await jsrunetime.InvokeVoidAsync("alert", "Đã xảy ra lỗi với API hoặc bạn chưa đăng nhập.");
+                    NavigationManager.NavigateTo("/login");
+                }
+                else
+                {
+                    // Thông báo lỗi nếu có lỗi khi xác nhận
+                    await jsrunetime.InvokeVoidAsync("alert", errorContent);
+                }
             }
         }
         catch (Exception ex)
@@ -264,10 +363,51 @@
         }
     }
 
+    private async Task CancelBill(int idBill)
+    {
+        try
+        {
+            // Gọi API để hủy xác nhận đơn hàng
+            var response = await httpClient.PostAsync($"api/Bill/CancelBill/{idBill}", null);
+
+            // Kiểm tra mã trạng thái HTTP
+            if (response.IsSuccessStatusCode)
+            {
+                // Thông báo cho người dùng sau khi hủy xác nhận hóa đơn
+                await jsrunetime.InvokeVoidAsync("alert", "Đơn hàng đã được hủy xác nhận!");
+
+                // Tải lại danh sách hóa đơn
+                await LoadBill();
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                if (errorContent.Contains("<html"))
+                {
+                    // Xử lý lỗi nếu có HTML trong phản hồi
+                    await jsrunetime.InvokeVoidAsync("alert", "Đã xảy ra lỗi với API hoặc bạn chưa đăng nhập.");
+                    NavigationManager.NavigateTo("/login");
+                }
+                else
+                {
+                    // Thông báo lỗi nếu không thành công
+                    await jsrunetime.InvokeVoidAsync("alert", errorContent);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Thông báo lỗi nếu có lỗi khi gọi API
+            await jsrunetime.InvokeVoidAsync("alert", $"Lỗi: {ex.Message}");
+        }
+    }
+
+
+
     // Điều hướng tới trang chi tiết hóa đơn
     private void NavigateToBillDetails(int IDBill)
     {
-        NavigationManager.NavigateTo($"/Admin/BillDetails/{IDBill}");
+        NavigationManager.NavigateTo($"/BillDetail/{IDBill}");
     }
 
     // Class Bill mô tả thông tin hóa đơn

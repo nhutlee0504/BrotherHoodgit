@@ -97,6 +97,13 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 return StatusCode(500, new { Message = "Đã xảy ra lỗi khi xóa sản phẩm khỏi giỏ hàng.", Error = ex.Message });
             }
         }
+
+        [HttpPost("afterAccep/{idProduct}")]
+        public async Task<IActionResult> afterAccep(int idProduct)
+        {
+            var t = await _cartItemService.updateStatus(idProduct);
+            return Ok(t);
+        }
     }
 }
 

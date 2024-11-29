@@ -73,5 +73,11 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             return Ok(await bill.AcceptBill(idBill));
         }
+
+        [HttpPost("CancelBill/{idBill}")]
+        public async Task<IActionResult> CancelBill(int idBill)
+        {
+            return Ok(await bill.CancelBill(idBill));
+        }
     }
 }

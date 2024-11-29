@@ -6,6 +6,7 @@ using SanGiaoDich_BrotherHood.Server.Services;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -38,9 +39,9 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 var add = await cart.AddCart(idProduct);
                 return Ok(add);
             }
-            catch (System.Exception)
+            catch (InvalidOperationException ex)
             {
-                return BadRequest();
+                return BadRequest(ex.Message);
             }
         }
 

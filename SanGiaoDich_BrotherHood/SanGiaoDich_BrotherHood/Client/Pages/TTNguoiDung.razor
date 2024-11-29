@@ -31,35 +31,81 @@ else if (userAccount != null)
 				</div>
 				<div class="modal-body">
 					<div class="row">
+						<!-- Họ và tên -->
 						<div class="mb-3 col-md-6">
 							<label for="modalFullName" class="form-label">Họ và tên</label>
-							<input type="text" class="form-control" id="modalFullName" @bind="infoAccountDto.FullName" />
+							<input type="text" class="form-control @((fieldErrors.ContainsKey("FullName") ? "is-invalid" : ""))" id="modalFullName" @bind="infoAccountDto.FullName" />
+							@if (fieldErrors.ContainsKey("FullName"))
+							{
+								<div class="invalid-feedback">
+									@fieldErrors["FullName"]
+								</div>
+							}
 						</div>
+
+						<!-- Email -->
 						<div class="mb-3 col-md-6">
 							<label for="modalEmail" class="form-label">Email</label>
-							<input type="email" class="form-control" id="modalEmail" @bind="infoAccountDto.Email" />
+							<input type="email" class="form-control @((fieldErrors.ContainsKey("Email") ? "is-invalid" : ""))" id="modalEmail" @bind="infoAccountDto.Email" />
+							@if (fieldErrors.ContainsKey("Email"))
+							{
+								<div class="invalid-feedback">
+									@fieldErrors["Email"]
+								</div>
+							}
 						</div>
+
+						<!-- Số điện thoại -->
 						<div class="mb-3 col-md-6">
 							<label for="modalPhone" class="form-label">Số điện thoại</label>
-							<input type="text" class="form-control" id="modalPhone" @bind="infoAccountDto.Phone" />
+							<input type="text" class="form-control @((fieldErrors.ContainsKey("Phone") ? "is-invalid" : ""))" id="modalPhone" @bind="infoAccountDto.Phone" />
+							@if (fieldErrors.ContainsKey("Phone"))
+							{
+								<div class="invalid-feedback">
+									@fieldErrors["Phone"]
+								</div>
+							}
 						</div>
+
+						<!-- Giới tính -->
 						<div class="mb-3 col-md-6 col-12">
 							<label for="modalGender" class="form-label">Giới tính</label>
-							<select class="form-select" id="modalGender" @bind="infoAccountDto.Gender">
+							<select class="form-select @((fieldErrors.ContainsKey("Gender") ? "is-invalid" : ""))" id="modalGender" @bind="infoAccountDto.Gender">
 								<option value="">Chọn giới tính</option>
 								<option value="Nam">Nam</option>
 								<option value="Nữ">Nữ</option>
 								<option value="Khác">Khác</option>
 							</select>
-						</div>
-						<div class="mb-3 col-md-6 col-12">
-							<label for="modalBirthday" class="form-label">Ngày sinh</label>
-							<input type="date" class="form-control" id="modalBirthday" @bind="infoAccountDto.Birthday" />
+							@if (fieldErrors.ContainsKey("Gender"))
+							{
+								<div class="invalid-feedback">
+									@fieldErrors["Gender"]
+								</div>
+							}
 						</div>
 
+						<!-- Ngày sinh -->
+						<div class="mb-3 col-md-6 col-12">
+							<label for="modalBirthday" class="form-label">Ngày sinh</label>
+							<input type="date" class="form-control @((fieldErrors.ContainsKey("Birthday") ? "is-invalid" : ""))" id="modalBirthday" @bind="infoAccountDto.Birthday" />
+							@if (fieldErrors.ContainsKey("Birthday"))
+							{
+								<div class="invalid-feedback">
+									@fieldErrors["Birthday"]
+								</div>
+							}
+						</div>
+
+						<!-- Giới thiệu -->
 						<div class="mb-3 col-md-6">
 							<label for="modalIntroduct" class="form-label">Giới thiệu</label>
-							<textarea class="form-control" id="modalIntroduct" rows="3" @bind="infoAccountDto.Introduce"></textarea>
+							<textarea class="form-control @((fieldErrors.ContainsKey("Introduce") ? "is-invalid" : ""))" id="modalIntroduct" rows="3" @bind="infoAccountDto.Introduce"></textarea>
+							@if (fieldErrors.ContainsKey("Introduce"))
+							{
+								<div class="invalid-feedback">
+									@fieldErrors["Introduce"]
+								</div>
+							}
 						</div>
 					</div>
 				</div>
@@ -70,6 +116,7 @@ else if (userAccount != null)
 			</div>
 		</div>
 	</div>
+
 
 	<div class="container mt-4">
 		<div class="row">
@@ -175,7 +222,7 @@ else if (userAccount != null)
 					@* Hiển thị bài đăng của bạn *@
 					@if (userProducts != null && userProducts.Any())
 					{
-						foreach (var productList in userProducts.Where(x => x.UserName == username))
+						foreach (var productList in userProducts)
 						{
 							var catename = GetCategoryById(productList.IDCategory);
 							<div class="card mb-3 position-relative shadow-sm" style="border-radius: 10px;">
@@ -241,7 +288,7 @@ else if (userAccount != null)
 					}
 					else if (!string.IsNullOrEmpty(productErrorMessage))
 					{
-						<div class="alert alert-danger">@productErrorMessage</div>
+						<div class="alert alert-waring">@productErrorMessage</div>
 					}
 					else
 					{
