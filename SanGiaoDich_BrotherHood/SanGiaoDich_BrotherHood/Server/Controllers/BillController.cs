@@ -79,5 +79,18 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             return Ok(await bill.CancelBill(idBill));
         }
+
+        [HttpPost("done/{id}")]
+        public async Task<IActionResult> DoneBill(int id, string status)
+        {
+            var bi = await bill.DoneBill(id, status);
+
+            if (bi == null)
+            {
+                return NotFound($"Bill with ID {id} not found.");
+            }
+
+            return Ok(bill);
+        }
     }
 }
