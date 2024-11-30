@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace SanGiaoDich_BrotherHood.Shared.Models
 {
@@ -36,8 +37,9 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
 
         [ForeignKey("Account")]
         public string UserName { get; set; }
-
+        [JsonIgnore]
         public Account Account { get; set; }
+        [JsonIgnore]
         public ICollection<BillDetail> billDetails { get; set; }
     }
 }

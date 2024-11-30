@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using FirebaseAdmin;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 using Microsoft.VisualBasic;
@@ -10,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static System.Net.WebRequestMethods;
@@ -41,8 +43,14 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		private int itemsPerPage = 4; 
 		private int totalPosts = 0;
 		private List<Product> products = new List<Product>();
+        private Dictionary<string, string> fieldErrors = new Dictionary<string, string>();
+        private string code;
+        private string reciveCode;
+        private string errorCode;
+        private bool loading = false;
+        private string successEmail;
 
-		private class AccountInfoDto
+        private class AccountInfoDto
 		{
 			public string UserName { get; set; }
 			public string FullName { get; set; }
@@ -406,71 +414,74 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			}
 		}
 
-		private Dictionary<string, string> fieldErrors = new Dictionary<string, string>();
+        private async Task CheckMail()
+        {
+            // Reset errors before validating
+            fieldErrors.Clear();
 
-		private async Task UpdateAccountInfo()
-		{
-			fieldErrors.Clear();
+            bool hasError = false;
 
-			bool hasError = false;
-			if (string.IsNullOrWhiteSpace(infoAccountDto.FullName))
-			{
-				fieldErrors["FullName"] = "Họ và tên không được để trống.";
-				hasError = true;
-			}
-			if (string.IsNullOrWhiteSpace(infoAccountDto.Email) || !IsValidEmail(infoAccountDto.Email))
-			{
-				fieldErrors["Email"] = "Email không hợp lệ.";
-				hasError = true;
-			}
-			if (string.IsNullOrWhiteSpace(infoAccountDto.Phone) || !IsValidPhoneNumber(infoAccountDto.Phone))
-			{
-				fieldErrors["Phone"] = "Số điện thoại không hợp lệ.";
-				hasError = true;
-			}
-			if (string.IsNullOrWhiteSpace(infoAccountDto.Gender))
-			{
-				fieldErrors["Gender"] = "Giới tính không được để trống.";
-				hasError = true;
-			}
+            // Validate Email
+            if (string.IsNullOrWhiteSpace(infoAccountDto.Email) || !IsValidEmail(infoAccountDto.Email))
+            {
+                fieldErrors["Email"] = "Email không hợp lệ";
+                hasError = true;
+            }
 
-			if (infoAccountDto.Birthday == null)
-			{
-				fieldErrors["Birthday"] = "Ngày sinh không được để trống.";
-				hasError = true;
-			}
-			else if (!IsAgeValid(infoAccountDto.Birthday))
-			{
-				fieldErrors["Birthday"] = "Bạn phải đủ 18 tuổi trở lên.";
-				hasError = true;
-			}
+            // If there are errors, do not submit
+            if (hasError)
+            {
+                return;
+            }
+            try
+            {
+                loading = true;
+                var sendCode = RandomCode();
+                var emailMessage = $"Mã xác nhận: {sendCode}";
+                await SendEmailAsync(infoAccountDto.Email, "[BroderHood] Mã xác nhận cập nhật Email", emailMessage);
+                successEmail = "Mã xác nhận đã được gửi đến Email của bạn";
+                loading = false;
+                code = sendCode;
+            }
+            catch (Exception ex)
+            {
 
-			if (hasError)
-			{
-				return;
-			}
+                Console.WriteLine("Lỗi gửi Email: ", ex);
+            }
+        }
 
-			try
-			{
-				var response = await HttpClient.PutAsJsonAsync("api/user/update", infoAccountDto);
+        private async Task UpdateAccountInfo()
+        {
+            if (reciveCode == null)
+            {
+                errorCode = "Mã xác nhận rỗng";
+                return;
+            }
+            else if (reciveCode != code)
+            {
+                errorCode = "Mã xác nhận không chính xác";
+                return;
+            }
+            try
+            {
+                var response = await HttpClient.PutAsJsonAsync($"api/user/UpdateAccountInfo?email={infoAccountDto.Email}", new { });
 
-				if (response.IsSuccessStatusCode)
-				{
-					// Handle success
-					NavigationManager.NavigateTo("/ThongTinNguoiDung");
-				}
-				else
-				{
-					errorMessage = "Có lỗi xảy ra khi cập nhật thông tin tài khoản.";
-				}
-			}
-			catch (Exception ex)
-			{
-				errorMessage = $"Lỗi: {ex.Message}";
-			}
-		}
-
-		private bool IsValidEmail(string email)
+                if (response.IsSuccessStatusCode)
+                {
+                    // Handle success
+                    NavigationManager.NavigateTo($"/ThongTinNguoiDung/{username}", forceLoad: true);
+                }
+                else
+                {
+                    errorMessage = "Có lỗi xảy ra khi cập nhật Email";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Lỗi: {ex.Message}";
+            }
+        }
+        private bool IsValidEmail(string email)
 		{
 			return email.Contains("@") && email.Contains(".");
 		}
@@ -565,6 +576,34 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				Console.WriteLine($"Lỗi xảy ra khi thay đổi trạng thái yêu thích: {ex.Message}");
 			}
 		}
+        private async Task SendEmailAsync(string email, string subject, string message)
+        {
+            var emailRequest = new EmailRequest
+            {
+                To = email,
+                Subject = subject,
+                Body = message
+            };
 
-	}
+            var response = await HttpClient.PostAsJsonAsync("api/Email/SendEmail", emailRequest);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Lỗi gửi Email");
+            }
+        }
+
+        private class EmailRequest
+        {
+            public string To { get; set; }
+            public string Subject { get; set; }
+            public string Body { get; set; }
+        }
+
+        private string RandomCode()
+        {
+            const string chars = "0123456789";
+            var random = new Random();
+            return new string(Enumerable.Repeat(chars, 6).Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+    }
 }

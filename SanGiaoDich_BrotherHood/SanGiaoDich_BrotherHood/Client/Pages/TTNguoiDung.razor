@@ -47,87 +47,56 @@ else if (userAccount != null)
 				</div>
 				<div class="modal-body">
 					<div class="row">
-						<!-- Họ và tên -->
-						<div class="mb-3 col-md-6">
-							<label for="modalFullName" class="form-label">Họ và tên</label>
-							<input type="text" class="form-control @((fieldErrors.ContainsKey("FullName") ? "is-invalid" : ""))" id="modalFullName" @bind="infoAccountDto.FullName" />
-							@if (fieldErrors.ContainsKey("FullName"))
+						<div class="mb-3 col-md-10 offset-1">
+							@if (loading)
 							{
-								<div class="invalid-feedback">
-									@fieldErrors["FullName"]
+								<div class="d-flex justify-content-center">
+									<div class="spinner-border" role="status">
+										<span class="visually-hidden">Loading...</span>
+									</div>
 								</div>
 							}
-						</div>
-
-						<!-- Email -->
-						<div class="mb-3 col-md-6">
 							<label for="modalEmail" class="form-label">Email</label>
-							<input type="email" class="form-control @((fieldErrors.ContainsKey("Email") ? "is-invalid" : ""))" id="modalEmail" @bind="infoAccountDto.Email" />
-							@if (fieldErrors.ContainsKey("Email"))
-							{
-								<div class="invalid-feedback">
-									@fieldErrors["Email"]
+							<!-- Email -->
+							<div class="row">
+								<div class="col-md-9">
+									<input type="email" class="form-control @((fieldErrors.ContainsKey("Email") ? "is-invalid" : ""))" id="modalEmail" @bind="infoAccountDto.Email" />
+									@if (fieldErrors.ContainsKey("Email"))
+									{
+										<div class="invalid-feedback">
+											@fieldErrors["Email"]
+										</div>
+									}
+									@if (!string.IsNullOrEmpty(successEmail))
+									{
+										<p class="text-success">@successEmail</p>
+									}
 								</div>
-							}
-						</div>
-
-						<!-- Số điện thoại -->
-						<div class="mb-3 col-md-6">
-							<label for="modalPhone" class="form-label">Số điện thoại</label>
-							<input type="text" class="form-control @((fieldErrors.ContainsKey("Phone") ? "is-invalid" : ""))" id="modalPhone" @bind="infoAccountDto.Phone" />
-							@if (fieldErrors.ContainsKey("Phone"))
-							{
-								<div class="invalid-feedback">
-									@fieldErrors["Phone"]
+								<div class="col-md-3">
+									<button type="button" class="custom-btn custom-btn-primary" @onclick="CheckMail">Gửi Mail</button>
 								</div>
-							}
-						</div>
-
-						<!-- Giới tính -->
-						<div class="mb-3 col-md-6 col-12">
-							<label for="modalGender" class="form-label">Giới tính</label>
-							<select class="form-select @((fieldErrors.ContainsKey("Gender") ? "is-invalid" : ""))" id="modalGender" @bind="infoAccountDto.Gender">
-								<option value="">Chọn giới tính</option>
-								<option value="Nam">Nam</option>
-								<option value="Nữ">Nữ</option>
-								<option value="Khác">Khác</option>
-							</select>
-							@if (fieldErrors.ContainsKey("Gender"))
-							{
-								<div class="invalid-feedback">
-									@fieldErrors["Gender"]
+							</div>
+							<!--Mã xác nhận-->
+							<div class="row mt-3">
+								<label>Mã xác nhận</label>
+								<div class="col-md-9">
+									<input type="text" class="form-control" id="modalOTP" @bind-value="reciveCode" placeholder="Nhập mã xác nhận được gửi qua Email của bạn" />
+									<div class="col-md-9">
+										@if (!string.IsNullOrEmpty(errorCode))
+										{
+											<p class="text-danger">@errorCode</p>
+										}
+									</div>
 								</div>
-							}
-						</div>
-
-						<!-- Ngày sinh -->
-						<div class="mb-3 col-md-6 col-12">
-							<label for="modalBirthday" class="form-label">Ngày sinh</label>
-							<input type="date" class="form-control @((fieldErrors.ContainsKey("Birthday") ? "is-invalid" : ""))" id="modalBirthday" @bind="infoAccountDto.Birthday" />
-							@if (fieldErrors.ContainsKey("Birthday"))
-							{
-								<div class="invalid-feedback">
-									@fieldErrors["Birthday"]
+								<div class="col-md-3">
+									<button type="button" class="custom-btn custom-btn-primary" @onclick="UpdateAccountInfo">Xác nhận</button>
 								</div>
-							}
-						</div>
-
-						<!-- Giới thiệu -->
-						<div class="mb-3 col-md-6">
-							<label for="modalIntroduct" class="form-label">Giới thiệu</label>
-							<textarea class="form-control @((fieldErrors.ContainsKey("Introduce") ? "is-invalid" : ""))" id="modalIntroduct" rows="3" @bind="infoAccountDto.Introduce"></textarea>
-							@if (fieldErrors.ContainsKey("Introduce"))
-							{
-								<div class="invalid-feedback">
-									@fieldErrors["Introduce"]
-								</div>
-							}
+							</div>
 						</div>
 					</div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="custom-btn custom-btn-secondary" data-bs-dismiss="modal">Đóng</button>
-					<button type="button" class="custom-btn custom-btn-primary" @onclick="UpdateAccountInfo">Lưu thay đổi</button>
 				</div>
 			</div>
 		</div>
@@ -202,7 +171,7 @@ else if (userAccount != null)
 							@if (isCurrentUser)
 							{
 								<button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
-									<i class="fas fa-user-edit"></i> Cập nhật thông tin
+									<i class="fas fa-user-edit"></i> Xác thực Email
 								</button>
 
 								@* 	<button class="btn btn-outline-success">

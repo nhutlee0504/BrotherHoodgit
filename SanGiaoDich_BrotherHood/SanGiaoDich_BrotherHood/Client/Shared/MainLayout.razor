@@ -424,7 +424,7 @@
                                             </li>
                                             <li><hr class="dropdown-divider"></li>
                                             <li><a class="dropdown-item" href="/post"><i class="fas fa-plus-circle"></i> Đăng sản phẩm</a></li>
-                                            <li><a class="dropdown-item" href="/ThongTinNguoiDung/@accountInfo.UserName"><i class="fas fa-user"></i> Thông tin tài khoản</a></li>
+                                            <li><a class="dropdown-item" @onclick="() => NavigateToProductDetail(accountInfo.UserName)"><i class="fas fa-user"></i> Thông tin tài khoản</a></li>
                                             <li><a class="dropdown-item" href="/changePass"><i class="fas fa-key"></i> Đổi mật khẩu</a></li>
                                             <li><a class="dropdown-item" href="/lichsunaptien"><i class="fas fa-history"></i> Lịch sử nạp tiền</a></li>
                                             <li><hr class="dropdown-divider"></li>
@@ -508,7 +508,7 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="custom-dropdown-item" href="/ThongTinNguoiDung/@accountInfo.UserName">
+                                        <a class="custom-dropdown-item"  @onclick="() => NavigateToProductDetail(accountInfo.UserName)">
                                             <i class="fas fa-user"></i> Thông tin tài khoản
                                         </a>
                                     </li>
@@ -720,6 +720,11 @@
         IsLoggedIn = false;
         accountInfo = null; // Đặt lại thông tin tài khoản
         NavigationManager.NavigateTo("/", forceLoad: true);
+    }
+
+    private void NavigateToProductDetail(string userName)
+    {
+        NavigationManager.NavigateTo($"/ThongTinNguoiDung/{userName}",forceLoad: true);
     }
 }
 <script>
