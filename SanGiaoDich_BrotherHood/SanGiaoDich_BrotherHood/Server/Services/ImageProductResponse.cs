@@ -17,12 +17,11 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
-        private readonly string _imagePath;
-
-        public ImageProductResponse(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
+        private readonly FirebaseStorageService _firebaseService;
+        public ImageProductResponse(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, FirebaseStorageService firebaseService)
         {
+            _firebaseService = firebaseService;
             _context = context;
-            _imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "AnhSanPham");
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
         }
@@ -30,21 +29,21 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public async Task DeleteImage(int idProd, int idImage)
         {
             var user = GetUserInfoFromClaims();
+
             var product = await _context.Products.FindAsync(idProd);
 
             if (product == null)
+            {
                 throw new KeyNotFoundException("Sản phẩm không tồn tại.");
-
+            }
             if (product.UserName != user.UserName)
+            {
                 throw new UnauthorizedAccessException("Bạn không có quyền xóa ảnh này.");
-
+            }
             var imageProduct = await _context.ImageProducts.FindAsync(idImage);
+
             if (imageProduct != null)
             {
-                var imagePath = Path.Combine(_imagePath, imageProduct.Image);
-                if (File.Exists(imagePath))
-                    File.Delete(imagePath);
-
                 _context.ImageProducts.Remove(imageProduct);
                 await _context.SaveChangesAsync();
             }
@@ -54,13 +53,15 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             }
         }
 
+
         public async Task<IEnumerable<ImageProduct>> GetImageProducts(int id)
         {
-            var images = await _context.ImageProducts.Where(ip => ip.IDProduct == id).ToListAsync();
-            if (images == null || !images.Any())
-                throw new KeyNotFoundException("Sản phẩm không có ảnh.");
-
-            return images;
+            var Image = await _context.ImageProducts.Where(ip => ip.IDProduct == id).ToListAsync();
+            if (Image == null)
+            {
+                throw new NotImplementedException("Sản phẩm không có ảnh");
+            }
+            return Image;
         }
 
         public async Task<IEnumerable<ImageProduct>> UploadImages(List<IFormFile> files, int productId)
@@ -69,73 +70,43 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             var product = await _context.Products.FindAsync(productId);
 
             if (product == null)
+            {
                 throw new KeyNotFoundException("Sản phẩm không tồn tại.");
+            }
 
             if (product.UserName != user.UserName)
+            {
                 throw new UnauthorizedAccessException("Bạn không có quyền thêm ảnh cho sản phẩm này.");
-
-            if (!Directory.Exists(_imagePath))
-                Directory.CreateDirectory(_imagePath);
+            }
 
             var imageProducts = new List<ImageProduct>();
-            if (files.Count > 3)
-                throw new InvalidOperationException("Bạn chỉ được chọn tối đa 3 ảnh.");
-
             foreach (var file in files)
             {
                 var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-                var filePath = Path.Combine(_imagePath, uniqueFileName);
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                using (var stream = file.OpenReadStream())
                 {
-                    await file.CopyToAsync(stream);
+                    try
+                    {
+                        var downloadUrl = await _firebaseService.UploadFileToFirebaseStorage(stream, uniqueFileName);
+                        var imageProduct = new ImageProduct
+                        {
+                            Image = downloadUrl,
+                            IDProduct = productId
+                        };
+
+                        imageProducts.Add(await AddImage(imageProduct));
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Lỗi khi tải ảnh lên Firebase: {ex.Message}");
+                    }
                 }
-
-                var imageProduct = new ImageProduct
-                {
-                    Image = uniqueFileName,
-                    IDProduct = productId
-                };
-
-                imageProducts.Add(await AddImage(imageProduct));
             }
 
             return imageProducts;
         }
 
-        public async Task<ImageProduct> UpdateImage(int imageId, IFormFile newFile)
-        {
-            var user = GetUserInfoFromClaims();
-            var imageProduct = await _context.ImageProducts.FindAsync(imageId);
-
-            if (imageProduct == null)
-                throw new KeyNotFoundException("Ảnh không tồn tại.");
-
-            var product = await _context.Products.FindAsync(imageProduct.IDProduct);
-            if (product == null || product.UserName != user.UserName)
-                throw new UnauthorizedAccessException("Bạn không có quyền cập nhật ảnh này.");
-
-            if (!Directory.Exists(_imagePath))
-                Directory.CreateDirectory(_imagePath);
-
-            var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(newFile.FileName)}";
-            var newFilePath = Path.Combine(_imagePath, uniqueFileName);
-
-            using (var stream = new FileStream(newFilePath, FileMode.Create))
-            {
-                await newFile.CopyToAsync(stream);
-            }
-
-            var oldFilePath = Path.Combine(_imagePath, imageProduct.Image);
-            if (File.Exists(oldFilePath))
-                File.Delete(oldFilePath);
-
-            imageProduct.Image = uniqueFileName;
-            _context.ImageProducts.Update(imageProduct);
-            await _context.SaveChangesAsync();
-
-            return imageProduct;
-        }
 
         public async Task<IEnumerable<ImageProduct>> GetImages()
         {
@@ -148,7 +119,40 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             await _context.SaveChangesAsync();
             return imageProduct;
         }
+       // public async Task<ImageProduct> UpdateImage(int imageId, IFormFile newFile)
+       // {
+       //     var user = GetUserInfoFromClaims();
+       //     var imageProduct = await _context.ImageProducts.FindAsync(imageId);
 
+       //     if (imageProduct == null)
+       //         throw new KeyNotFoundException("Ảnh không tồn tại.");
+
+       //     var product = await _context.Products.FindAsync(imageProduct.IDProduct);
+       //     if (product == null || product.UserName != user.UserName)
+       //         throw new UnauthorizedAccessException("Bạn không có quyền cập nhật ảnh này.");
+
+       //if (!Directory.Exists(_imagePath))
+       //         Directory.CreateDirectory(_imagePath);
+
+       //     var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(newFile.FileName)}";
+       //     var newFilePath = Path.Combine(_imagePath, uniqueFileName);
+
+       //     using (var stream = new FileStream(newFilePath, FileMode.Create))
+       //     {
+       //         await newFile.CopyToAsync(stream);
+       //     }
+
+       //     var oldFilePath = Path.Combine(_imagePath, imageProduct.Image);
+       //     if (File.Exists(oldFilePath))
+       //         File.Delete(oldFilePath);
+
+       //     imageProduct.Image = uniqueFileName;
+       //     _context.ImageProducts.Update(imageProduct);
+       //     await _context.SaveChangesAsync();
+
+       //     return imageProduct;
+       // }
+        //Phương thức ngoài
         private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()
         {
             var userClaim = _httpContextAccessor.HttpContext?.User;
@@ -167,12 +171,17 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 var timeBannedClaim = userClaim.FindFirst("TimeBanned");
 
                 DateTime? birthday = null;
-                if (!string.IsNullOrWhiteSpace(birthdayClaim?.Value) && DateTime.TryParse(birthdayClaim.Value, out DateTime parsedBirthday))
-                    birthday = parsedBirthday;
-
-                DateTime? timeBanned = null;
-                if (!string.IsNullOrWhiteSpace(timeBannedClaim?.Value) && DateTime.TryParse(timeBannedClaim.Value, out DateTime parsedTimeBanned))
-                    timeBanned = parsedTimeBanned;
+                if (!string.IsNullOrWhiteSpace(birthdayClaim?.Value))
+                {
+                    if (DateTime.TryParse(birthdayClaim.Value, out DateTime parsedBirthday))
+                    {
+                        birthday = parsedBirthday;
+                    }
+                    else
+                    {
+                        // Log or handle the invalid date format here if needed
+                    }
+                }
 
                 return (
                     userNameClaim?.Value,
@@ -185,10 +194,15 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                     imageAccountClaim?.Value,
                     roleClaim?.Value,
                     isDeleteClaim != null && bool.TryParse(isDeleteClaim.Value, out bool isDeleted) && isDeleted,
-                    timeBanned
+                    timeBannedClaim != null ? DateTime.TryParse(timeBannedClaim.Value, out DateTime parsedTimeBanned) ? parsedTimeBanned : (DateTime?)null : (DateTime?)null
                 );
             }
             throw new UnauthorizedAccessException("Vui lòng đăng nhập vào hệ thống.");
+        }
+
+        public Task<ImageProduct> UpdateImage(int idImage, IFormFile file)
+        {
+            throw new NotImplementedException();
         }
     }
 }

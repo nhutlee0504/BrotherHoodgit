@@ -10,6 +10,7 @@ namespace API.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int CartItemID { get; set; }
+        public DateTime CreatedDate { get; set; }
 
         [ForeignKey("Cart")]
         public int IDCart { get; set; }
@@ -21,5 +22,6 @@ namespace API.Models
         [JsonIgnore]
         public Product Product { get; set; } // Đảm bảo chỉ có 1 quan hệ với Product
     }
+
 
 }

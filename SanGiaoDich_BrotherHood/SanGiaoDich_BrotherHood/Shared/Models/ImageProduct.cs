@@ -9,7 +9,6 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         [Key]
         public int IDImage { get; set; }
 
-        [Column(TypeName = "varchar(150)")]
         public string Image { get; set; }
         public bool IsPrimary { get; set; }
         public DateTime CreatedDate { get; set; }

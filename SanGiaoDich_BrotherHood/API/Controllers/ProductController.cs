@@ -136,5 +136,34 @@ namespace API.Controllers
 				return StatusCode(500, "Đã xảy ra lỗi khi xóa sản phẩm.");
 			}
 		}
+		[HttpGet("statistics")]
+		public async Task<IActionResult> GetStatisticsByStatus()
+		{
+			try
+			{
+				var products = await prod.GetAllProductsAsync();
+
+				if (products == null || !products.Any())
+				{
+					return NotFound("Không có sản phẩm nào trong hệ thống.");
+				}
+
+				var statistics = products
+					.GroupBy(p => p.Status)
+					.Select(group => new
+					{
+						Status = group.Key,
+						Count = group.Count()
+					})
+					.ToList();
+
+				return Ok(statistics);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, "Đã xảy ra lỗi khi thống kê bài đăng.");
+			}
+		}
+
 	}
 }

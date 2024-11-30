@@ -1,0 +1,453 @@
+﻿@page "/message"
+@using SanGiaoDich_BrotherHood.Shared.Models
+@inject HttpClient http
+@inject IJSRuntime jsruntime
+@inject NavigationManager Navigation
+<style>
+/* Tổng thể card */
+.conversation-card, .message-card {
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+}
+
+/* Header của card (màu xanh lá phải dính liền với phần nội dung) */
+.card-header {
+    background-color: #4CAF50; /* Màu xanh lá */
+    color: white;
+    padding: 15px;
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin: 0;
+    border-radius: 0;  /* Loại bỏ bo tròn */
+}
+
+.card-header + .conversation-list-container {
+    border-top: none;  /* Loại bỏ border trên để nối liền với header */
+}
+
+/* Tìm kiếm và bộ lọc chung 1 hàng */
+.filter-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.search-input, .filter-select {
+    border-radius: 30px;
+    height: 40px;
+    padding-left: 10px;
+    border: 1px solid #ddd;
+}
+
+.filter-select {
+    flex: 1;
+}
+
+/* Khung chứa danh sách người nhắn */
+.conversation-list-container {
+    background-color: #fff;
+    padding: 0;
+    margin-top: 0;  /* Loại bỏ margin để khớp với header */
+    border-top: 1px solid #ddd;  /* Thêm đường viền dưới khung header */
+}
+
+.conversation-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.conversation-item {
+    background-color: #f8f8f8;
+    color: #333;
+    padding: 10px 15px;
+    border: none;
+    margin-bottom: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.conversation-item:hover {
+    background-color: #e0f7fa;
+    color: #00796b;
+}
+
+.conversation-item.active {
+    background-color: #00796b;
+    color: white;
+}
+
+.no-conversation {
+    color: #888;
+    text-align: center;
+}
+
+/* Khung tin nhắn */
+.message-container {
+    background-color: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+}
+
+.message-container p {
+    margin: 5px 0;
+}
+
+.message-container .text-end {
+    text-align: right;
+    background-color: #f1f1f1;
+    border-radius: 12px;
+    padding: 10px;
+    max-width: 75%;
+    margin-left: auto;
+}
+
+.message-container .text-start {
+    text-align: left;
+    background-color: #e1f5fe;
+    border-radius: 12px;
+    padding: 10px;
+    max-width: 75%;
+    margin-right: auto;
+}
+
+/* Gửi tin nhắn */
+.send-message .form-group input[type="text"] {
+    height: 40px;
+    border-radius: 30px;
+    padding-left: 10px;
+    border: 1px solid #ddd;
+}
+
+.send-btn {
+    background-color: #388e3c;
+    color: white;
+    border-radius: 30px;
+    padding: 10px 20px;
+}
+
+.send-btn:disabled {
+    background-color: #9e9e9e;
+}
+
+    .message .timestamp {
+        font-size: 0.8rem; 
+        color: #888; 
+        margin-top: 5px;
+        display: block;
+        text-align: right; 
+    }
+/* Layout responsive */
+
+
+</style>
+@if (isLoading)
+{
+    <div class="text-center">
+        <div class="spinner-border text-success" role="status">
+            <span class="visually-hidden">Đang tải...</span>
+        </div>
+    </div>
+}
+else if (!IsLoggedIn)
+{
+    <div class="alert alert-warning">
+        Vui lòng đăng nhập để xem tin nhắn.
+    </div>
+}
+else
+{
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-4 conversation-card">
+                <h4 class="card-header">Danh sách người nhắn</h4>
+                <div class="mb-3 filter-row">
+                    <input type="text" class="form-control search-input col" placeholder="Tìm kiếm..." @bind="searchTerm">
+                    <select class="form-control filter-select col" @bind="selectedFilter">
+                        <option value="">Tất cả</option>
+                        <option value="unread">Chưa đọc</option>
+                        <option value="read">Đã đọc</option>
+                    </select>
+                </div>
+                <div class="conversation-list-container">
+                    <ul class="list-group conversation-list">
+                        @if (filteredConversationList.Any())
+                        {
+                            @foreach (var conversation in filteredConversationList)
+                            {
+                                <li class="list-group-item conversation-item @(selectedUser == conversation.UserGive || selectedUser == conversation.Username ? "active" : "")"
+                                    @onclick="() => LoadMessages(conversation)">
+                                    @if (conversation.Username == username)
+                                    {
+                                        @conversation.UserGive
+                                    }
+                                    else
+                                    {
+                                        @conversation.Username
+                                    }
+                                </li>
+                            }
+                        }
+                        else
+                        {
+                            <li class="list-group-item no-conversation">Không có hội thoại nào.</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-md-8 message-card">
+                <h4 class="message-header">Tin nhắn với @selectedUser</h4>
+                <div class="message-container">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @errorMessage
+                        </div>
+                    }
+
+                    @if (messageList.Any())
+                    {
+                        @foreach (var message in messageList)
+                        {
+                            <div class="mb-2 message @(message.UserSend == username ? "text-end" : "text-start")">
+                                <p>@message.Content</p>
+                                <p class="timestamp">@message.CreatedDate.ToString("HH:mm dd/MM/yyyy")</p>
+                            </div>
+
+                        }
+                    }
+                    else
+                    {
+                        <p>Chưa có tin nhắn nào.</p>
+                    }
+                </div>
+
+                <!-- Gửi tin nhắn -->
+                <div class="mt-3 send-message">
+                    <div class="form-group">
+                        <input type="text" class="form-control message-input" placeholder="Nhập tin nhắn..." @bind="messageContent">
+                    </div>
+                    <button class="btn btn-primary send-btn mt-2" @onclick="SendMessage" disabled="@string.IsNullOrWhiteSpace(selectedUser)">Gửi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+
+
+@code {
+    private string searchTerm = string.Empty; // Từ khóa tìm kiếm
+    private string selectedFilter = string.Empty; // Bộ lọc
+    private List<Conversation> filteredConversationList = new();
+    private string productName;
+
+    private bool isLoading = true;
+    private string errorMessage;
+    private AccountInfoDto accountInfo;
+    private bool IsLoggedIn { get; set; } = false;
+    private List<Conversation> conversationList = new();
+    private List<Messages> messageList = new();
+    private string username; // Tên người dùng đăng nhập
+    private string selectedUser;
+    private string messageContent;
+    private System.Timers.Timer refreshTimer;
+
+    // Khởi tạo khi component được render lần đầu
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckTokenAndLoadAccountInfo();
+        if (IsLoggedIn)
+        {
+            await LoadConversations();
+            filteredConversationList = conversationList;
+            StartAutoRefresh(); // Khởi động cơ chế tự động làm mới
+        }
+    }
+
+    // Hàm kiểm tra token và tải thông tin người dùng
+    private async Task CheckTokenAndLoadAccountInfo()
+    {
+        var token = await jsruntime.InvokeAsync<string>("localStorage.getItem", "token");
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            await LoadAccountInfo();
+        }
+        else
+        {
+            isLoading = false;
+            IsLoggedIn = false;
+        }
+    }
+
+    // Hàm tải thông tin tài khoản
+    private async Task LoadAccountInfo()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var response = await http.GetAsync("api/User/GetMyInfo");
+
+            if (response.IsSuccessStatusCode)
+            {
+                accountInfo = await response.Content.ReadFromJsonAsync<AccountInfoDto>();
+                username = accountInfo.UserName; // Lấy username
+                IsLoggedIn = true;
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Lỗi: {response.StatusCode} - {errorContent}";
+                IsLoggedIn = false;
+                await Logout();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Có lỗi xảy ra khi lấy thông tin tài khoản: " + ex.Message;
+            IsLoggedIn = false;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // Hàm tải danh sách hội thoại
+    private async Task LoadConversations()
+    {
+        try
+        {
+            conversationList = await http.GetFromJsonAsync<List<Conversation>>($"api/Conversation/GetConversations/{username}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi khi tải danh sách hội thoại: {ex.Message}");
+        }
+    }
+
+    // Hàm tải danh sách tin nhắn
+    private async Task LoadMessages(Conversation conversation)
+    {
+        try
+        {
+            selectedUser = conversation.Username == username ? conversation.UserGive : conversation.Username;
+            var url = $"api/Message/GetMessagesBetween?username={username}&selectedUser={selectedUser}";
+            messageList = await http.GetFromJsonAsync<List<Messages>>(url);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi khi tải tin nhắn: {ex.Message}");
+        }
+    }
+
+    // Gửi tin nhắn
+    private async Task SendMessage()
+    {
+        try
+        {
+            var conversation = conversationList.FirstOrDefault(c =>
+                (c.Username == username && c.UserGive == selectedUser) ||
+                (c.Username == selectedUser && c.UserGive == username));
+
+            if (conversation == null || conversation.ConversationID <= 0)
+            {
+                Console.WriteLine("Không tìm thấy hội thoại hoặc ConversationID không hợp lệ.");
+                return;
+            }
+
+            var newMessage = new Messages
+                {
+                    ConversationID = conversation.ConversationID,
+                    UserSend = username,
+                    Content = messageContent,
+                    TypeContent = "Text",
+                    CreatedDate = DateTime.Now,
+                    IsDeleted = false,
+                    Status = "Sent",
+                };
+
+            var response = await http.PostAsJsonAsync($"api/Message/CreateMess?username={username}&userGive={selectedUser}", newMessage);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadMessages(conversation);
+                messageContent = string.Empty;
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Gửi tin nhắn thất bại: {errorContent}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi khi gửi tin nhắn: {ex.Message}");
+        }
+    }
+
+    private void StartAutoRefresh()
+    {
+        refreshTimer = new System.Timers.Timer(3000); // 3 giây
+        refreshTimer.Elapsed += async (sender, e) => await RefreshData();
+        refreshTimer.AutoReset = true;
+        refreshTimer.Start();
+    }
+
+    private async Task RefreshData()
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadConversations(); // Làm mới hội thoại
+            if (!string.IsNullOrEmpty(selectedUser)) // Nếu đã chọn người dùng, làm mới tin nhắn
+            {
+                var selectedConversation = conversationList.FirstOrDefault(c =>
+                    (c.Username == username && c.UserGive == selectedUser) ||
+                    (c.Username == selectedUser && c.UserGive == username));
+                if (selectedConversation != null)
+                {
+                    await LoadMessages(selectedConversation);
+                }
+            }
+            StateHasChanged(); // Cập nhật UI
+        });
+    }
+
+    public void Dispose()
+    {
+        if (refreshTimer != null)
+        {
+            refreshTimer.Stop();
+            refreshTimer.Dispose();
+        }
+    }
+
+    private async Task Logout()
+    {
+        await jsruntime.InvokeVoidAsync("localStorage.removeItem", "token");
+        IsLoggedIn = false;
+        accountInfo = null;
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+
+    private class AccountInfoDto
+    {
+        public string UserName { get; set; }
+        public decimal PreSystem { get; set; }
+        public string FullName { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Gender { get; set; }
+        public DateTime? Birthday { get; set; }
+        public string ImageAccount { get; set; }
+    }
+}

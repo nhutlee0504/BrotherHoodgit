@@ -22,11 +22,12 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         private List<Product> pagedProducts;
         private int currentPage = 1;
         private int totalPages;
-        private int pageSize = 4; // số lượng sp mỗi page
+        private int pageSize = 6; // số lượng sp mỗi page
         private string searchQuery = "";
 
         protected override async Task OnInitializedAsync()
         {
+            await LoadProducts();
             await LoadCategories();
 
             var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
@@ -35,12 +36,13 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             if (queryParams.TryGetValue("search", out var searchParam))
             {
                 searchQuery = searchParam.ToString();
-                await PerformSearch(searchQuery);  // Gọi hàm tìm kiếm ngay khi có từ khóa
+                await PerformSearch(searchQuery); 
             }
             else
             {
                 await LoadProducts();
             }
+            await LoadProductImages();
 
             UpdatePageProducts();
         }
@@ -68,25 +70,58 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             try
             {
                 var images = await http.GetFromJsonAsync<List<ImageProduct>>($"api/imageproduct/GetImageProduct/{id}");
-
-                // Lấy ảnh đầu tiên hoặc ảnh mặc định nếu không có
                 if (images != null && images.Count > 0)
                 {
-                    var imageUrl = images.First().Image; // Lấy ảnh đầu tiên
+                    var imageUrl = images.First().Image;
                     productImages[id] = imageUrl;
                 }
                 else
                 {
-                    productImages[id] = "/defaultImg.png"; // Ảnh mặc định
+                    productImages[id] = "/defaultImg.png";
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                productImages[id] = "/defaultImg.png"; // Ảnh mặc định nếu có lỗi
+                productImages[id] = "/defaultImg.png"; 
             }
         }
 
+        private async Task LoadProductImages()
+        {
+            try
+            {
+
+                foreach (var product in products)
+                {
+                    productImages[product.IDProduct] = "/defaultImg.png"; // Ảnh mặc định
+                }
+
+                // Sử dụng Task.WhenAll để tải ảnh song song
+                var imageTasks = products.Select(async product =>
+                {
+                    try
+                    {
+                        var images = await http.GetFromJsonAsync<List<ImageProduct>>($"api/imageproduct/GetImageProduct/{product.IDProduct}");
+                        if (images != null && images.Count > 0)
+                        {
+                            productImages[product.IDProduct] = images.First().Image;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Lỗi khi tải ảnh cho sản phẩm ID: {product.IDProduct}, {ex.Message}");
+                        productImages[product.IDProduct] = "/defaultImg.png"; // Nếu lỗi, dùng ảnh mặc định
+                    }
+                });
+
+                await Task.WhenAll(imageTasks);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi tải ảnh sản phẩm: {ex.Message}");
+            }
+        }
 
         private string GetImage(int id)
         {

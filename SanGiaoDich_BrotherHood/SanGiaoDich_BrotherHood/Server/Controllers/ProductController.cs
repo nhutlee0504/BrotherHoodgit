@@ -231,5 +231,12 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 				return StatusCode(500, "An error occurred while upgrading the product priority level.");
 			}
 		}
+        [HttpGet("StatisticsByStatus")]
+        public async Task<IActionResult> GetStatisticsByStatus()
+        {
+            var statistics = await prod.GetStatisticsByStatusAsync();
+            return Ok(statistics);
+        }
+
     }
 }

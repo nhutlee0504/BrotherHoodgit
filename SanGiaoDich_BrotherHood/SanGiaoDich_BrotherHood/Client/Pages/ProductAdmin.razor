@@ -165,7 +165,8 @@
                     }
                     else
                     {
-                        <button class="btn btn-info btn-sm" @onclick="() => ViewProduct(product.IDProduct)">Xem</button>
+                        <a class="btn btn-info btn-sm" href="@($"/Admin/Product/{product.IDProduct}")">Xem</a>
+
                         <button class="btn btn-danger btn-sm" @onclick="() => DeleteProduct(product.IDProduct)">Xóa</button>
                         
                         }
@@ -304,7 +305,6 @@
         }
         catch (Exception ex)
         {
-            // Xử lý các lỗi khác và in ra thông báo lỗi
             Console.WriteLine($"Lỗi khi duyệt sản phẩm: {ex.Message}");
         }
     }
@@ -328,7 +328,6 @@
         }
         catch (Exception ex)
         {
-            // Xử lý các lỗi khác và in ra thông báo lỗi
             Console.WriteLine($"Lỗi khi duyệt sản phẩm: {ex.Message}");
         }
     }
@@ -336,18 +335,16 @@
 
     private void ViewProduct(int id)
     {
-        // Chức năng xem sản phẩm
+        
         Console.WriteLine($"Xem sản phẩm ID: {id}");
     }
     private void EditProduct(int id)
     {
-        // Chức năng chỉnh sửa sản phẩm
         Console.WriteLine($"Chỉnh sửa sản phẩm ID: {id}");
     }
 
     private void DeleteProduct(int id)
     {
-        // Chức năng xóa sản phẩm
         Console.WriteLine($"Xóa sản phẩm ID: {id}");
     }
 }

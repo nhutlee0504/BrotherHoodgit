@@ -8,11 +8,9 @@ namespace API.Services
 {
     public interface IMessage
     {
-        Task<Conversation> CreateConversationAsync(string username1, string username2);
-        Task<List<Conversation>> GetConversationsForUserAsync(string username);
+        Task<Message> AddMessageWithConversation(string username, string userGive, Message messageModel);
         Task<List<Message>> GetMessagesByConversationIdAsync(int conversationId);
-        Task<List<Message>> GetMessagesBetweenUsersAsync(string username1, string username2);
-        Task<Message> SendMessageAsync(int conversationId, string userSend, string content, string typeContent);
+        Task<List<Message>> GetMessagesBetweenUsers(string username, string selectedUser);
 
     }
 }

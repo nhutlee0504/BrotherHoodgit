@@ -14,6 +14,7 @@ namespace API.Models
         public string Image { get; set; }
         public bool IsPrimary { get; set; }
         public DateTime CreatedDate { get; set; }
+
         public bool IsDelete { get; set; }
 
         [ForeignKey("Product")]

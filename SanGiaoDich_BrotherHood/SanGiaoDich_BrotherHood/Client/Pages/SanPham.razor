@@ -5,9 +5,6 @@
 @inject HttpClient http
 @inject NavigationManager NavigationManager
 
-@code {
-    // Thêm các biến và phương thức cần thiết ở đây
-}
 
 <style>
     /* Thêm CSS từ giao diện cũ nếu cần */
@@ -150,7 +147,7 @@
                 <div class="d-flex align-items-center mb-3">
                     <input type="text" class="form-control me-2" placeholder="Thấp" @bind="lowPrice">
                     <input type="text" class="form-control me-2" placeholder="Cao" @bind="highPrice">
-                    <button class="btn btn-success" @onclick="FilterByPrice">Filter</button>
+                    <button class="btn btn-success" @onclick="FilterByPrice">Lọc</button>
                 </div>
 
                 <!-- Dropdown Sắp xếp -->
@@ -181,7 +178,7 @@
                         <div class="col-lg-4 col-md-6 mb-4 prod">
                             <div class="card h-100 shadow-sm" style="border-radius: 15px;">
                                 <a href="@($"/ChiTietSanPham/{product.IDProduct}")">
-                                    <img src="/AnhSanPham/@GetImage(product.IDProduct)" class="card-img-top" alt="@product.Name" style="height: 200px; object-fit: cover; border-radius: 15px 15px 0 0;">
+                                    <img src="@GetImage(product.IDProduct)" class="card-img-top" alt="@product.Name" style="height: 200px; object-fit: cover; border-radius: 15px 15px 0 0;">
                                 </a>
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">@product.Name</h5>
@@ -232,6 +229,7 @@
                     </li>
                 </ul>
             </nav>
+
         </div>
     </div>
 </div>
@@ -240,11 +238,10 @@
     {
         try
         {
-            // Send the product ID as part of the URL without a body
             var response = await http.PostAsync($"api/Cart/AddCart/{productId}", null);
             if (response.IsSuccessStatusCode)
             {
-                // Optionally, show a success message or refresh cart data
+            
                 Console.WriteLine("Product added to cart successfully!");
             }
             else
@@ -257,4 +254,8 @@
             Console.WriteLine($"An error occurred: {ex.Message}");
         }
     }
+
 }
+
+
+

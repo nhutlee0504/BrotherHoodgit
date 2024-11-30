@@ -202,6 +202,28 @@ namespace API.Services
             _context.SaveChanges();
             return existingProduct;
         }
+
+        public async Task<IEnumerable<dynamic>> GetStatisticsByStatusAsync()
+        {
+            var products = await _context.Products.ToListAsync();
+
+            if (products == null || !products.Any())
+            {
+                throw new InvalidOperationException("Không có sản phẩm nào để thống kê.");
+            }
+
+            var statistics = products
+                .GroupBy(p => p.Status)
+                .Select(group => new
+                {
+                    Status = group.Key,
+                    Count = group.Count()
+                })
+                .ToList();
+
+            return statistics;
+        }
+
         //Phương thức ngooài
 
         private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()

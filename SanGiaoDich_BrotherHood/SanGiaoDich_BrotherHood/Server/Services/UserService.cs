@@ -16,6 +16,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 namespace SanGiaoDich_BrotherHood.Server.Services
 {
@@ -23,12 +24,23 @@ namespace SanGiaoDich_BrotherHood.Server.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IConfiguration _configuration; 
-        public UserService(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
+        private readonly IConfiguration _configuration;
+        private readonly FirebaseStorageService _firebaseService;
+        public UserService(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, FirebaseStorageService firebaseService)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
+            _firebaseService = firebaseService;
+        }
+        public string HashFullName(string input)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+                string hashString = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+                return hashString.Substring(0, 10);
+            }
         }
         public async Task<Account> RegisterUser(RegisterDto registerDto)
         {
@@ -48,15 +60,23 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             }
             var newAdmin = new Account
             {
+                FullName = HashFullName(registerDto.UserName),
                 UserName = registerDto.UserName,
                 Password = HashPassword(registerDto.Password),
                 IsDelete = false,
                 CreatedTime = DateTime.Now,
                 Role = "Người dùng",
                 PreSystem = 10000,
-                IsActived = true
+                IsActived = true,
+                ImageAccount = "https://firebasestorage.googleapis.com/v0/b/dbbrotherhood-ac2f1.appspot.com/o/ImageTest%2Favatar-default.svg?alt=media&token=fb4e7099-b322-412e-9da7-0f80d2311785"
             };
+            var newCart = new Cart
+            {
+                UserName = newAdmin.UserName,
+            };
+            
             await _context.Accounts.AddAsync(newAdmin);
+            await _context.Carts.AddAsync(newCart);
             await _context.SaveChangesAsync();
             return newAdmin;
         }
@@ -124,34 +144,42 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             await _context.SaveChangesAsync();
             return user; 
         }
-        public async Task<Account> UpdateProfileImage(IFormFile imageFile = null)
+        public async Task<Account> UpdateProfileImage(IFormFile imageFile)
         {
+            if (imageFile == null || imageFile.Length == 0)
+            {
+                throw new ArgumentException("File ảnh không hợp lệ.");
+            }
+
             var userClaims = GetUserInfoFromClaims();
             var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userClaims.UserName);
-
             if (user == null)
             {
-                throw new UnauthorizedAccessException("Không tìm thấy người dùng.");
+                throw new KeyNotFoundException("Tài khoản không tồn tại.");
             }
-            if (imageFile != null && imageFile.Length > 0)
+            if (user.UserName != userClaims.UserName)
             {
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "AnhAvatar");
-                if (!Directory.Exists(uploadsFolder))
-                {
-                    Directory.CreateDirectory(uploadsFolder);
-                }
-                var originalFileName = Path.GetFileName(imageFile.FileName);
-                var filePath = Path.Combine(uploadsFolder, originalFileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await imageFile.CopyToAsync(stream);
-                }
-
-                user.ImageAccount = originalFileName; 
+                throw new UnauthorizedAccessException("Bạn không có quyền cập nhật ảnh cho tài khoản này.");
             }
 
-            await _context.SaveChangesAsync();
-            return user;
+            try
+            {
+                var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(imageFile.FileName)}";
+
+                using (var stream = imageFile.OpenReadStream())
+                {
+                    var downloadUrl = await _firebaseService.UploadFileToFirebaseStorage(stream, uniqueFileName);
+                    user.ImageAccount = downloadUrl; 
+                    _context.Accounts.Update(user);
+                    await _context.SaveChangesAsync();
+                }
+
+                return user; 
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi tải ảnh lên Firebase: {ex.Message}");
+            }
         }
 
         public async Task<Account> ChangePassword(string username, InfoAccountDto info)
