@@ -13,7 +13,15 @@
 <div class="container-fluid">
 	<ul class="breadcrumb">
 		<li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
-		<li class="breadcrumb-item"><a href="#">Thông tin của bạn</a></li>
+		@if (isCurrentUser)
+		{
+			<li class="breadcrumb-item"><a href="#">Thông tin của bạn</a></li>
+		}
+		else
+		{
+			<li class="breadcrumb-item"><a href="#">Thông tin của @username</a></li>
+		}
+
 	</ul>
 </div>
 @if (!string.IsNullOrEmpty(errorMessage))
@@ -277,7 +285,7 @@ else if (userAccount != null)
 												<i class="fa fa-user"></i> Người bán: @productList.UserName
 											</p>
 											<p class="card-text text-muted">
-												<i class=""></i>Mức độ: @productList.ProrityLevel
+												<i class=""></i>Mức độ: <span class="text-success">@productList.ProrityLevel</span>
 											</p>
 											<p class="card-text text-muted">
 												<i class="fa fa-check-circle"></i> Trạng thái:

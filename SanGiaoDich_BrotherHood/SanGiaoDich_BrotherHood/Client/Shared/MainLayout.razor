@@ -670,6 +670,15 @@
             if (response.IsSuccessStatusCode)
             {
                 accountInfo = await response.Content.ReadFromJsonAsync<AccountInfoDto>();
+
+                // Kiểm tra điều kiện TimeBan và IsDelete
+                if (accountInfo.TimeBan > DateTime.Now || accountInfo.IsDelete)
+                {
+                    // Nếu bị ban hoặc tài khoản bị xóa, thực hiện logout
+                    await Logout();
+                    return;
+                }
+
                 IsLoggedIn = true; // Đánh dấu là người dùng đã đăng nhập
             }
             else
@@ -690,6 +699,7 @@
         }
     }
 
+
     private class AccountInfoDto
     {
         public string UserName { get; set; }
@@ -698,6 +708,8 @@
         public string PhoneNumber { get; set; }
         public string Gender { get; set; }
         public DateTime? Birthday { get; set; }
+        public bool IsDelete { get; set; }
+        public DateTime TimeBan { get; set; }
         public string ImageAccount { get; set; }
     }
 

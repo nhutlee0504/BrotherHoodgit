@@ -110,11 +110,11 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 
 		[HttpPut]
         [Route("UpdateAccountInfo")]
-		public async Task<IActionResult> UpdateAccountInfo(InfoAccountDto infoAccountDto)
+		public async Task<IActionResult> UpdateAccountInfo(string email)
 		{
 			try
 			{
-				var updatedUser = await _user.UpdateAccountInfo(infoAccountDto);
+				var updatedUser = await _user.UpdateAccountInfo(email);
 				return Ok(updatedUser);
 			}
 			catch (UnauthorizedAccessException ex)
@@ -227,8 +227,12 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                     PreSystem = 10000,
                     IsActived = true
                 };
-
+                var newCart = new Cart
+                {
+                    UserName = newUser.UserName
+                };
                 _context.Accounts.Add(newUser);
+                _context.Carts.Add(newCart);    
                 await _context.SaveChangesAsync();
 
                 token = GenerateJwtToken(newUser);
