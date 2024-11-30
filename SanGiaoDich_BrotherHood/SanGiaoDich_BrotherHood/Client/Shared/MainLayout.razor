@@ -305,6 +305,13 @@
         margin-left: 8px;
     }
 
+    .btn-no-border {
+        border: none;
+        background: none;
+        padding: 0;
+        color: inherit;
+        cursor: pointer;
+    }
 
 
 </style>
@@ -403,10 +410,10 @@
                                                                     </small>
                                                                 </p>
                                                                 <div class="d-flex justify-content-between mt-3">
-                                                                    <a href="/vnpay/naptien" class="btn btn-primary btn-sm" id="depositButton">
+                                                                    <a href="/vnpay/naptien" class="btn btn-success text-white btn-sm" id="depositButton">
                                                                         <i class="fas fa-arrow-circle-up"></i> Nạp tiền
                                                                     </a>
-                                                                    <button class="btn btn-warning btn-sm" id="withdrawButton">
+                                                                    <button class="btn btn-warning text-white btn-sm" id="withdrawButton">
                                                                         <i class="fas fa-arrow-circle-down"></i> Rút tiền
                                                                     </button>
                                                                 </div>
@@ -416,13 +423,12 @@
                                                 </div>
                                             </li>
                                             <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item" href="/post"><i class="fas fa-plus-circle"></i> Thêm sản phẩm</a></li>
+                                            <li><a class="dropdown-item" href="/post"><i class="fas fa-plus-circle"></i> Đăng sản phẩm</a></li>
                                             <li><a class="dropdown-item" href="/ThongTinNguoiDung/@accountInfo.UserName"><i class="fas fa-user"></i> Thông tin tài khoản</a></li>
                                             <li><a class="dropdown-item" href="/changePass"><i class="fas fa-key"></i> Đổi mật khẩu</a></li>
-                                            <li><a class="dropdown-item" href="/ThongBao"><i class="fas fa-bell"></i> Thông báo</a></li>
                                             <li><a class="dropdown-item" href="/lichsunaptien"><i class="fas fa-history"></i> Lịch sử nạp tiền</a></li>
                                             <li><hr class="dropdown-divider"></li>
-                                            <li><button class="dropdown-item text-danger" @onclick="Logout"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button></li>
+                                            <li><button class="btn text-danger ms-2" @onclick="Logout"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button></li>
                                         </ul>
                                     </div>
                                 }
@@ -451,18 +457,25 @@
                         <i class="bi bi-chat-dots"></i>
                         <span>Nhắn tin</span>
                     </a>
+                    <a class="menu-item">
+                        <div class="btn-group dropup">
+                            <a class="dropdown-toggle" href="#" style="padding:0;margin-bottom:7px;margin-top:2px;" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle"></i>
+                            </a>
 
-                    <!-- Dropdown -->
-                    <div class="custom-dropdown user-dropdown">
-                        <a class="custom-dropdown-toggle" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user-circle"></i>
-                        </a>
-                        <div class="custom-dropdown-menu custom-mobile-dropdown" id="mobileDropdown">
-                            <ul>
+                            <ul class="dropdown-menu" aria-labelledby="userDropdown">
                                 @if (!IsLoggedIn)
                                 {
-                                    <li><a class="custom-dropdown-item" href="/register"><i class="fas fa-user-plus"></i> Đăng ký</a></li>
-                                    <li><a class="custom-dropdown-item" href="login"><i class="fas fa-sign-in-alt"></i> Đăng nhập</a></li>
+                                    <li>
+                                        <a class="custom-dropdown-item" href="/register">
+                                            <i class="fas fa-user-plus"></i> Đăng ký
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="custom-dropdown-item" href="/login">
+                                            <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                                        </a>
+                                    </li>
                                 }
                                 else
                                 {
@@ -476,28 +489,56 @@
                                                     </small>
                                                 </p>
                                                 <div class="d-flex justify-content-between mt-3">
-                                                    <a href="/vnpay/naptien" class="btn btn-primary btn-sm" id="customDepositButton">
+                                                    <a href="/vnpay/naptien" class="btn btn-success text-white btn-sm">
                                                         <i class="fas fa-arrow-circle-up"></i> Nạp tiền
                                                     </a>
-                                                    <button class="btn btn-warning btn-sm" id="customWithdrawButton">
+                                                    <button class="btn btn-warning text-white btn-sm">
                                                         <i class="fas fa-arrow-circle-down"></i> Rút tiền
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
                                     </li>
-                                    <li><hr class="custom-dropdown-divider"></li>
-                                    <li><a class="custom-dropdown-item" href="/post"><i class="fas fa-plus-circle"></i> Thêm sản phẩm</a></li>
-                                    <li><a class="custom-dropdown-item" href="/ThongTinNguoiDung/@accountInfo.UserName"><i class="fas fa-user"></i> Thông tin tài khoản</a></li>
-                                    <li><a class="custom-dropdown-item" href="/changePass"><i class="fas fa-key"></i> Đổi mật khẩu</a></li>
-                                    <li><a class="custom-dropdown-item" href="/ThongBao"><i class="fas fa-bell"></i> Thông báo</a></li>
-                                    <li><a class="custom-dropdown-item" href="/lichsunaptien"><i class="fas fa-history"></i> Lịch sử nạp tiền</a></li>
-                                    <li><hr class="custom-dropdown-divider"></li>
-                                    <li><button class="custom-dropdown-item text-danger" @onclick="Logout"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <a class="custom-dropdown-item" href="/post">
+                                            <i class="fas fa-plus-circle"></i> Đăng sản phẩm
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="custom-dropdown-item" href="/ThongTinNguoiDung/@accountInfo.UserName">
+                                            <i class="fas fa-user"></i> Thông tin tài khoản
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="custom-dropdown-item" href="/changePass">
+                                            <i class="fas fa-key"></i> Đổi mật khẩu
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="custom-dropdown-item" href="/lichsunaptien">
+                                            <i class="fas fa-history"></i> Lịch sử nạp tiền
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+
+                                        <button class="btn-no-border text-danger ms-3 custom-dropdown-item" @onclick="Logout">
+                                            <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                                        </button>
+
+                                    </li>
                                 }
                             </ul>
                         </div>
-                    </div>
+                        <span>Người dùng</span>
+                    </a>
+
+               
 
 
 

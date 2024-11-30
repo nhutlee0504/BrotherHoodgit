@@ -19,7 +19,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         }
         public async Task<List<PaymentRequestModel>> GetAllPaymentRequestsAsync()
         {
-            return await _context.PaymentRequests
+            return await _context.PaymentRequests.OrderByDescending(c => c.CreatedDate)
                .ToListAsync();
         }
 

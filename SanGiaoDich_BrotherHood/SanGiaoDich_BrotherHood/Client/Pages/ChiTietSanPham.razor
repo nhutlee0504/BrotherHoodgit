@@ -30,6 +30,16 @@
     .heart-unchecked {
         color: gray; /* Màu xám khi chưa yêu thích */
     }
+
+    .bg-green {
+        background-color: #28a745; /* Màu xanh lá */
+        color: white; /* Màu chữ trắng */
+    }
+
+    .card-header h4 {
+        margin: 0;
+        font-size: 1.5rem; /* Tuỳ chỉnh kích thước chữ */
+    }
 </style>
 
 
@@ -105,13 +115,15 @@
                     </p>
                 </div>
             </div>
-            <!-- Thay thế checkbox bằng hình trái tim -->
-            <div class="favorite-heart">
-                <i class="fas fa-heart @((isFavorite) ? "heart-checked" : "heart-unchecked")" @onclick="ToggleFavorite"></i>
+
+
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h3 class="mb-0" style="font-weight:bolder">@product?.Name</h3>
+                <!-- Thay đổi vị trí của hình trái tim -->
+                <div class="favorite-heart ms-3">
+                    <i class="fas fa-heart @((isFavorite) ? "heart-checked" : "heart-unchecked")" @onclick="ToggleFavorite"></i>
+                </div>
             </div>
-
-
-            <h3 style="font-weight:bolder">@product?.Name</h3>
             <h4 class="text-success mb-2"><i class="bi bi-cash-coin"></i>@product?.Price.ToString("N0") VND</h4>
             <p><strong>Loại sản phẩm:</strong> @categoryName</p>
             <p><i class="bi bi-clock"></i> Đăng vào lúc: @(product?.StartDate?.ToString("dd/MM/yyyy") ?? "Chưa xác định")</p>
@@ -123,15 +135,15 @@
         </div>
     </div>
 
-    <!-- Mô tả sản phẩm -->
     <div class="product-description card mt-4">
-        <div class="card-header text-white">
+        <div class="card-header bg-green text-white">
             <h4 class="card-title">Mô tả sản phẩm</h4>
         </div>
         <div class="card-body">
-            <p></p>
+            <p>@product?.Description</p>
         </div>
     </div>
+
     <div class="mt-4">
         <h4 class="review-title">Đánh giá</h4>
         <div class="row">

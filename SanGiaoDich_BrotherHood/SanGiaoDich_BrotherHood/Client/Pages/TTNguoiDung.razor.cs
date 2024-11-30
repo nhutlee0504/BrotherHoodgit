@@ -19,6 +19,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 	public partial class TTNguoiDung
 	{
 		private string currentUserName;
+		public bool isLoading;
 		private bool isCurrentUser => string.Equals(currentUserName, username, StringComparison.OrdinalIgnoreCase);
 		[Parameter] public string username { get; set; }
 		private Account userAccount;
@@ -37,8 +38,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		private Dictionary<int, List<string>> productImageLists = new Dictionary<int, List<string>>();
 
 		private int currentPage = 1;
-		private int itemsPerPage = 4; // Số sản phẩm hiển thị mỗi trang
-		private int totalPosts = 0; // Tổng số bài đăng
+		private int itemsPerPage = 4; 
+		private int totalPosts = 0;
 		private List<Product> products = new List<Product>();
 
 		private class AccountInfoDto
@@ -57,7 +58,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			public int idProduct { get; set; }
 			public string url { get; set; }
 		}
-		// Đối tượng để lưu tệp
+
 		private IBrowserFile selectedFile;
 		protected override async Task OnInitializedAsync()
 		{
@@ -107,14 +108,15 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		}
 		private async Task LoadUserData()
 		{
+			isLoading = true;
 			try
 			{
+				
 				userAccount = await HttpClient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
 				userAddress = await HttpClient.GetFromJsonAsync<IEnumerable<AddressDetail>>($"api/addressdetail/GetAddressDetailsByUserName/{username}");
 				firstAddress = userAddress?.FirstOrDefault();
 				userBill = await HttpClient.GetFromJsonAsync<IEnumerable<Bill>>($"api/bill/GetBillsByUserName/{username}");
 				countBill = userBill.Count();
-				// Initialize the DTO with user account info
 				infoAccountDto = new InfoAccountDto
 				{
 					FullName = userAccount.FullName,
@@ -124,6 +126,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 					Birthday = userAccount.Birthday,
 					Introduce = userAccount.Introduce
 				};
+				isLoading = false;
 
 			}
 			catch (Exception ex)
@@ -131,13 +134,12 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				errorMessage = "Không thể lấy thông tin tài khoản: " + ex.Message;
 			}
 		}
-		// Khi chuyển sang tab "Bài đăng của bạn"
+
 		private async Task SwitchTabToPosts()
 		{
 			activeTab = "posts";
 		}
 
-		// Khi chuyển sang tab "Sản phẩm yêu thích"
 		private async Task SwitchTabToFavorites()
 		{
 			activeTab = "favorites";
@@ -175,8 +177,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			}
 
 			currentPage = page;
-			UpdatePageProducts(); // Cập nhật danh sách sản phẩm hiển thị
-			StateHasChanged(); // Đảm bảo cập nhật giao diện
+			UpdatePageProducts(); 
+			StateHasChanged(); 
 			Console.WriteLine($"Chuyển sang trang {currentPage}");
 		}
 
@@ -184,31 +186,27 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		{
 			try
 			{
-				// Make a DELETE request to the API to delete the product
 				var response = await HttpClient.DeleteAsync($"api/product/DeleteProduct/{productId}");
 
 				if (response.IsSuccessStatusCode)
 				{
-					// If deletion is successful, find and update the product in the list
 					var productToDelete = userProducts.FirstOrDefault(p => p.IDProduct == productId);
 					if (productToDelete != null)
 					{
-						// Optionally, update the product status on the frontend
+
 						productToDelete.Status = "Đã xóa";
 					}
-					// Optionally, display a success message
 					await JSRuntime.InvokeVoidAsync("alert", "Sản phẩm đã được xóa thành công!");
 				}
 				else
 				{
-					// If there is an error from the API, display the error message
 					var errorResponse = await response.Content.ReadAsStringAsync();
 					await JSRuntime.InvokeVoidAsync("alert", $"Lỗi: {errorResponse}");
 				}
 			}
 			catch (Exception ex)
 			{
-				// Handle any exceptions that might occur during the delete operation
+
 				Console.WriteLine($"Lỗi xảy ra khi xóa sản phẩm: {ex.Message}");
 				await JSRuntime.InvokeVoidAsync("alert", "Đã xảy ra lỗi khi xóa sản phẩm.");
 			}
@@ -218,11 +216,9 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		{
 			try
 			{
-				// Gọi API nâng cấp mức độ sản phẩm
 				var response = await HttpClient.PutAsync($"api/product/UpgradeProrityLevel/{productId}", null);
 				if (response.IsSuccessStatusCode)
 				{
-					// Nếu nâng cấp thành công, cập nhật trạng thái sản phẩm trong giao diện
 					var productToUpdate = userProducts.FirstOrDefault(p => p.IDProduct == productId);
 					if (productToUpdate != null)
 					{
@@ -232,7 +228,6 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				}
 				else
 				{
-					// Nếu API trả về lỗi
 					var errorResponse = await response.Content.ReadAsStringAsync();
 					Console.WriteLine($"Lỗi khi nâng cấp sản phẩm: {errorResponse}");
 					await JSRuntime.InvokeVoidAsync("alert", $"Lỗi: {errorResponse}");
@@ -245,10 +240,10 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			}
 
 		}
-		private string activeTab = "posts"; // Tab mặc định là bài đăng
+		private string activeTab = "posts"; 
 
 		private List<Favorite> favorites = new List<Favorite>();
-		private Dictionary<int, Product> favoriteProducts = new Dictionary<int, Product>(); // Lưu thông tin sản phẩm yêu thích
+		private Dictionary<int, Product> favoriteProducts = new Dictionary<int, Product>(); 
 		private string favoriteErrorMessage;
 		private bool isLoadingFavorites = false;
 
@@ -302,14 +297,14 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                 if (response == null || response.Count == 0)
                 {
                     Console.WriteLine("API không trả về sản phẩm.");
-                    productErrorMessage = "Chưa có bài đăng nào được tạo"; // Gán thông báo lỗi
-                    userProducts = new List<Product>(); // Đảm bảo danh sách sản phẩm không null
+                    productErrorMessage = "Chưa có bài đăng nào được tạo";
+                    userProducts = new List<Product>(); 
                     return;
                 }
 
                 products = response;
                 totalPosts = products.Count;
-                productErrorMessage = null; // Xóa lỗi nếu có sản phẩm
+                productErrorMessage = null;
 
                 Console.WriteLine($"Số lượng sản phẩm: {totalPosts}");
                 UpdatePageProducts();
@@ -326,18 +321,13 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		{
 			try
 			{
-				// Lặp qua danh sách sản phẩm để xử lý từng sản phẩm
 				foreach (var product in products)
 				{
 					try
 					{
-						// Gọi API lấy danh sách ảnh của sản phẩm
 						var images = await HttpClient.GetFromJsonAsync<List<ImageProduct>>($"api/ImageProduct/GetImageProduct/{product.IDProduct}");
-
-						// Kiểm tra nếu API trả về danh sách ảnh
 						if (images != null && images.Count > 0)
 						{
-							// Lấy ảnh đầu tiên
 							productImages[product.IDProduct] = images.First().Image;
 						}
 						else
@@ -420,40 +410,30 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 
 		private async Task UpdateAccountInfo()
 		{
-			// Reset errors before validating
 			fieldErrors.Clear();
 
 			bool hasError = false;
-
-			// Validate FullName
 			if (string.IsNullOrWhiteSpace(infoAccountDto.FullName))
 			{
 				fieldErrors["FullName"] = "Họ và tên không được để trống.";
 				hasError = true;
 			}
-
-			// Validate Email
 			if (string.IsNullOrWhiteSpace(infoAccountDto.Email) || !IsValidEmail(infoAccountDto.Email))
 			{
 				fieldErrors["Email"] = "Email không hợp lệ.";
 				hasError = true;
 			}
-
-			// Validate Phone
 			if (string.IsNullOrWhiteSpace(infoAccountDto.Phone) || !IsValidPhoneNumber(infoAccountDto.Phone))
 			{
 				fieldErrors["Phone"] = "Số điện thoại không hợp lệ.";
 				hasError = true;
 			}
-
-			// Validate Gender
 			if (string.IsNullOrWhiteSpace(infoAccountDto.Gender))
 			{
 				fieldErrors["Gender"] = "Giới tính không được để trống.";
 				hasError = true;
 			}
 
-			// Validate Birthday
 			if (infoAccountDto.Birthday == null)
 			{
 				fieldErrors["Birthday"] = "Ngày sinh không được để trống.";
@@ -465,7 +445,6 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				hasError = true;
 			}
 
-			// If there are errors, do not submit
 			if (hasError)
 			{
 				return;

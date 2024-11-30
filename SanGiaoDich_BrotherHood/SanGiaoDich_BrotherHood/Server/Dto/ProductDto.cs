@@ -8,5 +8,6 @@
         public string Description { get; set; }
         public string ProrityLevel { get; set; }
         public int CategoryId { get; set;}
+        public decimal PriceUp { get; set; }
     }
 }

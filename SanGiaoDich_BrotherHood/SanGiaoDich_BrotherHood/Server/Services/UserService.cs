@@ -345,6 +345,25 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             throw new UnauthorizedAccessException("Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.");
         }
 
-      
+        public async Task<Account> AcceptIDCard(RecognitionDto recognitionDto)
+        {
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.UserName == recognitionDto.UserName);
+
+            if (account == null)
+            {
+                throw new ArgumentException("Không tìm thấy tài khoản với username đã cung cấp.");
+            }
+            account.FullName = recognitionDto.Name;
+            account.Gender = recognitionDto.Sex;
+            account.ID = recognitionDto.Id;
+            account.Dob = recognitionDto.Dob;
+            account.Home = recognitionDto.Home;
+            account.Nationality = recognitionDto.Nationality;
+            account.Doe = recognitionDto.Doe;
+            _context.Accounts.Update(account);
+            await _context.SaveChangesAsync();
+
+            return account;
+        }
     }
 }
