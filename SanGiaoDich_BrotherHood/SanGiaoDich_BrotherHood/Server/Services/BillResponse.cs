@@ -36,6 +36,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public async Task<Bill> AddBill(BillDto bill)
         {
             var user = GetUserInfoFromClaims();
+            var userFind = await _context.Accounts.FindAsync(user.UserName);
             var newBill = new Bill
             {
                 FullName = bill.FullName,
@@ -49,6 +50,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 UserName = user.UserName
             };
             await _context.Bills.AddAsync(newBill);
+            userFind.PreSystem = (userFind.PreSystem - newBill.Total);
             await _context.SaveChangesAsync();
             return newBill;
         }
@@ -56,10 +58,12 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public async Task<Bill> CancelBill(int IdBill)
         {
             var BillFind = await _context.Bills.FindAsync(IdBill);
+            var user = await _context.Accounts.FirstOrDefaultAsync(x => x.UserName == BillFind.UserName);
             if (BillFind != null)
             {
                 BillFind.Status = "Đã hủy";
             }
+            user.PreSystem = (user.PreSystem + BillFind.Total);
             await _context.SaveChangesAsync();
             return BillFind;
         }

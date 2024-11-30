@@ -25,15 +25,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         private string name = string.Empty;
         protected override async Task OnInitializedAsync()
         {
-            await CheckTokenAndLoadAccountInfo();
-            if (IsLoggedIn)
-            {
-                await LoadProductDetails();
-            }
-            else
-            {
-                Navigation.NavigateTo("/login");
-            }
+           
+            await LoadProductDetails();
         }
 
         private async Task CheckTokenAndLoadAccountInfo()
@@ -236,7 +229,15 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 
         private async Task GoToMessagingPage()
         {
-            if (product != null && accountInfo != null)
+			await CheckTokenAndLoadAccountInfo();
+			if (IsLoggedIn)
+			{
+			}
+			else
+			{
+				Navigation.NavigateTo("/login");
+			}
+			if (product != null && accountInfo != null)
             {
                 try
                 {

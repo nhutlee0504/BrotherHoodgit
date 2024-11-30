@@ -346,10 +346,22 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 token = GenerateJwtToken(newUser);
             }
 
-            // Trả về token và chuyển hướng về trang login kèm token trong URL
+         
             return Redirect($"/login?token={token}");
         }
-
+        [HttpPost("AcceptIDCard")]
+        public async Task<IActionResult> AcceptIDCard([FromBody] RecognitionDto recognitionDto)
+        {
+            try
+            {
+                var account = await _user.AcceptIDCard(recognitionDto);
+                return Ok(account);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
     }
 }

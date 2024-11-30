@@ -105,7 +105,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 		public async Task<Product> AddProduct(ProductDto product)
 		{
 
-			// Phần còn lại của logic thêm sản phẩm
 			var user = GetUserInfoFromClaims();
 
 			if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null)
@@ -123,24 +122,22 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 			int deductionAmount;
 			if (product.ProrityLevel == "Ưu tiên")
 			{
-				deductionAmount = 50000; // Mức trừ cho sản phẩm ưu tiên
+				deductionAmount = 50000; 
 			}
 			else if (product.ProrityLevel == "Phổ thông")
 			{
-				deductionAmount = 25000; // Mức trừ cho sản phẩm phổ thông
+				deductionAmount = 25000;
 			}
 			else
 			{
 				throw new InvalidOperationException("Mức độ ưu tiên không hợp lệ");
 			}
 
-			// Kiểm tra số dư
 			if (existingUser.PreSystem < deductionAmount)
 			{
 				throw new InvalidOperationException("Số dư không đủ để thực hiện thao tác này");
 			}
 
-			// Trừ số dư
 			existingUser.PreSystem -= deductionAmount;
 			_context.Accounts.Update(existingUser);
 
@@ -157,7 +154,8 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 				UpdatedDate = DateTime.Now,
 				StartDate = DateTime.Now,
 				UserName = user.UserName,
-				AccountAccept = "Admin"
+				AccountAccept = "Admin",
+                PriceUp = product.PriceUp
 			};
 
 			await _context.Products.AddAsync(newProd);
