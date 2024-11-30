@@ -44,7 +44,7 @@ else
                                  style="width: 100px; height: auto; cursor: pointer; border-radius: 5px;"
                                  @onclick="() => OpenImageModal(GetImage(detail.IDProduct))" />
                         </td>
-                        <td>@detail.IDProduct</td>
+                        <td>@GetProductName(detail.IDProduct)</td>
                         <td>@detail.Quantity</td>
                         <td>@detail.Price.ToString("N0")</td>
                     </tr>
@@ -202,4 +202,50 @@ else
     {
         public string Image { get; set; }
     }
+
+    public class ProductModel
+    {
+        public int IDProduct { get; set; }
+        public string Name { get; set; }
+    }
+    private Dictionary<int, string> productNames = new Dictionary<int, string>();
+
+    private async Task LoadProductName(int productId)
+    {
+        try
+        {
+            // Gọi API để lấy tên sản phẩm theo ID
+            var product = await httpClient.GetFromJsonAsync<ProductModel>($"api/product/GetProductById/{productId}");
+
+            if (product != null)
+            {
+                // Lưu tên sản phẩm vào dictionary
+                if (!productNames.ContainsKey(productId))
+                {
+                    productNames[productId] = product.Name;
+                }
+            }
+            else
+            {
+                // Nếu không tìm thấy sản phẩm, lưu giá trị mặc định
+                productNames[productId] = "Sản phẩm không tồn tại";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            productNames[productId] = "Sản phẩm không tồn tại"; // Tên mặc định nếu có lỗi
+        }
+    }
+
+    private string GetProductName(int id)
+    {
+        if (!productNames.ContainsKey(id))
+        {
+            // Nếu tên sản phẩm chưa được tải, thực hiện tải tên sản phẩm
+            LoadProductName(id).Wait();
+        }
+        return productNames.ContainsKey(id) ? productNames[id] : "Tên sản phẩm không có";
+    }
+
 }

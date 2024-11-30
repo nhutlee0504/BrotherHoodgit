@@ -114,6 +114,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                     categoryName = await GetCategoryNameById(product.IDCategory);
                     user = await GetSellerByUsername(product.UserName);
                     images = await GetImagesByProductId(product.IDProduct);
+
+                    await LoadRelatedProducts();
                 }
 
                 // Kiểm tra token và lấy danh sách yêu thích nếu có
@@ -326,6 +328,38 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             {
                 Console.WriteLine($"Lỗi khi tạo hội thoại: {ex.Message}");
                 return null;
+            }
+        }
+        private List<Product> relatedProducts;
+        private async Task LoadRelatedProducts()
+        {
+            if (product != null)
+            {
+                try
+                {
+                    // Gọi API lấy toàn bộ sản phẩm
+                    var response = await httpclient.GetAsync("api/product/GetAllProduct");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var allProducts = await response.Content.ReadFromJsonAsync<List<Product>>();
+
+                        // Lọc các sản phẩm cùng loại và loại bỏ sản phẩm hiện tại
+                        relatedProducts = allProducts
+                            .Where(p => p.IDCategory == product.IDCategory && p.IDProduct != product.IDProduct)
+                            .Take(4) // Lấy tối đa 4 sản phẩm
+                            .ToList();
+                    }
+                    else
+                    {
+                        errorMessage = "Không thể tải danh sách sản phẩm: " + response.ReasonPhrase;
+                        relatedProducts = new List<Product>();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorMessage = "Có lỗi xảy ra khi tải sản phẩm cùng loại: " + ex.Message;
+                    relatedProducts = new List<Product>();
+                }
             }
         }
     }

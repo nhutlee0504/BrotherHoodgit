@@ -168,12 +168,62 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
 		public async Task<IEnumerable<Product>> GetAllProductsAsync()//Lấy tất cả sản phẩm
         {
-            var getP = await _context.Products.OrderByDescending(cre => cre.CreatedDate).ToListAsync();
-            if (getP == null)
+			var currentDate = DateTime.Now.Date; // Ngày hiện tại
+			var products = await _context.Products.OrderByDescending(cre => cre.CreatedDate).ToListAsync();
+            if (products == null)
             {
                 throw new NotImplementedException("Không có sản phẩm hoặc không tìm thấy sản phẩm của bạn");
             }
-            return getP;
+			foreach (var product in products)
+			{
+				// Kiểm tra nếu ngày hết hạn trùng với ngày hiện tại
+				if (product.EndDate != null && product.EndDate.Value.Date == currentDate)
+				{
+					// Lấy thông tin người bán
+					var seller = await _context.Accounts.FindAsync(product.UserName);
+
+					if (seller == null)
+					{
+						// Nếu không tìm thấy người bán, chỉnh trạng thái sản phẩm về hết hạn
+						product.Status = "Hết hạn";
+						continue;
+					}
+
+					// Xử lý gia hạn dựa trên mức độ sản phẩm
+					if (product.ProrityLevel == "Phổ thông")
+					{
+						if (seller.PreSystem >= 25000)
+						{
+							// Trừ tiền và gia hạn 7 ngày
+							seller.PreSystem -= 25000;
+							product.EndDate = currentDate.AddDays(7);
+						}
+						else
+						{
+							// Không đủ số dư, chỉnh trạng thái sản phẩm về hết hạn
+							product.Status = "Hết hạn";
+						}
+					}
+					else if (product.ProrityLevel == "Ưu tiên")
+					{
+						if (seller.PreSystem >= 50000)
+						{
+							// Trừ tiền và gia hạn 30 ngày
+							seller.PreSystem -= 50000;
+							product.EndDate = currentDate.AddDays(30);
+						}
+						else
+						{
+							// Không đủ số dư, chỉnh trạng thái sản phẩm về hết hạn
+							product.Status = "Hết hạn";
+						}
+					}
+				}
+			}
+
+			// Lưu thay đổi vào CSDL
+			await _context.SaveChangesAsync();
+			return products;
         }
 
         public async Task<IEnumerable<Product>> GetProductsAccount()//Lấy tất cả danh sách sản phẩm của người đăng nhập
