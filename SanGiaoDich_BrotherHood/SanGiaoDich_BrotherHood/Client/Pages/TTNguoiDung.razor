@@ -175,19 +175,21 @@ else if (userAccount != null)
 							}
 							
 						}
-
-						@if (string.IsNullOrEmpty(userAccount.ID) || userAccount.ID == "0")
+						@if (isCurrentUser)
 						{
-							<a href="/XacThucCCCD" class="btn-verify">Xác thực 2 bước</a>
-						}
-						else
-						{
-							<div class="row ">
-								<p class="verified-text justify-content-center">
-									<i class="fa fa-check-circle"></i> Tài khoản đã xác thực
-								</p>
+							@if (string.IsNullOrEmpty(userAccount.ID) || userAccount.ID == "0")
+							{
+								<a href="/XacThucCCCD" class="btn-verify">Xác thực 2 bước</a>
+							}
+							else
+							{
+								<div class="row ">
+									<p class="verified-text justify-content-center">
+										<i class="fa fa-check-circle"></i> Tài khoản đã xác thực
+									</p>
 								</div>
-						
+
+							}
 						}
 
 					</div>
