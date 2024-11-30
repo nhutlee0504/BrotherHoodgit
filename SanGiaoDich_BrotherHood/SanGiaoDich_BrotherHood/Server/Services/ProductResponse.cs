@@ -247,6 +247,8 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
 			return products.Select(p => new Product
 			{
+				IDProduct = p.IDProduct,
+				ProrityLevel = p.ProrityLevel,
 				Name = p.Name,
 				Price = p.Price,
 				UserName = p.UserName,
