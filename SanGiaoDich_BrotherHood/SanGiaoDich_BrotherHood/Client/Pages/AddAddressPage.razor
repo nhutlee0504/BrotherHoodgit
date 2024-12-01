@@ -92,7 +92,8 @@
                 listAddressByUser = await response.Content.ReadFromJsonAsync<List<AddressDetail>>();
                 if (listAddressByUser != null)
                 {
-                    var addressExit = listAddressByUser.Any(x => x.AdditionalDetail.ToLower() == address.AdditionalDetail.ToLower());
+                    var addressExit = listAddressByUser
+                    .Any(x => x.AdditionalDetail.ToLower() == address.AdditionalDetail.ToLower() && x.Wardcommune == address.Wardcommune && x.District == address.District && x.ProvinceCity == address.ProvinceCity);
                     if(addressExit)
                     {
                         errorMessage = "Địa chỉ đã tồn tại";

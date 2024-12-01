@@ -31,10 +31,10 @@
                                 <td>@x.AdditionalDetail, @x.Wardcommune, @x.District, @x.ProvinceCity</td>
                                 <td>
                                     <a href="/updateaddress/@x.IDAddress" class="btn btn-warning">Cập nhật</a>
-                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@x.IDAddress">
                                         Xóa
                                     </button>
-                                    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                    <div class="modal fade" id="deleteModal-@x.IDAddress" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
                                                 <div class="modal-body">
@@ -122,9 +122,7 @@
             var response = await http.DeleteAsync($"api/AddressDetail/{id}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
             {
-                addresses = addresses.Where(x => x.IDAddress != id).ToList();
-                await js.InvokeVoidAsync("hideModal", "deleteModal");
-                StateHasChanged(); 
+                navigation.NavigateTo("/address", forceLoad:true);
             }
             else
             {
@@ -141,7 +139,7 @@
     }
 }
 <script>
-    function hideModal(modalId) {
+    export function hideModal(modalId) {
         const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
         if (modal) {
             modal.hide();

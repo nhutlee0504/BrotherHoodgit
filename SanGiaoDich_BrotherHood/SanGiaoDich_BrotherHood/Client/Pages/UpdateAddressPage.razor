@@ -107,6 +107,24 @@
     {
         try
         {
+            var response1 = await http.GetAsync($"api/AddressDetail/GetAddressDetailsByUserName/{account.UserName}");
+            if (response1.IsSuccessStatusCode)
+            {
+                listAddressByUser = await response1.Content.ReadFromJsonAsync<List<AddressDetail>>();
+                if (listAddressByUser != null)
+                {
+                    var addressExit = listAddressByUser
+                    .Any(x => x.AdditionalDetail.ToLower() == address.AdditionalDetail.ToLower() && x.Wardcommune == address.Wardcommune && x.District == address.District && x.ProvinceCity == address.ProvinceCity);
+                    if (addressExit)
+                    {
+                        errorMessage = "Địa chỉ đã tồn tại";
+                        StateHasChanged();
+                        await Task.Delay(3000);
+                        errorMessage = null;
+                        return;
+                    }
+                }
+            }
             address.UserName = account.UserName;
             var content = new StringContent(JsonSerializer.Serialize(address), System.Text.Encoding.UTF8, "application/json");
             var response = await http.PutAsync($"api/AddressDetail/{id}", content);

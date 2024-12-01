@@ -73,3 +73,27 @@
     background-color: #f8f9fa; /* Màu nền khi hover */
     transition: background-color 0.3s; /* Hiệu ứng chuyển đổi */
 }
+
+.modal-dialog {
+    max-width: 800px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 128, 0, 0.2);
+}
+
+.modal-content {
+    border-radius: 10px;
+    background-color: #f9f9f9;
+}
+
+.modal-header {
+    background-color: #28a745;
+    color: white;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    padding: 1rem;
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+}

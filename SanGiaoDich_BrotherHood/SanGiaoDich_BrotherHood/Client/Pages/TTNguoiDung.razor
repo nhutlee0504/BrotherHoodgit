@@ -142,7 +142,7 @@ else if (userAccount != null)
 							{
 								<p>Chưa có địa chỉ nào.</p>
 							}
-							
+
 						}
 						@if (isCurrentUser)
 						{
@@ -166,17 +166,13 @@ else if (userAccount != null)
 				<!-- Action Buttons -->
 				<div class="row mb-3">
 					<div class="col-12 d-grid gap-2">
-					
+
 						<div class="d-flex justify-content-around">
 							@if (isCurrentUser)
 							{
 								<button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
 									<i class="fas fa-user-edit"></i> Xác thực Email
 								</button>
-
-								@* 	<button class="btn btn-outline-success">
-						<i class="fas fa-user-edit"></i> Cập nhật thông tin
-						</button> *@
 								<a href="changePass">
 									<button class="btn btn-outline-secondary">
 										<i class="fas fa-lock"></i> Đổi mật khẩu
@@ -187,6 +183,22 @@ else if (userAccount != null)
 										<i class="fas fa-plus-circle"></i> Đăng bài
 									</button>
 								</a>
+							}
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3">
+					<div class="col-12 d-grid gap-2">
+
+						<div class="d-flex justify-content-around">
+							@if (isCurrentUser)
+							{
+								<a class="btn btn-outline-success" href="/address">
+									<i class="bi bi-house-up-fill"></i> Địa chỉ của bạn
+								</a>
+								<button class="btn btn-outline-success">
+									<i class="bi bi-person-fill"></i> Thông tin cá nhân
+								</button>
 							}
 						</div>
 					</div>
@@ -207,7 +219,7 @@ else if (userAccount != null)
 					</div>
 				</div>
 			</div>
-		
+
 			<!-- Right Panel: Product Listings -->
 			<div class="col-md-7">
 				<!-- Thêm Tabs -->
