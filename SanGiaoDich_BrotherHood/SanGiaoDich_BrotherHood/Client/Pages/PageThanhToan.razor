@@ -9,6 +9,7 @@
     private List<CartItemUser> selectedCartItems = new();
     private decimal totalPrice = 0;
     private SellerInfo sellerInfo;
+    private List<AddressDetail> addresses;
 
     protected override async Task OnInitializedAsync()
     {
@@ -35,13 +36,14 @@
                     sellerInfo = response;
                 }
             }
+
+            addresses = await http.GetFromJsonAsync<List<AddressDetail>>($"api/AddressDetail/{bill.UserName}");
         }
         catch (Exception ex)
         {
             await jsruntime.InvokeVoidAsync("alert", $"Đã xảy ra lỗi khi tải dữ liệu: {ex.Message}");
         }
     }
-
 
     private async Task PlaceOrder()
     {
@@ -112,6 +114,15 @@
         }
     }
 
+    private async void selectAddress(int id)
+    {
+        var address = addresses.Where(x => x.IDAddress == id).FirstOrDefault();
+        if (address != null)
+        {
+            bill.DeliveryAddress = $"{address.AdditionalDetail}, {address.Wardcommune}, {address.District}, {address.ProvinceCity}";
+            await jsruntime.InvokeVoidAsync("hideModal", "modalAddress");
+        }
+    }
 
     public class Bill
     {
@@ -206,9 +217,54 @@
                             <i class="fas fa-map-marker-alt" style="color: #ffffff; margin-right: 10px;"></i>
                             Địa chỉ nhận hàng
                         </label>
-                        <textarea class="form-control" id="deliveryAddress" @bind="bill.DeliveryAddress" placeholder="Số nhà, tên đường, quận/huyện, xã/phường, tỉnh/thành phố"></textarea>
-                        <a href="#" class="custom-link" style="color:white;">Tùy chỉnh</a>
+                        <textarea class="form-control" id="deliveryAddress" @bind="bill.DeliveryAddress" placeholder="Địa chỉ cụ thể, quận/huyện, xã/phường, tỉnh/thành phố"></textarea>
+                        <a class="custom-link" style="color:white;" data-bs-toggle="modal" data-bs-target="#modalAddress">Tùy chỉnh</a>
                     </div>
+
+                    <!--Modal địa chỉ-->
+                    <div class="modal fade" id="modalAddress" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-xl">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="staticBackdropLabel">Địa chỉ của bạn</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="mb-3 col-md-10 offset-1">
+                                            <table class="table table-striped table-bordered">
+                                                <tbody>
+                                                    @if (addresses != null)
+                                                    {
+                                                        foreach (var x in addresses)
+                                                        {
+                                                            <tr>
+                                                                <td class="text-black">@x.AdditionalDetail, @x.Wardcommune, @x.District, @x.ProvinceCity</td>
+                                                                <td>
+                                                                    <button type="button" class="btn btn-success" @onclick="() => selectAddress(x.IDAddress)">
+                                                                       Chọn
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <p class="text-black">Bạn chưa có địa chỉ</p>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!---->
+
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
@@ -353,3 +409,12 @@
         </div>
     </div>
 </div>
+
+<script>
+    function hideModal(modalId) {
+        const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
+        if (modal) {
+            modal.hide();
+        }
+    }
+</script>
