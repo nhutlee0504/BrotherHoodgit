@@ -351,7 +351,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             if (userFind != null)
             {
                 // Cấm tài khoản
-                userFind.TimeBanned = DateTime.Now; // Ví dụ: cấm trong 1 tháng
+                userFind.TimeBanned = null; // Ví dụ: cấm trong 1 tháng
                 userFind.IsDelete = false;
                 await _context.SaveChangesAsync();
                 return userFind;
