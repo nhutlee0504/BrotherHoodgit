@@ -32,6 +32,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		private IEnumerable<Bill> userBill;
 		private int countBill;
 		private IEnumerable<Product> userProducts;
+		private IEnumerable<Product> allProduct;
 		private string productErrorMessage;
 		private Dictionary<int, string> categoryNames = new Dictionary<int, string>();
 		private Dictionary<int, string> productImages = new Dictionary<int, string>();
@@ -43,6 +44,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		private int itemsPerPage = 4; 
 		private int totalPosts = 0;
 		private List<Product> products = new List<Product>();
+		private List<Product> aProduct = new List<Product>();
         private Dictionary<string, string> fieldErrors = new Dictionary<string, string>();
         private string code;
         private string reciveCode;
@@ -72,11 +74,13 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		{
 			await LoadUserData();
 			await LoadProducts();
-			await LoadCategoryNames(userProducts);
+            await LoadAllProduct();
+            await LoadCategoryNames(userProducts);
 			await LoadFavoriteAccounts();
 			totalPosts = products.Count;
 			await LoadProductImages();
 			UpdatePageProducts();
+		
 			try
 			{
 				var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
@@ -294,6 +298,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		{
 			public int IDFavorite { get; set; }
 			public string AccountName { get; set; }
+			public int IDProduct { get; set; }
 		}
 
         private async Task LoadProducts()
@@ -324,12 +329,40 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             }
         }
 
+		private async Task LoadAllProduct()
+		{
+            try
+            {
+                var response = await HttpClient.GetFromJsonAsync<List<Product>>($"api/product/GetAllProduct");
+
+                if (response == null || response.Count == 0)
+                {
+                    Console.WriteLine("API không trả về sản phẩm.");
+                    productErrorMessage = "Chưa có bài đăng nào được tạo";
+                    allProduct = new List<Product>();
+                    return;
+                }
+
+                aProduct = response;
+                totalPosts = aProduct.Count;
+                productErrorMessage = null;
+
+                Console.WriteLine($"Số lượng sản phẩm: {totalPosts}");
+                UpdatePageProducts();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi tải sản phẩm: {ex.Message}");
+                productErrorMessage = "Đã xảy ra lỗi khi tải sản phẩm. Vui lòng thử lại sau.";
+            }
+        }
+
 
         private async Task LoadProductImages()
 		{
 			try
 			{
-				foreach (var product in products)
+				foreach (var product in aProduct)
 				{
 					try
 					{
@@ -357,31 +390,6 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 				Console.WriteLine($"Lỗi khi tải ảnh sản phẩm: {ex.Message}");
 			}
 		}
-
-
-
-		private async Task LoadImagesByIdProduct(int id)
-		{
-			try
-			{
-				var images = await HttpClient.GetFromJsonAsync<List<ImageProduct>>($"api/imageproduct/GetImageProduct/{id}");
-				if (images != null && images.Count > 0)
-				{
-					var imageUrl = images.First().Image;
-					productImages[id] = imageUrl;
-				}
-				else
-				{
-					productImages[id] = "/defaultImg.png";
-				}
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine(ex.Message);
-				productImages[id] = "/defaultImg.png";
-			}
-		}
-
 
 		private string GetImage(int id)
 		{
