@@ -88,56 +88,17 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         }
 
         [HttpPost("BanAccount")]
-        public async Task<IActionResult> BanAccount([FromQuery] string username)
+        public async Task<IActionResult> BanAccount(string username)
         {
-            if (string.IsNullOrWhiteSpace(username))
-            {
-                return BadRequest("Tên tài khoản không được để trống.");
-            }
-
-            var account = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == username);
-            if (account == null)
-            {
-                return NotFound("Tài khoản không tồn tại.");
-            }
-
-            if (account.IsDelete == true)
-            {
-                return BadRequest("Tài khoản đã bị khóa.");
-            }
-
-            // Cấm tài khoản
-            account.IsDelete = true;
-            await _context.SaveChangesAsync();
-
+            var ban = await _admin.BannedAccount(username);
             return Ok($"Tài khoản {username} đã bị cấm.");
         }
 
-        [HttpPost("UnbanAccount")]
-        public async Task<IActionResult> UnbanAccount([FromQuery] string username)
+        [HttpPost("UnBanAccount")]
+        public async Task<IActionResult> UnBanAccount(string username)
         {
-            if (string.IsNullOrWhiteSpace(username))
-            {
-                return BadRequest("Tên tài khoản không được để trống.");
-            }
-
-            var account = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == username);
-            if (account == null)
-            {
-                return NotFound("Tài khoản không tồn tại.");
-            }
-
-            if (account.IsDelete == false || account.IsDelete == null)
-            {
-                return BadRequest("Tài khoản chưa bị cấm.");
-            }
-
-            // Mở khóa tài khoản
-            account.IsDelete = false;
-            await _context.SaveChangesAsync();
-
-            return Ok($"Tài khoản {username} đã được mở khóa.");
+            var ban = await _admin.UnBannedAccount(username);
+            return Ok($"Tài khoản {username} đã mở khóa.");
         }
-
     }
 }

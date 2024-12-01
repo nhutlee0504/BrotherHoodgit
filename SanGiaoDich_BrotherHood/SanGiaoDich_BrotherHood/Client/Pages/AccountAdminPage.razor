@@ -11,6 +11,28 @@
     <button class="btn btn-primary" @onclick="OnSearchKeywordChanged">Tìm kiếm</button>
 </div>
 
+@if (isModalVisible)
+{
+    <div class="modal-backdrop fade show"></div>
+    <div class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@modalTitle</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @modalMessage
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" @onclick="CloseModal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
 @if (filteredUsers == null)
 {
     <p>Đang tải dữ liệu...</p>
@@ -28,6 +50,7 @@ else
                 <th>Họ và tên</th>
                 <th>Email</th>
                 <th>Số điện thoại</th>
+                <th>Trạng thái</th>
                 <th>Hành động</th>
             </tr>
         </thead>
@@ -39,14 +62,17 @@ else
                     <td>@user.FullName</td>
                     <td>@user.Email</td>
                     <td class="text-center">@user.PhoneNumber</td>
+                    <td>@(user.IsDelete == true ? "Bị cấm" : "Hoạt động")</td>
                     <td class="text-center">
-                        <button class="btn btn-primary">Chỉnh sửa</button>
-                        <button class="btn @(user.IsDelete ?? false ? "btn-danger" : "btn-success")"
-                                disabled="@(processingUsername == user.UserName)"
-                                @onclick="() => ToggleBanAccount(user.UserName, user.IsDelete ?? false)">
-                            @(processingUsername == user.UserName ? "Đang xử lý..." : (user.IsDelete ?? false ? "Cấm" : "Mở khóa"))
-                        </button>
-
+                        <button class="btn btn-primary me-2">Chỉnh sửa</button>
+                        @if (user.IsDelete == true)
+                        {
+                            <button class="btn btn-success" @onclick="() => OnUnBanAccount(user.UserName)">Mở khóa</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-danger" @onclick="() => OnBanAccount(user.UserName)">Cấm</button>
+                        }
                     </td>
                 </tr>
             }
@@ -54,31 +80,31 @@ else
     </table>
 }
 
-@if (isSuccess != null)
-{
-    <div class="alert @alertClass">
-        @isSuccess
-    </div>
-}
-
 @code {
     private List<Account> users;
     private List<Account> filteredUsers;
     private string searchKeyword = string.Empty;
-    private string isSuccess;
-    private string alertClass;
-    private string processingUsername;
+
+    // Biến cho modal
+    private bool isModalVisible = false;
+    private string modalTitle;
+    private string modalMessage;
 
     protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
     {
         try
         {
             users = await httpClient.GetFromJsonAsync<List<Account>>("api/user/GetAccounts");
-            filteredUsers = users; // Gán danh sách ban đầu
+            filteredUsers = users;
         }
         catch (Exception ex)
         {
-            await ShowAlert($"Lỗi khi tải dữ liệu: {ex.Message}", "alert-danger");
+            ShowModal("Lỗi", $"Không thể tải danh sách người dùng: {ex.Message}");
         }
     }
 
@@ -86,7 +112,7 @@ else
     {
         if (string.IsNullOrWhiteSpace(searchKeyword))
         {
-            filteredUsers = users; // Hiển thị tất cả người dùng khi không có từ khóa
+            filteredUsers = users;
         }
         else
         {
@@ -99,45 +125,63 @@ else
         }
     }
 
-    private async Task ShowAlert(string message, string alertType)
+    private async Task OnBanAccount(string username)
     {
-        isSuccess = message;
-        alertClass = alertType;
-        await Task.Delay(5000); // Hiển thị thông báo trong 5 giây
-        isSuccess = null; // Ẩn thông báo
-    }
-
-    private async Task ToggleBanAccount(string username, bool isBanned)
-    {
-        processingUsername = username;
         try
         {
-            var response = await httpClient.PostAsJsonAsync<object>(
-                $"api/Admin/{(isBanned ? "UnbanAccount" : "BanAccount")}?username={username}",
-                null);
-
+            var response = await httpClient.PostAsJsonAsync($"api/Admin/BanAccount?username={username}", username);
             if (response.IsSuccessStatusCode)
             {
-                var action = isBanned ? "Mở khóa" : "Cấm";
-                await ShowAlert($"Tài khoản đã được {action} thành công!", "alert-success");
-
-                // Tải lại danh sách người dùng sau khi cấm/mở khóa tài khoản
-                users = await httpClient.GetFromJsonAsync<List<Account>>("api/Admin/GetAllAccount");
-                filteredUsers = users;
+                ShowModal("Thành công", $"Tài khoản {username} đã bị cấm.");
+                await OnInitializedAsync();
             }
             else
             {
                 var errorMessage = await response.Content.ReadAsStringAsync();
-                await ShowAlert($"Đã xảy ra lỗi: {errorMessage}", "alert-danger");
+                ShowModal("Lỗi", $"Không thể cấm tài khoản: {errorMessage}");
             }
         }
         catch (Exception ex)
         {
-            await ShowAlert($"Lỗi khi kết nối đến server: {ex.Message}", "alert-danger");
-        }
-        finally
-        {
-            processingUsername = null;
+            ShowModal("Lỗi hệ thống", ex.Message);
         }
     }
+
+    private async Task OnUnBanAccount(string username)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync($"api/Admin/UnBanAccount?username={username}", username);
+            if (response.IsSuccessStatusCode)
+            {
+                ShowModal("Thành công", $"Tài khoản {username} đã được mở khóa.");
+                await OnInitializedAsync();
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                ShowModal("Lỗi", $"Không thể mở khóa tài khoản: {errorMessage}");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowModal("Lỗi hệ thống", ex.Message);
+        }
+    }
+
+    private void ShowModal(string title, string message)
+    {
+        modalTitle = title;
+        modalMessage = message;
+        isModalVisible = true;
+        StateHasChanged();
+    }
+
+    private void CloseModal()
+    {
+        isModalVisible = false;
+        StateHasChanged();
+        LoadUsers(); // Cập nhật danh sách sau khi đóng modal
+    }
 }
+

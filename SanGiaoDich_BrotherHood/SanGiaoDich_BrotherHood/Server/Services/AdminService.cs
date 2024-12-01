@@ -332,28 +332,31 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         }
         public async Task<Account> BannedAccount(string username)
         {
-            var user = GetUserInfoFromClaims();
-            if (user.Role == "Chủ")
+            var userFind = await _context.Accounts.FirstOrDefaultAsync(x => x.UserName == username);
+            if (userFind != null)
             {
-                var userFind = await _context.Accounts.FirstOrDefaultAsync(x => x.UserName == username);
-                if (userFind != null)
-                {
-                    if (userFind.UserName != user.UserName)
-                    {
-                        if (userFind.Role != "Chủ")
-                        {
-                            // Cấm tài khoản
-                            userFind.TimeBanned = DateTime.UtcNow.AddMonths(1); // Ví dụ: cấm trong 1 tháng
-                            await _context.SaveChangesAsync();
-                            return userFind;
-                        }
-                        throw new UnauthorizedAccessException("Không thể cấm tài khoản có quyền cao hơn");
-                    }
-                    throw new UnauthorizedAccessException("Bạn không thể cấm chính mình");
-                }
-                throw new NotImplementedException("Không tìm thấy tài khoản");
+                // Cấm tài khoản
+                userFind.TimeBanned = DateTime.UtcNow.AddMonths(1); // Ví dụ: cấm trong 1 tháng
+                userFind.IsDelete = true;
+                await _context.SaveChangesAsync();
+                return userFind;
             }
-            throw new UnauthorizedAccessException("Bạn không có quyền thực hiện chức năng này");
+
+            throw new NotImplementedException("Không tìm thấy tài khoản");
+        }
+
+        public async Task<Account> UnBannedAccount(string username)
+        {
+            var userFind = await _context.Accounts.FirstOrDefaultAsync(x => x.UserName == username);
+            if (userFind != null)
+            {
+                // Cấm tài khoản
+                userFind.TimeBanned = DateTime.Now; // Ví dụ: cấm trong 1 tháng
+                userFind.IsDelete = false;
+                await _context.SaveChangesAsync();
+                return userFind;
+            }
+            throw new NotImplementedException("Không tìm thấy tài khoản");
         }
 
     }
