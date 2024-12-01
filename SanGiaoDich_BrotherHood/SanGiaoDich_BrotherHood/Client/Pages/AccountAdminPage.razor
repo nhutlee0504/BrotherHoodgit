@@ -11,7 +11,6 @@
     <button class="btn btn-primary" @onclick="OnSearchKeywordChanged">Tìm kiếm</button>
 </div>
 
-
 @if (filteredUsers == null)
 {
     <p>Đang tải dữ liệu...</p>
@@ -42,7 +41,11 @@ else
                     <td class="text-center">@user.PhoneNumber</td>
                     <td class="text-center">
                         <button class="btn btn-primary">Chỉnh sửa</button>
-                        <button class="btn btn-danger">Xóa</button>
+                        <button class="btn @(user.IsDelete ?? false ? "btn-danger" : "btn-success")"
+                                disabled="@(processingUsername == user.UserName)"
+                                @onclick="() => ToggleBanAccount(user.UserName, user.IsDelete ?? false)">
+                            @(processingUsername == user.UserName ? "Đang xử lý..." : (user.IsDelete ?? false ? "Cấm" : "Mở khóa"))
+                        </button>
 
                     </td>
                 </tr>
@@ -51,15 +54,32 @@ else
     </table>
 }
 
+@if (isSuccess != null)
+{
+    <div class="alert @alertClass">
+        @isSuccess
+    </div>
+}
+
 @code {
     private List<Account> users;
     private List<Account> filteredUsers;
     private string searchKeyword = string.Empty;
+    private string isSuccess;
+    private string alertClass;
+    private string processingUsername;
 
     protected override async Task OnInitializedAsync()
     {
-        users = await httpClient.GetFromJsonAsync<List<Account>>("api/user/GetAccounts");
-        filteredUsers = users; // Gán danh sách ban đầu
+        try
+        {
+            users = await httpClient.GetFromJsonAsync<List<Account>>("api/user/GetAccounts");
+            filteredUsers = users; // Gán danh sách ban đầu
+        }
+        catch (Exception ex)
+        {
+            await ShowAlert($"Lỗi khi tải dữ liệu: {ex.Message}", "alert-danger");
+        }
     }
 
     private void OnSearchKeywordChanged()
@@ -79,11 +99,45 @@ else
         }
     }
 
-    // Lắng nghe sự thay đổi từ input
-    private void OnInputChanged(ChangeEventArgs e)
+    private async Task ShowAlert(string message, string alertType)
     {
-        searchKeyword = e.Value?.ToString() ?? string.Empty;
-        OnSearchKeywordChanged();
+        isSuccess = message;
+        alertClass = alertType;
+        await Task.Delay(5000); // Hiển thị thông báo trong 5 giây
+        isSuccess = null; // Ẩn thông báo
+    }
+
+    private async Task ToggleBanAccount(string username, bool isBanned)
+    {
+        processingUsername = username;
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync<object>(
+                $"api/Admin/{(isBanned ? "UnbanAccount" : "BanAccount")}?username={username}",
+                null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var action = isBanned ? "Mở khóa" : "Cấm";
+                await ShowAlert($"Tài khoản đã được {action} thành công!", "alert-success");
+
+                // Tải lại danh sách người dùng sau khi cấm/mở khóa tài khoản
+                users = await httpClient.GetFromJsonAsync<List<Account>>("api/Admin/GetAllAccount");
+                filteredUsers = users;
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                await ShowAlert($"Đã xảy ra lỗi: {errorMessage}", "alert-danger");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowAlert($"Lỗi khi kết nối đến server: {ex.Message}", "alert-danger");
+        }
+        finally
+        {
+            processingUsername = null;
+        }
     }
 }
-

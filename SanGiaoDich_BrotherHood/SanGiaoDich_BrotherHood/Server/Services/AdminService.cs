@@ -65,14 +65,16 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             await _context.SaveChangesAsync();
             return newAdmin;
         }
-        public async Task<string> LoginAdmin(LoginDto loginDto)//Đăng nhập dành cho Admin
+        public async Task<string> LoginAdmin(LoginDto loginDto)
         {
-			var userInfo = await _context.Accounts
-			.FirstOrDefaultAsync(u => EF.Functions.Collate(u.UserName, "Latin1_General_BIN") == loginDto.UserName);
-			if (userInfo == null || !VerifyPassword(loginDto.Password, userInfo.Password))
+            var userInfo = await _context.Accounts
+                .FirstOrDefaultAsync(u => EF.Functions.Collate(u.UserName, "Latin1_General_BIN") == loginDto.UserName);
+
+            if (userInfo == null || !VerifyPassword(loginDto.Password, userInfo.Password))
             {
                 throw new UnauthorizedAccessException("Tên tài khoản hoặc mật khẩu không đúng.");
             }
+
             // Kiểm tra nếu tài khoản đã bị xóa
             if (userInfo.IsDelete == true)
             {
@@ -94,15 +96,17 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                     await _context.SaveChangesAsync(); // Lưu thay đổi vào cơ sở dữ liệu
                 }
             }
+
             // Kiểm tra vai trò
             if (userInfo.Role == "Chủ" || userInfo.Role == "Nhân viên")
             {
                 var token = GenerateJwtToken(userInfo);
                 return token;
             }
-            throw new UnauthorizedAccessException("Bạn không có quyền truy cập vào tài khoản Admin.");
 
+            throw new UnauthorizedAccessException("Bạn không có quyền truy cập vào tài khoản Admin.");
         }
+
         public async Task<IEnumerable<Account>> GetAllAccount()//Lây tất cả tài khoản
         {
             var userInfo = GetUserInfoFromClaims(); // Lấy thông tin người dùng
@@ -118,54 +122,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 throw new NotImplementedException("Không tìm thấy người dùng nào");
             }
             return users;
-        }
-        public async Task<Account> BannedAccountHigh(string username, DateTime endDate)//Ban tài khoản theo thời hạn
-        {
-            var user = GetUserInfoFromClaims();
-            if (user.Role == "Chủ")
-            {
-                var userFind = await _context.Accounts.FirstOrDefaultAsync(x => x.UserName == username);
-                if (userFind != null)
-                {
-                    if (userFind.UserName != user.UserName)
-                    {
-                        if (userFind.Role != "Chủ")
-                        {
-                            userFind.TimeBanned = endDate;
-                            await _context.SaveChangesAsync();
-                            return userFind;
-                        }
-                        throw new UnauthorizedAccessException("Bạn không thể khóa tài khoản quyền cao hơn");
-                    }
-                    throw new UnauthorizedAccessException("Bạn không thể khóa chính mình");
-                }
-                throw new System.NotImplementedException("Không tìm thấy tài khoản");
-            }
-            throw new UnauthorizedAccessException("Bạn không có quyền thực hiện chức năng");
-        }
-        public async Task<Account> BannedAccountLow(string username, DateTime endDate)//Ban tài khoản theo thời hạn
-        {
-            var user = GetUserInfoFromClaims();
-            if (user.Role == "Chủ" || user.Role == "Nhân viên")
-            {
-                var userFind = await _context.Accounts.FirstOrDefaultAsync(x => x.UserName == username);
-                if (userFind != null)
-                {
-                    if (userFind.UserName != user.UserName)
-                    {
-                        if (userFind.Role != "Chủ" && userFind.Role != "Nhân viên")
-                        {
-                            userFind.TimeBanned = endDate;
-                            await _context.SaveChangesAsync();
-                            return userFind;
-                        }
-                        throw new UnauthorizedAccessException("Bạn không thể khóa tài khoản quyền cao hơn");
-                    }
-                    throw new UnauthorizedAccessException("Bạn không thể khóa chính mình");
-                }
-                throw new System.NotImplementedException("Không tìm thấy tài khoản");
-            }
-            throw new UnauthorizedAccessException("Bạn không có quyền thực hiện chức năng");
         }
         public async Task<Account> DeleteAccountHigh(string username)//Khóa tài khoản vô thời hạn
         {
@@ -373,6 +329,31 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             }
 
             throw new UnauthorizedAccessException("Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.");
+        }
+        public async Task<Account> BannedAccount(string username)
+        {
+            var user = GetUserInfoFromClaims();
+            if (user.Role == "Chủ")
+            {
+                var userFind = await _context.Accounts.FirstOrDefaultAsync(x => x.UserName == username);
+                if (userFind != null)
+                {
+                    if (userFind.UserName != user.UserName)
+                    {
+                        if (userFind.Role != "Chủ")
+                        {
+                            // Cấm tài khoản
+                            userFind.TimeBanned = DateTime.UtcNow.AddMonths(1); // Ví dụ: cấm trong 1 tháng
+                            await _context.SaveChangesAsync();
+                            return userFind;
+                        }
+                        throw new UnauthorizedAccessException("Không thể cấm tài khoản có quyền cao hơn");
+                    }
+                    throw new UnauthorizedAccessException("Bạn không thể cấm chính mình");
+                }
+                throw new NotImplementedException("Không tìm thấy tài khoản");
+            }
+            throw new UnauthorizedAccessException("Bạn không có quyền thực hiện chức năng này");
         }
 
     }
