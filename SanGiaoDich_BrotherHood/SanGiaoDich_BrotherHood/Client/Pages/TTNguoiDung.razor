@@ -13,12 +13,28 @@
 <div class="container-fluid">
 	<ul class="breadcrumb">
 		<li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
-		<li class="breadcrumb-item"><a href="#">Thông tin của bạn</a></li>
+		@if (isCurrentUser)
+		{
+			<li class="breadcrumb-item"><a href="#">Thông tin của bạn</a></li>
+		}
+		else
+		{
+			<li class="breadcrumb-item"><a href="#">Thông tin của @username</a></li>
+		}
+
 	</ul>
 </div>
 @if (!string.IsNullOrEmpty(errorMessage))
 {
 	<div class="alert alert-danger">@errorMessage</div>
+}
+@if (isLoading)
+{
+	<div class="text-center">
+		<div class="spinner-border text-primary" role="status">
+			<span class="sr-only">Đang tải...</span>
+		</div>
+	</div>
 }
 else if (userAccount != null)
 {
@@ -31,45 +47,61 @@ else if (userAccount != null)
 				</div>
 				<div class="modal-body">
 					<div class="row">
-						<div class="mb-3 col-md-6">
-							<label for="modalFullName" class="form-label">Họ và tên</label>
-							<input type="text" class="form-control" id="modalFullName" @bind="infoAccountDto.FullName" />
-						</div>
-						<div class="mb-3 col-md-6">
+						<div class="mb-3 col-md-10 offset-1">
+							@if (loading)
+							{
+								<div class="d-flex justify-content-center">
+									<div class="spinner-border" role="status">
+										<span class="visually-hidden">Loading...</span>
+									</div>
+								</div>
+							}
 							<label for="modalEmail" class="form-label">Email</label>
-							<input type="email" class="form-control" id="modalEmail" @bind="infoAccountDto.Email" />
-						</div>
-						<div class="mb-3 col-md-6">
-							<label for="modalPhone" class="form-label">Số điện thoại</label>
-							<input type="text" class="form-control" id="modalPhone" @bind="infoAccountDto.Phone" />
-						</div>
-						<div class="mb-3 col-md-6 col-12">
-							<label for="modalGender" class="form-label">Giới tính</label>
-							<select class="form-select" id="modalGender" @bind="infoAccountDto.Gender">
-								<option value="">Chọn giới tính</option>
-								<option value="Nam">Nam</option>
-								<option value="Nữ">Nữ</option>
-								<option value="Khác">Khác</option>
-							</select>
-						</div>
-						<div class="mb-3 col-md-6 col-12">
-							<label for="modalBirthday" class="form-label">Ngày sinh</label>
-							<input type="date" class="form-control" id="modalBirthday" @bind="infoAccountDto.Birthday" />
-						</div>
-
-						<div class="mb-3 col-md-6">
-							<label for="modalIntroduct" class="form-label">Giới thiệu</label>
-							<textarea class="form-control" id="modalIntroduct" rows="3" @bind="infoAccountDto.Introduce"></textarea>
+							<!-- Email -->
+							<div class="row">
+								<div class="col-md-9">
+									<input type="email" class="form-control @((fieldErrors.ContainsKey("Email") ? "is-invalid" : ""))" id="modalEmail" @bind="infoAccountDto.Email" />
+									@if (fieldErrors.ContainsKey("Email"))
+									{
+										<div class="invalid-feedback">
+											@fieldErrors["Email"]
+										</div>
+									}
+									@if (!string.IsNullOrEmpty(successEmail))
+									{
+										<p class="text-success">@successEmail</p>
+									}
+								</div>
+								<div class="col-md-3">
+									<button type="button" class="custom-btn custom-btn-primary" @onclick="CheckMail">Gửi Mail</button>
+								</div>
+							</div>
+							<!--Mã xác nhận-->
+							<div class="row mt-3">
+								<label>Mã xác nhận</label>
+								<div class="col-md-9">
+									<input type="text" class="form-control" id="modalOTP" @bind-value="reciveCode" placeholder="Nhập mã xác nhận được gửi qua Email của bạn" />
+									<div class="col-md-9">
+										@if (!string.IsNullOrEmpty(errorCode))
+										{
+											<p class="text-danger">@errorCode</p>
+										}
+									</div>
+								</div>
+								<div class="col-md-3">
+									<button type="button" class="custom-btn custom-btn-primary" @onclick="UpdateAccountInfo">Xác nhận</button>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="custom-btn custom-btn-secondary" data-bs-dismiss="modal">Đóng</button>
-					<button type="button" class="custom-btn custom-btn-primary" @onclick="UpdateAccountInfo">Lưu thay đổi</button>
 				</div>
 			</div>
 		</div>
 	</div>
+
 
 	<div class="container mt-4">
 		<div class="row">
@@ -78,12 +110,14 @@ else if (userAccount != null)
 				<!-- User Profile Card -->
 				<div class="card shadow mb-3" style="border:none;">
 					<div class="card-body text-center">
-						<img src="/AnhAvatar/@userAccount.ImageAccount" class="rounded-circle img-fluid" style="width: 100px;">
-						<h5 class="mt-3">@userAccount.FullName</h5>
-						<p class="text-muted">#CodeUser</p>
-						<button class="btn btn-outline-primary btn-sm mb-3" type="button" onclick="triggerFileInput()">
-							<i class="fa fa-upload"></i> Tải ảnh lên
-						</button>
+						<img src="@userAccount.ImageAccount" class="rounded-circle img-fluid" style="width: 100px;">
+						<h5 class="mt-3">@ToTitleCase(@userAccount.FullName)</h5>
+						@if (isCurrentUser)
+						{
+							<button class="btn btn-outline-primary btn-sm mb-3" type="button" onclick="triggerFileInput()">
+								<i class="fa fa-upload"></i> Tải ảnh lên
+							</button>
+						}
 
 						<!-- Input file -->
 						<InputFile id="fileInput"
@@ -100,28 +134,72 @@ else if (userAccount != null)
 						}
 						else
 						{
-							<p>Chưa có địa chỉ nào.</p>
+							@if (userAccount.Home != null)
+							{
+								<p>Địa chỉ:@ToTitleCase(@userAccount.Home)</p>
+							}
+							else
+							{
+								<p>Chưa có địa chỉ nào.</p>
+							}
+
 						}
+						@if (isCurrentUser)
+						{
+							@if (string.IsNullOrEmpty(userAccount.ID) || userAccount.ID == "0")
+							{
+								<a href="/XacThucCCCD" class="btn-verify">Xác thực 2 bước</a>
+							}
+							else
+							{
+								<div class="row ">
+									<p class="verified-text justify-content-center">
+										<i class="fa fa-check-circle"></i> Tài khoản đã xác thực
+									</p>
+								</div>
+
+							}
+						}
+
 					</div>
 				</div>
 				<!-- Action Buttons -->
 				<div class="row mb-3">
 					<div class="col-12 d-grid gap-2">
+
 						<div class="d-flex justify-content-around">
-							<button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">	<i class="fas fa-user-edit"></i> Cập nhật thông tin</button>
-							@* 	<button class="btn btn-outline-success">
-						<i class="fas fa-user-edit"></i> Cập nhật thông tin
-						</button> *@
-							<a href="changePass">
-								<button class="btn btn-outline-secondary">
-									<i class="fas fa-lock"></i> Đổi mật khẩu
+							@if (isCurrentUser)
+							{
+								<button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+									<i class="fas fa-user-edit"></i> Xác thực Email
 								</button>
-							</a>
-							<a href="post">
-								<button class="btn btn-success">
-									<i class="fas fa-plus-circle"></i> Đăng bài
+								<a href="changePass">
+									<button class="btn btn-outline-secondary">
+										<i class="fas fa-lock"></i> Đổi mật khẩu
+									</button>
+								</a>
+								<a href="post">
+									<button class="btn btn-success">
+										<i class="fas fa-plus-circle"></i> Đăng bài
+									</button>
+								</a>
+							}
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3">
+					<div class="col-12 d-grid gap-2">
+
+						<div class="d-flex justify-content-around">
+							@if (isCurrentUser)
+							{
+								<a class="btn btn-outline-success" href="/address">
+									<i class="bi bi-house-up-fill"></i> Địa chỉ của bạn
+								</a>
+								<button class="btn btn-outline-success">
+									<i class="bi bi-person-fill"></i> Thông tin cá nhân
 								</button>
-							</a>
+							}
 						</div>
 					</div>
 				</div>
@@ -141,6 +219,7 @@ else if (userAccount != null)
 					</div>
 				</div>
 			</div>
+
 			<!-- Right Panel: Product Listings -->
 			<div class="col-md-7">
 				<!-- Thêm Tabs -->
@@ -166,13 +245,13 @@ else if (userAccount != null)
 					@* Hiển thị bài đăng của bạn *@
 					@if (userProducts != null && userProducts.Any())
 					{
-						foreach (var productList in userProducts.Where(x => x.UserName == username))
+						foreach (var productList in userProducts)
 						{
 							var catename = GetCategoryById(productList.IDCategory);
 							<div class="card mb-3 position-relative shadow-sm" style="border-radius: 10px;">
 								<div class="row g-0">
 									<div class="col-md-4">
-										<img src="/AnhSanPham/@GetImage(productList.IDProduct)" class="img-fluid rounded-start" alt="@productList.Name" />
+										<img src="@GetImage(productList.IDProduct)" class="img-fluid rounded-start" alt="@productList.Name" />
 									</div>
 
 									<div class="col-md-8">
@@ -189,7 +268,7 @@ else if (userAccount != null)
 												<i class="fa fa-user"></i> Người bán: @productList.UserName
 											</p>
 											<p class="card-text text-muted">
-												<i class=""></i>Mức độ: @productList.ProrityLevel
+												<i class=""></i>Mức độ: <span class="text-success">@productList.ProrityLevel</span>
 											</p>
 											<p class="card-text text-muted">
 												<i class="fa fa-check-circle"></i> Trạng thái:
@@ -201,20 +280,23 @@ else if (userAccount != null)
 											<div class="d-flex justify-content-end">
 												@if (productList.Status == "Đã duyệt")
 												{
-													@if (productList.ProrityLevel == "Phổ thông")
+													@if (isCurrentUser)
 													{
-														<button class="btn btn-info me-2" @onclick="() => UpgradePriorityLevel(productList.IDProduct)">
-															<i class="fa fa-arrow-up"></i> Nâng cấp
+														@if (productList.ProrityLevel == "Phổ thông")
+														{
+															<button class="btn btn-info me-2" @onclick="() => UpgradePriorityLevel(productList.IDProduct)">
+																<i class="fa fa-arrow-up"></i> Nâng cấp
+															</button>
+														}
+														<a href="/updatepost/@productList.IDProduct">
+															<button class="btn btn-warning me-2">
+																<i class="fa fa-edit"></i> Sửa
+															</button>
+														</a>
+														<button class="btn btn-danger me-2" @onclick="() => DeleteProduct(productList.IDProduct)">
+															<i class="fa fa-trash"></i> Xóa
 														</button>
 													}
-													<a href="/updatepost/@productList.IDProduct">
-														<button class="btn btn-warning me-2">
-															<i class="fa fa-edit"></i> Sửa
-														</button>
-													</a>
-													<button class="btn btn-danger me-2" @onclick="() => DeleteProduct(productList.IDProduct)">
-														<i class="fa fa-trash"></i> Xóa
-													</button>
 												}
 											</div>
 
@@ -229,7 +311,7 @@ else if (userAccount != null)
 					}
 					else if (!string.IsNullOrEmpty(productErrorMessage))
 					{
-						<div class="alert alert-danger">@productErrorMessage</div>
+						<div class="alert alert-waring">@productErrorMessage</div>
 					}
 					else
 					{
@@ -281,7 +363,7 @@ else if (userAccount != null)
 								<div class="card mb-3 position-relative shadow-sm" style="border-radius: 10px;">
 									<div class="row g-0">
 										<div class="col-md-4">
-											<img src="/AnhSanPham/@GetImage(item.IDProduct)" class="img-fluid rounded-start" alt="@product.Name" />
+											<img src="@GetImage(item.IDProduct)" class="img-fluid rounded-start" alt="@product.Name" />
 										</div>
 										<div class="col-md-8">
 											<div class="card-body">
@@ -314,30 +396,30 @@ else if (userAccount != null)
 					{
 						<p class="text-muted">Danh sách yêu thích trống.</p>
 					}
-@* 					<!-- Pagination -->
-					<nav aria-label="Page navigation">
-						<ul class="pagination justify-content-center">
-							<li class="page-item @(currentFavoritesPage == 1 ? "disabled" : "")">
-								<a class="page-link text-black" aria-label="Previous" @onclick="() => ChangeFavoritesPage(currentFavoritesPage - 1)">
-									<span aria-hidden="true">&laquo;</span>
-								</a>
-							</li>
-							@for (var i = 1; i <= CalculateFavoriteTotalPages(totalFavoriteProducts, itemsPerFavoritesPage); i++)
-							{
-								<li class="page-item @(currentFavoritesPage == i ? "active" : "")">
-									<a class="page-link text-black" @onclick="() => ChangeFavoritesPage(i)">
-										<span>@i</span>
-									</a>
-								</li>
-							}
-							<li class="page-item @(currentFavoritesPage == CalculateFavoriteTotalPages(totalFavoriteProducts, itemsPerFavoritesPage) ? "disabled" : "")">
-								<a class="page-link text-black" aria-label="Next" @onclick="() => ChangeFavoritesPage(currentFavoritesPage + 1)">
-									<span aria-hidden="true">&raquo;</span>
-								</a>
-							</li>
-						</ul>
-					</nav>
- *@				}
+					@* 					<!-- Pagination -->
+			<nav aria-label="Page navigation">
+			<ul class="pagination justify-content-center">
+			<li class="page-item @(currentFavoritesPage == 1 ? "disabled" : "")">
+			<a class="page-link text-black" aria-label="Previous" @onclick="() => ChangeFavoritesPage(currentFavoritesPage - 1)">
+			<span aria-hidden="true">&laquo;</span>
+			</a>
+			</li>
+			@for (var i = 1; i <= CalculateFavoriteTotalPages(totalFavoriteProducts, itemsPerFavoritesPage); i++)
+			{
+			<li class="page-item @(currentFavoritesPage == i ? "active" : "")">
+			<a class="page-link text-black" @onclick="() => ChangeFavoritesPage(i)">
+			<span>@i</span>
+			</a>
+			</li>
+			}
+			<li class="page-item @(currentFavoritesPage == CalculateFavoriteTotalPages(totalFavoriteProducts, itemsPerFavoritesPage) ? "disabled" : "")">
+			<a class="page-link text-black" aria-label="Next" @onclick="() => ChangeFavoritesPage(currentFavoritesPage + 1)">
+			<span aria-hidden="true">&raquo;</span>
+			</a>
+			</li>
+			</ul>
+			</nav>
+			*@				}
 			</div>
 		</div>
 	</div>
@@ -348,6 +430,21 @@ else if (userAccount != null)
 	}
 </style>
 @code {
+	private string ToTitleCase(string input)
+	{
+		if (string.IsNullOrEmpty(input))
+			return input;
+
+		var words = input.Split(' ');
+		for (int i = 0; i < words.Length; i++)
+		{
+			if (words[i].Length > 0)
+			{
+				words[i] = char.ToUpper(words[i][0]) + words[i].Substring(1).ToLower();
+			}
+		}
+		return string.Join(" ", words);
+	}
 	private async Task RemoveFavorite(int productId)
 	{
 		try

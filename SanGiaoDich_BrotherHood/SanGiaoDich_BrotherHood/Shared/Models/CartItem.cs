@@ -18,14 +18,13 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         [ForeignKey("Cart")]
         public int IDCart { get; set; }
         [JsonIgnore]
-
         public Cart Cart { get; set; }
 
         [ForeignKey("Product")] // Rõ ràng hóa quan hệ tới Product
         public int IDProduct { get; set; }
         [JsonIgnore]
-
         public Product Product { get; set; } // Đảm bảo chỉ có 1 quan hệ với Product
+        public DateTime CreatedDate { get; set; }
     }
 
 }

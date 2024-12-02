@@ -8,7 +8,8 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 {
     public interface IMessage
     {
-        public Task<Message> SendMessage(Message message, IFormFile imageFile);
-        public Task<IEnumerable<Message>> GetMessages(string usersend, string userrevice);
+        Task<Messages> AddMessageWithConversation(string username, string userGive, Messages messageModel);
+        Task<List<Messages>> GetMessagesByConversationIdAsync(int conversationId);
+        Task<List<Messages>> GetMessagesBetweenUsers(string username, string selectedUser);
     }
 }

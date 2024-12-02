@@ -19,30 +19,53 @@ namespace API.Controllers
         }
 
         [HttpGet]
+        [Route("GetCategories")]
         public async Task<ActionResult> GetCategories()
         {
             return Ok(await category.GetCategories());
         }
 
-        [HttpGet("IDCate")]
+        [HttpGet]
+        [Route("GetCategoryByID/{IDCate}")]
         public async Task<ActionResult> GetCategoryByID(int IDCate)
         {
-            return Ok(await category.GeCategory(IDCate));
+            var result = await category.GeCategory(IDCate);
+            if (result == null)
+                return NotFound($"Không tìm thấy danh mục với ID: {IDCate}");
+            return Ok(result);
         }
 
-        [HttpPost]
-        public async Task<ActionResult> AddCategory(string cate)
+        [HttpGet("Name")]
+        public async Task<ActionResult> GetCategoryByName(string name)
         {
-            var ct = await category.AddCategory(cate);
-            if (ct == null)
-                return BadRequest();
-            return CreatedAtAction("AddCategory",ct);
+            var categoryResult = await category.GetCategoryByName(name);
+            if (categoryResult == null)
+                return NotFound();
+            return Ok(categoryResult);
         }
+
+
+
+        [HttpPost("AddCategory")]
+        public async Task<ActionResult> AddCategory(Category cate)
+        {
+
+            var ct = await category.AddCategory(new Category
+            {
+                NameCate = cate.NameCate
+            });
+            if (ct == null)
+            {
+                return BadRequest("Không thể tạo loại mới.");
+            }
+            return CreatedAtAction(nameof(AddCategory), new { id = ct.IDCategory }, ct);
+        }
+
 
         [HttpPut("IDCate")]
         public async Task<ActionResult> UpdateCategory(int IDCate, Category cate)
         {
-            return Ok(await category.UpdateCategory(IDCate,cate));
+            return Ok(await category.UpdateCategory(IDCate, cate));
         }
 
         [HttpDelete("IDCate")]

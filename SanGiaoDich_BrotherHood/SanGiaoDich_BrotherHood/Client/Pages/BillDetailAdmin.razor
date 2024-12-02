@@ -1,0 +1,178 @@
+﻿@page "/Admin/BillDetails/{IDBill:int}"
+@using SanGiaoDich_BrotherHood.Shared.Models
+@layout AdminLayout
+@inject HttpClient httpClient
+@inject NavigationManager NavigationManager
+
+<h3>Chi tiết hóa đơn</h3>
+
+@if (billDetails == null)
+{
+    <p>Đang tải dữ liệu...</p>
+}
+else if (!billDetails.Any())
+{
+    <p>Không có chi tiết hóa đơn nào.</p>
+}
+else
+{
+    @if (isModalOpen)
+    {
+        <div class="image-modal" @onclick="CloseImageModal">
+            <img src="@modalImageUrl" alt="Phóng to hình ảnh" />
+        </div>
+    }
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Hình ảnh</th>
+                <th>ID Sản phẩm</th>
+                <th>Số lượng</th>
+                <th>Giá</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var detail in billDetails)
+            {
+                <tr>
+                    <td>@detail.IDBillDetail</td>
+                    <td>
+                        <img src="@GetImage(detail.IDProduct)"
+                             alt="Hình ảnh sản phẩm"
+                             style="width: 100px; height: auto; cursor: pointer;"
+                             @onclick="() => OpenImageModal(GetImage(detail.IDProduct))" />
+                    </td>
+                    <td>@detail.IDProduct</td>
+                    <td>@detail.Quantity</td>
+                    <td>@detail.Price.ToString("N0")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+
+<button class="btn btn-secondary" @onclick="NavigateBack">Quay lại</button>
+<style>
+    .image-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        cursor: pointer;
+    }
+
+        .image-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 5px;
+        }
+
+</style>
+@code {
+    private bool isModalOpen = false;
+    private string modalImageUrl = string.Empty;
+
+    private void OpenImageModal(string imageUrl)
+    {
+        modalImageUrl = imageUrl; // Lưu URL ảnh được phóng to
+        isModalOpen = true;       // Mở modal
+    }
+
+    private void CloseImageModal()
+    {
+        isModalOpen = false;      // Đóng modal
+    }
+
+    private Dictionary<int, string> productImages = new Dictionary<int, string>();
+
+    private async Task LoadImagesByIdProduct(int id)
+    {
+        try
+        {
+            var images = await httpClient.GetFromJsonAsync<List<ImageProduct>>($"api/imageproduct/GetImageProduct/{id}");
+
+            // Lấy ảnh đầu tiên hoặc ảnh mặc định nếu không có
+            if (images != null && images.Count > 0)
+            {
+                var imageUrl = images.First().Image; // Lấy ảnh đầu tiên
+                productImages[id] = imageUrl;
+            }
+            else
+            {
+                productImages[id] = "defaultImg.png"; // Ảnh mặc định
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            productImages[id] = "defaultImg.png"; // Ảnh mặc định nếu có lỗi
+        }
+    }
+
+    private string GetImage(int id)
+    {
+        if (!productImages.ContainsKey(id))
+        {
+            // Nếu hình ảnh chưa được tải, thực hiện tải ảnh cho sản phẩm
+            LoadImagesByIdProduct(id).Wait();
+        }
+        return productImages.ContainsKey(id) ? productImages[id] : "defaultImg.png";
+    }
+
+    [Parameter]
+    public int IDBill { get; set; }
+
+    private List<BillDetail> billDetails;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Gọi API để lấy chi tiết hóa đơn
+            billDetails = await httpClient.GetFromJsonAsync<List<BillDetail>>($"api/BillDetail/GetBillDetailsByIDBill/{IDBill}");
+
+            // Tải hình ảnh cho từng sản phẩm
+            if (billDetails != null && billDetails.Any())
+            {
+                foreach (var detail in billDetails)
+                {
+                    // Tải hình ảnh cho từng sản phẩm
+                    await LoadImagesByIdProduct(detail.IDProduct);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi khi tải chi tiết hóa đơn: " + ex.Message);
+        }
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/Admin/Bill");
+    }
+
+    public class BillDetail
+    {
+        public int IDBillDetail { get; set; }
+        public int IDBill { get; set; }
+        public int IDProduct { get; set; }
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+        public DateTime CreatedDate { get; set; }
+    }
+
+    public class ImageProduct
+    {
+        public string Image { get; set; }
+    }
+}

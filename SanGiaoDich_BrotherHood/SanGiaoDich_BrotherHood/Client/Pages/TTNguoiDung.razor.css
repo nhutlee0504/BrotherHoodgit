@@ -1,5 +1,4 @@
-﻿
-.modal-dialog {
+﻿.modal-dialog {
     max-width: 800px;
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0, 128, 0, 0.2);
@@ -153,5 +152,35 @@ select.form-select {
 .fa-heart:hover {
     color: red;
 }
+.is-invalid {
+    border: 2px solid red;
+}
+.verified-text {
+    color: green; 
+    font-size: 18px; 
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px; 
+}
 
+    .verified-text .fa-check-circle {
+        font-size: 20px;
+        color: green;
+    }
+.btn-verify {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: #fff;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
 
+    .btn-verify:hover {
+        background-color: #218838;
+    }

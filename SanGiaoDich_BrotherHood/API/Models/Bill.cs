@@ -36,6 +36,7 @@ namespace API.Models
 
         [ForeignKey("Account")]
         public string UserName { get; set; }
+
         public Account Account { get; set; }
         public ICollection<BillDetail> billDetails { get; set; }
     }

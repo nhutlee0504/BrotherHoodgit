@@ -9,8 +9,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Security.Principal;
+using System.Text.Json;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace SanGiaoDich_BrotherHood.Server.Services
@@ -20,85 +23,205 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration; // Thêm IConfiguration
-        public ProductResponse(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
+        private readonly HttpClient _httpClient;
+		private readonly string _apiUrl = "https://generativelanguage.googleapis.com/v1beta2/models/gemini-1.5-safe/contentModeration"; // Địa chỉ API kiểm duyệt văn bản
+		private readonly string _apiKey = "AIzaSyDbce3o_4id0lVOhGr0Xva0KJcVeR5RRc4"; // Thay API key của bạn
+
+		public ProductResponse(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, HttpClient httpClient)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
+            _httpClient = httpClient;
         }
 
-        public async Task<Product> AddProduct(ProductDto product)
-        {
-            var user = GetUserInfoFromClaims();
+		public async Task<bool> ContainsProfanityAsync(string text)
+		{
+			if (string.IsNullOrWhiteSpace(text))
+				throw new ArgumentException("Nội dung kiểm tra không được để trống.");
 
-            if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null)
-            {
-                throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
-            }
-            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
+			var requestPayload = new { text };
+			var requestContent = new StringContent(
+				JsonSerializer.Serialize(requestPayload),
+				Encoding.UTF8,
+				"application/json"
+			);
 
-            if (existingUser == null)
-            {
-                throw new InvalidOperationException("Người dùng không tồn tại");
-            }
+			// Sử dụng HttpRequestMessage để thêm header Authorization
+			var request = new HttpRequestMessage(HttpMethod.Post, _apiUrl)
+			{
+				Content = requestContent
+			};
 
-			// Xác định số tiền cần trừ dựa trên mức ưu tiên
+			request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _apiKey);
+
+			try
+			{
+				var response = await _httpClient.SendAsync(request);
+
+				if (!response.IsSuccessStatusCode)
+				{
+					var errorDetails = await response.Content.ReadAsStringAsync();
+					throw new InvalidOperationException($"Lỗi từ API kiểm duyệt: {response.StatusCode} - {errorDetails}");
+				}
+
+				var result = await response.Content.ReadAsStringAsync();
+				var profanityResult = JsonSerializer.Deserialize<ProfanityCheckResult>(result);
+
+				if (profanityResult == null)
+					throw new InvalidOperationException("API trả về phản hồi không hợp lệ hoặc null.");
+
+				return profanityResult.IsProfane;
+			}
+			catch (HttpRequestException ex)
+			{
+				throw new InvalidOperationException($"Lỗi kết nối đến API kiểm duyệt: {ex.Message}");
+			}
+			catch (JsonException ex)
+			{
+				throw new InvalidOperationException($"Lỗi giải mã JSON từ phản hồi API: {ex.Message}");
+			}
+			catch (Exception ex)
+			{
+				throw new InvalidOperationException($"Lỗi không xác định: {ex.Message}");
+			}
+		}
+
+
+		public class ProfanityCheckResult
+		{
+			public bool IsProfane { get; set; }
+			public string Reason { get; set; } // Nếu API cung cấp lý do (optional)
+		}
+
+
+		// Định nghĩa model phản hồi của API kiểm duyệt
+		private class ModerationResponse
+		{
+			public bool IsSafe { get; set; }
+			public string Reason { get; set; }
+		}
+
+		public async Task<Product> AddProduct(ProductDto product)
+		{
+
+			var user = GetUserInfoFromClaims();
+
+			if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null)
+			{
+				throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
+			}
+
+			var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
+
+			if (existingUser == null)
+			{
+				throw new InvalidOperationException("Người dùng không tồn tại");
+			}
+
 			int deductionAmount;
 			if (product.ProrityLevel == "Ưu tiên")
 			{
-				deductionAmount = 50000; // Mức trừ cho sản phẩm ưu tiên
+				deductionAmount = 50000; 
 			}
 			else if (product.ProrityLevel == "Phổ thông")
 			{
-				deductionAmount = 25000; // Mức trừ cho sản phẩm phổ thông
+				deductionAmount = 25000;
 			}
 			else
 			{
 				throw new InvalidOperationException("Mức độ ưu tiên không hợp lệ");
 			}
 
-			// Kiểm tra số dư
 			if (existingUser.PreSystem < deductionAmount)
 			{
 				throw new InvalidOperationException("Số dư không đủ để thực hiện thao tác này");
 			}
 
-			// Trừ số dư
 			existingUser.PreSystem -= deductionAmount;
 			_context.Accounts.Update(existingUser);
 
-
 			var newProd = new Product
-            {
-                Name = product.Name,
-                Quantity = product.Quantity,
-                Price = product.Price,
-                Description = product.Description,
-                IDCategory = product.CategoryId,
-                Status = "Đang chờ duyệt",
-                ProrityLevel = product.ProrityLevel,
-                CreatedDate = DateTime.Now,
-                UpdatedDate = DateTime.Now,
-                StartDate = DateTime.Now,
-                UserName = user.UserName,
-                AccountAccept = "Admin"
-                
-            };
+			{
+				Name = product.Name,
+				Quantity = product.Quantity,
+				Price = product.Price,
+				Description = product.Description,
+				IDCategory = product.CategoryId,
+				Status = "Đang chờ duyệt",
+				ProrityLevel = product.ProrityLevel,
+				CreatedDate = DateTime.Now,
+				UpdatedDate = DateTime.Now,
+				StartDate = DateTime.Now,
+				UserName = user.UserName,
+				AccountAccept = "Admin",
+                PriceUp = product.PriceUp
+			};
 
-            await _context.Products.AddAsync(newProd);
-            await _context.SaveChangesAsync();
+			await _context.Products.AddAsync(newProd);
+			await _context.SaveChangesAsync();
 
-            return newProd;
-        }
+			return newProd;
+		}
 
-        public async Task<IEnumerable<Product>> GetAllProductsAsync()//Lấy tất cả sản phẩm
+		public async Task<IEnumerable<Product>> GetAllProductsAsync()//Lấy tất cả sản phẩm
         {
-            var getP = await _context.Products.ToListAsync();
-            if (getP == null)
+			var currentDate = DateTime.Now.Date; // Ngày hiện tại
+			var products = await _context.Products.OrderByDescending(cre => cre.CreatedDate).ToListAsync();
+            if (products == null)
             {
                 throw new NotImplementedException("Không có sản phẩm hoặc không tìm thấy sản phẩm của bạn");
             }
-            return getP;
+			foreach (var product in products)
+			{
+				// Kiểm tra nếu ngày hết hạn trùng với ngày hiện tại
+				if (product.EndDate != null && product.EndDate.Value.Date == currentDate)
+				{
+					// Lấy thông tin người bán
+					var seller = await _context.Accounts.FindAsync(product.UserName);
+
+					if (seller == null)
+					{
+						// Nếu không tìm thấy người bán, chỉnh trạng thái sản phẩm về hết hạn
+						product.Status = "Hết hạn";
+						continue;
+					}
+
+					// Xử lý gia hạn dựa trên mức độ sản phẩm
+					if (product.ProrityLevel == "Phổ thông")
+					{
+						if (seller.PreSystem >= 25000)
+						{
+							// Trừ tiền và gia hạn 7 ngày
+							seller.PreSystem -= 25000;
+							product.EndDate = currentDate.AddDays(7);
+						}
+						else
+						{
+							// Không đủ số dư, chỉnh trạng thái sản phẩm về hết hạn
+							product.Status = "Hết hạn";
+						}
+					}
+					else if (product.ProrityLevel == "Ưu tiên")
+					{
+						if (seller.PreSystem >= 50000)
+						{
+							// Trừ tiền và gia hạn 30 ngày
+							seller.PreSystem -= 50000;
+							product.EndDate = currentDate.AddDays(30);
+						}
+						else
+						{
+							// Không đủ số dư, chỉnh trạng thái sản phẩm về hết hạn
+							product.Status = "Hết hạn";
+						}
+					}
+				}
+			}
+
+			// Lưu thay đổi vào CSDL
+			await _context.SaveChangesAsync();
+			return products;
         }
 
         public async Task<IEnumerable<Product>> GetProductsAccount()//Lấy tất cả danh sách sản phẩm của người đăng nhập
@@ -122,6 +245,8 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
 			return products.Select(p => new Product
 			{
+				IDProduct = p.IDProduct,
+				ProrityLevel = p.ProrityLevel,
 				Name = p.Name,
 				Price = p.Price,
 				UserName = p.UserName,
@@ -206,7 +331,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             {
                 throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
             }
-         
             existingProduct.Status = "Đã duyệt";
             _context.SaveChanges();
             return existingProduct;
@@ -218,11 +342,37 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             {
                 throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
             }
-
             existingProduct.Status = "Đã hủy";
-            _context.SaveChanges();
+            decimal refundAmount = 0;
+            if (existingProduct.ProrityLevel == "Phổ thông")
+            {
+                refundAmount = 25000 * 0.95m; 
+            }
+            else if (existingProduct.ProrityLevel == "Ưu tiên")
+            {
+                refundAmount = 50000 * 0.95m;
+            }
+            else
+            {
+                throw new NotImplementedException("Priority không hợp lệ");
+            }
+
+
+     
+            var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == existingProduct.UserName);
+            if (user == null)
+            {
+                throw new NotImplementedException("Không tìm thấy người dùng tương ứng");
+            }
+            user.PreSystem += refundAmount;
+
+
+            await _context.SaveChangesAsync();
+
             return existingProduct;
         }
+
+
         //Phương thức ngooài
 
         private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()
@@ -254,7 +404,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                         // Log or handle the invalid date format here if needed
                     }
                 }
-
                 return (
                     userNameClaim?.Value,
                     emailClaim?.Value,
@@ -312,4 +461,5 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 			return prodFind;
 		}
 	}
+      
 }

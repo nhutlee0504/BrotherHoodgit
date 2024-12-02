@@ -1,4 +1,5 @@
-﻿using API.Models;
+﻿using API.Dto;
+using API.Models;
 using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -7,7 +8,8 @@ namespace API.Services
 {
     public interface IMessage
     {
-        public Task<Message> SendMessage(Message message, IFormFile imageFile);
-        public Task<IEnumerable<Message>> GetMessages(string usersend, string userrevice);
+        Task<Message> AddMessageWithConversation(string username, string userGive, Message messageModel);
+        Task<List<Message>> GetMessagesByConversationIdAsync(int conversationId);
+        Task<List<Message>> GetMessagesBetweenUsers(string username, string selectedUser);
     }
 }

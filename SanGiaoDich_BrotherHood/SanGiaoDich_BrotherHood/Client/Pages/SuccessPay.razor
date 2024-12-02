@@ -1,0 +1,238 @@
+﻿@page "/vnpay/payment-success"
+@using SanGiaoDich_BrotherHood.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<div class="container mt-2 mb-3">
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Đang tải...</span>
+            </div>
+        </div>
+    }
+    else if (isSuccess)
+    {
+<div class="card shadow-sm border-0 rounded-3 p-4 mb-4" style="background-color: #f8f9fa;">
+    <div class="d-flex align-items-center mb-4">
+        <i class="fas fa-check-circle fa-3x text-success me-3"></i>
+        <h4 class="text-success mb-0">Giao dịch đã được xử lý thành công</h4>
+    </div>
+    <h5 class="text-center text-success mb-4">Thông tin giao dịch</h5>
+    <ul class="list-group mb-4">
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="row w-100">
+                <div class="col-6 d-flex align-items-center">
+                    <i class="fas fa-shopping-cart text-success me-3"></i>
+                    <strong>Mã đơn hàng:</strong>
+                </div>
+                <div class="col-6 d-flex justify-content-end align-items-center">
+                    <span class="text-success font-weight-bold">@OrderId</span>
+                    <button class="btn btn-sm btn-outline-success copy-btn" onclick="copyText('@OrderId')">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </li>
+        <!-- Mã giao dịch VnPay -->
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="row w-100">
+                <!-- Cột bên trái (Mã giao dịch VnPay) -->
+                <div class="col-6 d-flex align-items-center">
+                    <i class="fas fa-credit-card text-success me-3"></i>
+                    <strong>Mã giao dịch VnPay:</strong>
+                </div>
+                <!-- Cột bên phải (Giá trị của Mã giao dịch VnPay) -->
+                <div class="col-6 d-flex justify-content-end align-items-center">
+                    <span class="text-success font-weight-bold">@PaymentId</span>
+                    <button class="btn btn-sm btn-outline-success copy-btn" onclick="copyText('@PaymentId')">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="row w-100">
+                <div class="col-6 d-flex align-items-center">
+                    <i class="fas fa-file-alt text-success me-3"></i>
+                    <strong>Mô tả đơn hàng:</strong>
+                </div>
+                <div class="col-6 d-flex justify-content-end align-items-center">
+                    <span class="text-success">@OrderDescription</span>
+                </div>
+            </div>
+        </li>
+        <!-- Mã phản hồi VnPay -->
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="row w-100">
+                <div class="col-6 d-flex align-items-center">
+                    <i class="fas fa-comment-dots text-success me-3"></i>
+                    <strong>Mã phản hồi VnPay:</strong>
+                </div>
+                <div class="col-6 d-flex justify-content-end align-items-center">
+                    <span class="text-success font-weight-bold">@VnPayResponseCode</span>
+                </div>
+            </div>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="row w-100">
+                <div class="col-6 d-flex align-items-center">
+                    <i class="fas fa-credit-card text-success me-3"></i>
+                    <strong>Phương thức thanh toán:</strong>
+                </div>
+                <div class="col-6 d-flex justify-content-end align-items-center">
+                    <span class="text-success">@PaymentMethod</span>
+                </div>
+            </div>
+        </li>
+    </ul>
+    <div class="text-center">
+      @*   <button class="btn btn-success me-3 btn-hover">
+            <i class="fas fa-file-pdf me-2"></i> Xuất PDF
+        </button>
+        *@
+        <a href="/" class="btn btn-success me-3 btn-hover">
+            <i class="fas fa-home me-2"></i> Trở về trang chủ
+        </a>
+      @*   <button class="btn btn-info btn-hover">
+            <i class="fas fa-chart-line me-2"></i> Báo cáo
+        </button> *@
+    </div>
+</div>
+    }
+    else
+    {
+        <!-- Thông báo lỗi khi giao dịch không thành công -->
+        <div class="alert alert-danger text-center d-flex align-items-center justify-content-center">
+            <i class="fas fa-exclamation-circle me-2" style="font-size: 24px;"></i>
+            <span class="font-weight-bold">Giao dịch không thành công. Mã phản hồi: @VnPayResponseCode</span>
+        </div>
+
+        <!-- Hiển thị các thông tin giao dịch vẫn còn -->
+        <div class="card shadow-sm border-0 rounded-3 p-4 mb-4" style="background-color: #f8f9fa;">
+            <h5 class="text-center text-danger mb-4">Thông tin giao dịch</h5>
+            <ul class="list-group mb-4">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div class="row w-100">
+                        <div class="col-6 d-flex align-items-center">
+                            <i class="fas fa-shopping-cart text-danger me-3"></i>
+                            <strong>Mã đơn hàng:</strong>
+                        </div>
+                        <div class="col-6 d-flex justify-content-end align-items-center">
+                            <span class="text-danger font-weight-bold">@OrderId</span>
+                        </div>
+                    </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div class="row w-100">
+                        <div class="col-6 d-flex align-items-center">
+                            <i class="fas fa-credit-card text-danger me-3"></i>
+                            <strong>Mã giao dịch VnPay:</strong>
+                        </div>
+                        <div class="col-6 d-flex justify-content-end align-items-center">
+                            <span class="text-danger font-weight-bold">@PaymentId</span>
+                        </div>
+                    </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div class="row w-100">
+                        <div class="col-6 d-flex align-items-center">
+                            <i class="fas fa-file-alt text-danger me-3"></i>
+                            <strong>Mô tả đơn hàng:</strong>
+                        </div>
+                        <div class="col-6 d-flex justify-content-end align-items-center">
+                            <span class="text-danger">@OrderDescription</span>
+                        </div>
+                    </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div class="row w-100">
+                        <div class="col-6 d-flex align-items-center">
+                            <i class="fas fa-comment-dots text-danger me-3"></i>
+                            <strong>Mã phản hồi VnPay:</strong>
+                        </div>
+                        <div class="col-6 d-flex justify-content-end align-items-center">
+                            <span class="text-danger font-weight-bold">@VnPayResponseCode</span>
+                        </div>
+                    </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div class="row w-100">
+                        <div class="col-6 d-flex align-items-center">
+                            <i class="fas fa-credit-card text-danger me-3"></i>
+                            <strong>Phương thức thanh toán:</strong>
+                        </div>
+                        <div class="col-6 d-flex justify-content-end align-items-center">
+                            <span class="text-danger">@PaymentMethod</span>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    }
+</div>
+<script>
+    function copyText(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            alert('Đã sao chép: ' + text);
+        }, function() {
+            alert('Lỗi khi sao chép.');
+        });
+    }
+</script>
+@code {
+    private bool isLoading = true;
+    private bool isSuccess;
+    private string OrderId { get; set; }
+    private string PaymentId { get; set; }
+    private string OrderDescription { get; set; }
+    private string VnPayResponseCode { get; set; }
+    private string PaymentMethod { get; set; }
+    private string Token { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var queryString = Navigation.ToAbsoluteUri(Navigation.Uri).Query;
+            var apiUrl = $"api/Payment/PaymentCallbackVnpay{queryString}";
+
+            var response = await Http.GetAsync(apiUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<PaymentResponseModel>();
+                if (result != null && result.VnPayResponseCode == "00")
+                {
+                    isSuccess = true;
+                    OrderId = result.OrderId;
+                    PaymentId = result.PaymentId;
+                    OrderDescription = result.OrderDescription;
+                    VnPayResponseCode = result.VnPayResponseCode;
+                    PaymentMethod = result.PaymentMethod;
+                    Token = result.Token;
+                }
+                else
+                {
+                    isSuccess = false;
+                    VnPayResponseCode = result?.VnPayResponseCode ?? "Lỗi phản hồi";
+                }
+            }
+            else
+            {
+                isSuccess = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            isSuccess = false;
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

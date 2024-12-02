@@ -146,9 +146,9 @@
 <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../assets/js/sidebarmenu.js"></script>
 <script src="../assets/js/app.min.js"></script>
-<script src="../assets/libs/apexcharts/dist/apexcharts.min.js"></script>
 <script src="../assets/libs/simplebar/dist/simplebar.js"></script>
 <script src="../assets/js/dashboard.js"></script>
+
 @if (!isLoggedIn)
     {
     <div class="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center">
@@ -222,7 +222,7 @@
                         <span class="hide-menu">Trang chủ</span>
                     </li>
                     <li class="sidebar-item">
-                        <a class="sidebar-link" href="./index.html" aria-expanded="false">
+                        <a class="sidebar-link" href="/admin/dashboard" aria-expanded="false">
                             <span>
                                 <i class="ti ti-layout-dashboard"></i>
                             </span>
@@ -258,14 +258,14 @@
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a class="sidebar-link" href="/Components/Forms" aria-expanded="false">
+                        <a class="sidebar-link" href="/Admin/Bill" aria-expanded="false">
                             <span>
                                 <i class="ti ti-file-description"></i>
                             </span>
                             <span class="hide-menu">Hóa đơn</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                 @*    <li class="sidebar-item">
                         <a class="sidebar-link" href="/Components/Typhoraphy" aria-expanded="false">
                             <span>
                                 <i class="ti ti-typography"></i>
@@ -312,7 +312,7 @@
                             </span>
                             <span class="hide-menu">Trang khác</span>
                         </a>
-                    </li>
+                    </li> *@
                 </ul>
               
             </nav>

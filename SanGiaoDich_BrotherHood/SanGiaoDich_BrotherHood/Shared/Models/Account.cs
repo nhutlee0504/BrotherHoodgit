@@ -33,8 +33,6 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
 
         [Column(TypeName = "ntext")]
         public string Introduce { get; set; }
-
-        [Column(TypeName = "varchar(150)")]
         public string ImageAccount { get; set; }
 
         public DateTime CreatedTime { get; set; }
@@ -44,7 +42,11 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         public bool? IsDelete { get; set; }
         public decimal? PreSystem {  get; set; }
         public bool? IsActived { get; set; }
-        //public int GoogleID { get; set; }
+        public string ID { get; set; }
+        public string Dob { get; set; }
+        public string Home { get; set; }
+        public string Nationality { get; set; }
+        public string Doe { get; set; }
 
 
         public ICollection<Product> products { get; set; }
@@ -53,6 +55,7 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         public ICollection<Rating> ratings { get; set; }
         public ICollection<AddressDetail> addressDetails { get; set; }
         public ICollection<Bill> bills { get; set; }
+        public ICollection<PaymentRequestModel> paymentRequests { get; set; }
         public ICollection<Conversation> conversations { get; set; }
     }
 }

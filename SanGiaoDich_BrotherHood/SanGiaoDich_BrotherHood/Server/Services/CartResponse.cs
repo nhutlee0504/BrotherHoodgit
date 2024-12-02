@@ -20,33 +20,49 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             _context = context;
             _httpContextAccessor = httpContextAccessor;
         }
-        public async Task<CartItem> AddCart(int idProduct)
-        {
-            try
-            {
-                var user = GetUserInfoFromClaims();
-                var cartFind = await _context.Carts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
-                if (cartFind != null) 
-                {
-                    var newCartItem = new CartItem
-                    {
-                        IDCart = cartFind.IDCart,
-                        IDProduct = idProduct,
-                    };
-                    _context.CartItems.Add(newCartItem);
-                    await _context.SaveChangesAsync();
-                    return newCartItem;
-                }
-                throw new NotFiniteNumberException();
-            }
-            catch (System.Exception)
-            {
+		public async Task<CartItem> AddCart(int idProduct)
+		{
+			try
+			{
+				var user = GetUserInfoFromClaims();
+				// Tìm giỏ hàng của người dùng
+				var cartFind = await _context.Carts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
 
-                return null;
-            }
-        }
+				if (cartFind != null)
+				{
+					// Kiểm tra nếu sản phẩm đã có trong giỏ hàng
+					var existingItem = await _context.CartItems
+						.FirstOrDefaultAsync(ci => ci.IDCart == cartFind.IDCart && ci.IDProduct == idProduct);
 
-        public async Task<Cart> DeleteCart(int IDCart)
+					if (existingItem != null)
+					{
+						// Nếu sản phẩm đã có trong giỏ hàng, ném lỗi
+						throw new InvalidOperationException("Sản phẩm đã có trong giỏ hàng.");
+					}
+
+					// Thêm sản phẩm vào giỏ hàng
+					var newCartItem = new CartItem
+					{
+						IDCart = cartFind.IDCart,
+						IDProduct = idProduct,
+						CreatedDate = DateTime.Now,
+					};
+					_context.CartItems.Add(newCartItem);
+					await _context.SaveChangesAsync();
+					return newCartItem;
+				}
+
+				// Nếu không tìm thấy giỏ hàng của người dùng, ném lỗi
+				throw new NotFiniteNumberException("Không tìm thấy giỏ hàng của người dùng.");
+			}
+			catch (Exception ex)
+			{
+				// Có thể tùy chỉnh cách xử lý lỗi tại đây, chẳng hạn trả về null hoặc xử lý cụ thể
+				return null;
+			}
+		}
+
+		public async Task<Cart> DeleteCart(int IDCart)
         {
             try
             {
@@ -62,9 +78,9 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             }
         }
 
-        public async Task<IEnumerable<Cart>> GetCartsByUserName(string userName)
+        public async Task<Cart> GetCartsByUserName(string userName)
         {
-            return await _context.Carts.Where(x => x.UserName == userName).ToListAsync();
+            return await _context.Carts.FirstOrDefaultAsync(x => x.UserName == userName);
         }
 
         public async Task<Cart> UpdateCart(int IDCart, Cart cart)
@@ -75,7 +91,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 if (cartUpdate == null)
                     return null;
                 cartUpdate.UserName = cart.UserName;
-                
+
                 _context.Carts.Update(cartUpdate);
                 await _context.SaveChangesAsync();
                 return cart;
@@ -142,9 +158,9 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                     idCardClaim,
                     birthday,
                     imageAccountClaim,
-                    roleClaim,
-                    isDelete,
-                    timeBanned
+                   roleClaim,
+                   isDelete,
+                   timeBanned
                 );
             }
 

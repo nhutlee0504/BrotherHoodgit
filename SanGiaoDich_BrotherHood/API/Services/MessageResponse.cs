@@ -1,13 +1,12 @@
 ﻿using API.Data;
 using API.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Xml.Serialization;
 
 namespace API.Services
 {
@@ -16,47 +15,86 @@ namespace API.Services
         private readonly ApplicationDbContext _context;
         private readonly string _imagePath;
 
-        public MessageResponse(ApplicationDbContext context)
+        private readonly string _connectionString;
+
+        public MessageResponse(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
             _imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "AnhNhanTin");
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
-
-        public async Task<Message> SendMessage(Message message, IFormFile imageFile = null)
+        public async Task<Message> AddMessageWithConversation(string username, string userGive, Message messageModel)
         {
-            if (imageFile != null)
+            try
             {
-                // Lưu hình ảnh vào thư mục
-                var fileName = Path.GetFileName(imageFile.FileName);
-                var filePath = Path.Combine(_imagePath, fileName);
+                var existingConversation = await _context.Conversations
+                    .FirstOrDefaultAsync(c =>
+                        (c.UserName == username && c.UserName == userGive ||
+                         c.UserName == userGive && c.UserName == username)
+                        && !c.IsDeleted);
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                if (existingConversation == null)
                 {
-                    await imageFile.CopyToAsync(stream);
+                    var newConversation = new Conversation
+                    {
+                        UserName = username,
+                        CreatedDate = DateTime.Now,
+                        IsDeleted = false
+                    };
+
+                    _context.Conversations.Add(newConversation);
+                    await _context.SaveChangesAsync();
+                    messageModel.ConversationID = newConversation.ConversationID;
                 }
+                else
+                {
+                    messageModel.ConversationID = existingConversation.ConversationID;
+                }
+                _context.Messages.Add(messageModel);
+                await _context.SaveChangesAsync();
 
-                // Cập nhật thông tin hình ảnh vào message
-                //message.Image = fileName; // Lưu tên tệp hình ảnh
-                message.Content = "image"; // Đánh dấu kiểu nội dung là hình ảnh
+                return messageModel;
             }
-            else
+            catch (Exception ex)
             {
-                message.TypeContent = "text"; // Đánh dấu kiểu nội dung là văn bản
+                Console.WriteLine($"Lỗi khi thêm tin nhắn: {ex.Message}");
+                throw;
             }
-
-            message.CreatedDate = DateTime.Now.ToString(); // Đặt thời gian gửi
-            message.Status = "Đã gửi";
-            _context.Messages.Add(message); // Thêm tin nhắn vào cơ sở dữ liệu
-            await _context.SaveChangesAsync(); // Lưu thay đổi
-            return message; // Trả về tin nhắn đã gửi
         }
-
-        public async Task<IEnumerable<Message>> GetMessages(string usersend, string userrevice)
+        public async Task<List<Message>> GetMessagesByConversationIdAsync(int conversationId)
         {
             return await _context.Messages
-                .Where(m => m.UserSend == usersend.ToString() && m.UserSend == userrevice)
-                .OrderBy(m => m.CreatedDate)
+                .Where(m => m.ConversationID == conversationId && !m.IsDeleted)
+                .OrderBy(m => m.CreatedDate) // Tin nhắn theo thứ tự thời gian
                 .ToListAsync();
+        }
+        public async Task<List<Message>> GetMessagesBetweenUsers(string username, string selectedUser)
+        {
+            try
+            {
+                // Lấy ConversationID của hội thoại giữa username và selectedUser
+                var conversation = await _context.Conversations
+                    .FirstOrDefaultAsync(c =>
+                        (c.UserName == username && c.UserName == selectedUser) ||
+                        (c.UserName == selectedUser && c.UserName == username));
+
+                // Nếu không tìm thấy hội thoại, trả về danh sách rỗng
+                if (conversation == null)
+                {
+                    return new List<Message>();
+                }
+                var messages = await _context.Messages
+                    .Where(m => m.ConversationID == conversation.ConversationID && !m.IsDeleted)
+                    .OrderBy(m => m.CreatedDate)
+                    .ToListAsync();
+
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi tải tin nhắn: {ex.Message}");
+                throw;
+            }
         }
     }
 }

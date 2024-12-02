@@ -23,7 +23,8 @@ namespace API.Controllers
             return Ok(await bill.GetBills());
         }
 
-        [HttpGet("userName")]
+        [HttpGet]
+        [Route("GetBillsByUserName/{username}")]
         public async Task<ActionResult> GetBillsByUserName(string userName)
         {
             return Ok(await bill.GetBillsByUserName(userName));
@@ -53,7 +54,7 @@ namespace API.Controllers
             });
             if (b == null)
                 return BadRequest();
-            return CreatedAtAction("AddBill",b);
+            return CreatedAtAction("AddBill", b);
         }
 
         [HttpPut("IDBill")]

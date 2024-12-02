@@ -6,6 +6,7 @@ using SanGiaoDich_BrotherHood.Server.Services;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -14,16 +15,20 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
     public class CartController : ControllerBase
     {
         private readonly ICart cart;
-
         public CartController(ICart cart)
         {
             this.cart = cart;
         }
-
-        [HttpGet("userName")]
+        [HttpGet]
+        [Route("GetCartsByUserName/{userName}")]
         public async Task<ActionResult> GetCartsByUserName(string userName)
         {
-            return Ok(await cart.GetCartsByUserName(userName));
+            var result = await cart.GetCartsByUserName(userName);
+            if (result == null)
+            {
+                return NotFound(new { Message = "Không tìm thấy giỏ hàng của người dùng." });
+            }
+            return Ok(result);
         }
 
         [HttpPost("AddCart/{idProduct}")]
@@ -34,10 +39,25 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 var add = await cart.AddCart(idProduct);
                 return Ok(add);
             }
-            catch (System.Exception)
+            catch (InvalidOperationException ex)
             {
-                return BadRequest();
+                return BadRequest(ex.Message);
             }
+        }
+
+        [HttpPut("IDCart")]
+        public async Task<ActionResult> UpdateCart(int IDCart, Cart c)
+        {
+            return Ok(await cart.UpdateCart(IDCart, c));
+        }
+
+        [HttpDelete("IDCart")]
+        public async Task<ActionResult> DeleteCart(int IDCart)
+        {
+            var ca = await cart.DeleteCart(IDCart);
+            if (ca == null)
+                return BadRequest();
+            return NoContent();
         }
     }
 }

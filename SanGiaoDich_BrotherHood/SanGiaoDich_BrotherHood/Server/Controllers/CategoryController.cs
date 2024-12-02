@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SanGiaoDich_BrotherHood.Server.Services;
 using SanGiaoDich_BrotherHood.Shared.Models;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
@@ -30,8 +32,37 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         [Route("GetCategoryByID/{IDCate}")]
         public async Task<ActionResult> GetCategoryByID(int IDCate)
         {
-            return Ok(await category.GeCategory(IDCate));
+            var result = await category.GeCategory(IDCate);
+            if (result == null)
+                return NotFound($"Không tìm thấy danh mục với ID: {IDCate}");
+            return Ok(result);
         }
+
+        [HttpGet]
+        [Route("GetCategoryByName/{name}")]
+        public async Task<IActionResult> GetCategoryByName(string name)
+        {
+            try
+            {
+                // Gọi dịch vụ để tìm danh mục theo tên
+                var categoryResult = await category.GetCategoryByName(name);
+
+                // Trả về danh sách kết quả
+                return Ok(categoryResult);
+            }
+            catch (NotImplementedException ex)
+            {
+                // Xử lý ngoại lệ khi không tìm thấy danh mục
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                // Xử lý ngoại lệ chung
+                return StatusCode(500, $"Đã xảy ra lỗi: {ex.Message}");
+            }
+        }
+
+
         [HttpPost("AddCategory")]
         public async Task<ActionResult> AddCategory(Category cate)
         {

@@ -1,0 +1,404 @@
+﻿@page "/lichsunaptien"
+@using System.Text.Json
+@using SanGiaoDich_BrotherHood.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime jsruntime
+<div class="container-fluid">
+    <ul class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="#">Lịch sử giao dịch</a></li>
+    </ul>
+</div>
+@if (isLoading)
+{
+    <div class="text-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Đang tải...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-md-4 col-7 mb-3">
+                <div class="input-group input-group-lg shadow-sm">
+                    <input class="form-control border-0 rounded-3" type="text" placeholder="Tìm kiếm mã giao dịch hoặc mô tả"
+                           @bind="searchTerm" />
+                    <span class="input-group-text bg-success text-white border-0 rounded-3">
+                        <i class="bi bi-search"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-4 col-5 mb-3">
+                <select class="form-select form-select-lg shadow-sm rounded-3" @bind="filterSuccessStatus">
+                    <option value="">-- Lọc theo trạng thái --</option>
+                    <option value="success">Thành công</option>
+                    <option value="failed">Không thành công</option>
+                </select>
+            </div>
+            <div class="col-md-4 col-12 mb-3 d-flex align-items-end">
+                <button class="btn btn-success  btn-sm shadow-sm rounded-3" @onclick="ApplyFilters">
+                    <i class="bi bi-funnel"></i> Áp dụng bộ lọc
+                </button>
+            </div>
+        </div>
+
+    </div>
+   
+
+
+    <div class="table-responsive container-fluid">
+        <table class="table payment-requests-table">
+            <thead>
+                <tr>
+                    <th class="text-center">Mã Giao Dịch</th>
+                    <th class="text-center">Số Tiền</th>
+                    <th class="text-center">Kết quả</th>
+                    <th class="text-center">Mô Tả</th>
+                    <th class="text-center">Thời Gian</th>
+                
+                    <th class="text-center">Chi Tiết Giao Dịch</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (PaginatedPaymentRequests == null || !PaginatedPaymentRequests.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            Bạn chưa có giao dịch nào.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var req in PaginatedPaymentRequests)
+                    {
+                        <tr>
+                            <td>@req.TxnRef</td>
+                            <td class="text-center">@req.Amount.ToString("N0") đồng</td>
+                            <td class="text-center">
+                                @if (req.PaymentResponse?.VnPayResponseCode == "00")
+                                {
+                                    <span class="badge bg-success">Thành công</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Thất bại</span>
+                                }
+                            </td>
+                            <td class="text-center">@req.OrderDescription</td>
+                            <td class="text-center">@req.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-center">
+                                <button class="btn btn-primary" @onclick="() => ShowTransactionDetails(req.TxnRef)">Xem chi tiết</button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+
+        </table>
+    </div>
+
+    <div class="pagination mb-5">
+        <button class="btn btn-link" @onclick="PreviousPage" disabled="@IsPreviousDisabled">« Trang Trước</button>
+        <span>Trang @currentPage / @totalPages</span>
+        <button class="btn btn-link" @onclick="NextPage" disabled="@IsNextDisabled">Trang Sau »</button>
+    </div>
+
+
+
+}
+<style>
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+        .pagination button {
+            background-color: transparent;
+            border: 1px solid #28a745;
+            color: #28a745;
+            padding: 5px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s, transform 0.2s;
+            text-decoration: none;
+        }
+
+            .pagination button:disabled {
+                color: #ccc;
+                border-color: #ccc;
+                cursor: not-allowed;
+            }
+
+            .pagination button:hover:not(:disabled) {
+                background-color: #28a745;
+                color: white;
+                transform: scale(1.1);
+            }
+
+        .pagination span {
+            font-size: 14px;
+            color: #333;
+        }
+
+
+    .input-group .form-control {
+        border-radius: 1rem;
+        font-size: 1rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease-in-out;
+    }
+
+        .input-group .form-control:focus {
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+            outline: none;
+        }
+
+    .input-group-text {
+        background-color: #28a745;
+        color: white;
+        border-radius: 0 1rem 1rem 0;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+        .input-group-text:hover {
+            background-color: #218838;
+        }
+
+    .form-select {
+        border-radius: 1rem;
+        padding: 10px;
+        font-size: 1rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+        .form-select:focus {
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+            outline: none;
+        }
+
+    .btn-success {
+        padding: 10px;
+        font-size: 1.1rem;
+        border-radius: 1rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s ease-in-out;
+    }
+
+        .btn-success:hover {
+            background-color: #218838;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+    .row.mb-4 {
+        margin-bottom: 2rem;
+    }
+
+    .d-flex.align-items-end .btn {
+        height: 100%;
+    }
+
+    .payment-requests-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        font-family: Arial, sans-serif;
+    }
+
+        .payment-requests-table thead {
+            background-color: #f1f1f1;
+            color: #333;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .payment-requests-table th, .payment-requests-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+            .payment-requests-table td:nth-child(3) {
+                text-align: right;
+            }
+
+            .payment-requests-table td:nth-child(5) {
+                text-align: center;
+            }
+
+        .payment-requests-table tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .payment-requests-table td, .payment-requests-table th {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .payment-requests-table th, .payment-requests-table td {
+            min-width: 120px;
+        }
+
+        .payment-requests-table td {
+            word-wrap: break-word;
+        }
+</style>
+@code {
+    private List<PaymentRequestModel> paymentRequests = new List<PaymentRequestModel>();
+    private List<PaymentRequestModel> filteredPaymentRequests = new List<PaymentRequestModel>();
+    private List<PaymentRequestModel> PaginatedPaymentRequests => filteredPaymentRequests.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+
+    private string searchTerm = string.Empty;
+    private string filterSuccessStatus = string.Empty;
+    private int currentPage = 1;
+    private int pageSize = 5;
+    private bool isLoading = true;
+    private string errorMessage;
+    private AccountInfoDto accountInfo;
+    private bool IsLoggedIn = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckTokenAndLoadAccountInfo();
+
+        if (IsLoggedIn)
+        {
+            await LoadPaymentRequests();
+            ApplyFilters();
+        }
+    }
+
+    private async Task LoadPaymentRequests()
+    {
+        try
+        {
+            isLoading = true;
+            var response = await Http.GetFromJsonAsync<List<PaymentRequestModel>>($"api/payment/request-user/{accountInfo.UserName}");
+            if (response != null && response.Any())
+            {
+                paymentRequests = response;
+                filteredPaymentRequests = new List<PaymentRequestModel>(paymentRequests); // Set initial filtered list
+            }
+            else
+            {
+                errorMessage = "Không có dữ liệu trả về từ API.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi khi tải dữ liệu: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        filteredPaymentRequests = paymentRequests
+            .Where(r =>
+                (string.IsNullOrEmpty(searchTerm) ||
+                 r.TxnRef.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                 r.OrderDescription.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) &&
+                (string.IsNullOrEmpty(filterSuccessStatus) ||
+                 (filterSuccessStatus == "success" && r.PaymentResponse?.VnPayResponseCode == "00") ||
+                 (filterSuccessStatus == "failed" && r.PaymentResponse?.VnPayResponseCode != "00")))
+            .ToList();
+
+        currentPage = 1; // Reset to first page after applying filters
+    }
+
+    private bool IsPreviousDisabled => currentPage <= 1;
+    private bool IsNextDisabled => currentPage >= totalPages;
+
+    private int totalPages => (int)Math.Ceiling(filteredPaymentRequests.Count / (double)pageSize);
+
+    private void PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+        }
+    }
+
+    private void NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+        }
+    }
+
+    private void ShowTransactionDetails(string txnRef)
+    {
+        var details = filteredPaymentRequests.FirstOrDefault(r => r.TxnRef == txnRef);
+        if (details != null)
+        {
+            Console.WriteLine($"Chi tiết giao dịch: {details.OrderDescription}");
+        }
+    }
+
+    private async Task CheckTokenAndLoadAccountInfo()
+    {
+        var token = await jsruntime.InvokeAsync<string>("localStorage.getItem", "token");
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            await LoadAccountInfo();
+        }
+        else
+        {
+            isLoading = false;
+            IsLoggedIn = false;
+        }
+    }
+
+    private async Task LoadAccountInfo()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var response = await Http.GetAsync("api/User/GetMyInfo");
+
+            if (response.IsSuccessStatusCode)
+            {
+                accountInfo = await response.Content.ReadFromJsonAsync<AccountInfoDto>();
+                IsLoggedIn = true;
+            }
+            else
+            {
+                errorMessage = $"Lỗi: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}";
+                IsLoggedIn = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Có lỗi xảy ra khi lấy thông tin tài khoản: " + ex.Message;
+            IsLoggedIn = false;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private class AccountInfoDto
+    {
+        public string UserName { get; set; }
+        public string FullName { get; set; }
+    }
+}

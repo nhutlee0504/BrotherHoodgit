@@ -30,6 +30,12 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.Property<DateTime>("CreatedTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Dob")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Doe")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Email")
                         .HasColumnType("varchar(150)");
 
@@ -39,8 +45,14 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.Property<string>("Gender")
                         .HasColumnType("nvarchar(6)");
 
+                    b.Property<string>("Home")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ID")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ImageAccount")
-                        .HasColumnType("varchar(150)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Introduce")
                         .HasColumnType("ntext");
@@ -50,6 +62,9 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
 
                     b.Property<bool?>("IsDelete")
                         .HasColumnType("bit");
+
+                    b.Property<string>("Nationality")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -205,6 +220,9 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("IDCart")
                         .HasColumnType("int");
 
@@ -252,11 +270,14 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<string>("CreatedDate")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<string>("UserGive")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Username")
                         .HasColumnType("nvarchar(450)");
@@ -266,6 +287,30 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.HasIndex("Username");
 
                     b.ToTable("Conversations");
+                });
+
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.ConversationParticipant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("ConversationId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("JoinedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ConversationParticipants");
                 });
 
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Favorite", b =>
@@ -307,7 +352,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Image")
-                        .HasColumnType("varchar(150)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDelete")
                         .HasColumnType("bit");
@@ -322,7 +367,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.ToTable("ImageProducts");
                 });
 
-            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Message", b =>
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Messages", b =>
                 {
                     b.Property<int>("MessageID")
                         .ValueGeneratedOnAdd()
@@ -335,8 +380,8 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.Property<int>("ConversationID")
                         .HasColumnType("int");
 
-                    b.Property<string>("CreatedDate")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -357,6 +402,89 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.ToTable("Messages");
                 });
 
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.PaymentRequestModel", b =>
+                {
+                    b.Property<int>("PaymentReqID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<double>("Amount")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("OrderDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TxnRef")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("PaymentReqID");
+
+                    b.HasIndex("UserName");
+
+                    b.ToTable("PaymentRequests");
+                });
+
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.PaymentResponseModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsProcessed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("OrderDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OrderId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PaymentReqID")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Success")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Token")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TransactionId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("VnPayResponseCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PaymentReqID")
+                        .IsUnique();
+
+                    b.ToTable("PaymentResponses");
+                });
+
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Product", b =>
                 {
                     b.Property<int>("IDProduct")
@@ -367,7 +495,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.Property<string>("AccountAccept")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
@@ -386,6 +514,9 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal>("PriceUp")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("ProrityLevel")
                         .HasColumnType("nvarchar(max)");
 
@@ -395,13 +526,13 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.Property<string>("Reason")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("StartDate")
+                    b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime");
 
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<DateTime>("UpdatedDate")
+                    b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserName")
@@ -574,7 +705,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Message", b =>
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Messages", b =>
                 {
                     b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Conversation", "conversation")
                         .WithMany("message")
@@ -583,6 +714,26 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .IsRequired();
 
                     b.Navigation("conversation");
+                });
+
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.PaymentRequestModel", b =>
+                {
+                    b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Account", "Account")
+                        .WithMany("paymentRequests")
+                        .HasForeignKey("UserName");
+
+                    b.Navigation("Account");
+                });
+
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.PaymentResponseModel", b =>
+                {
+                    b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.PaymentRequestModel", "PaymentRequest")
+                        .WithOne("PaymentResponse")
+                        .HasForeignKey("SanGiaoDich_BrotherHood.Shared.Models.PaymentResponseModel", "PaymentReqID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PaymentRequest");
                 });
 
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Product", b =>
@@ -631,6 +782,8 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
 
                     b.Navigation("favorites");
 
+                    b.Navigation("paymentRequests");
+
                     b.Navigation("products");
 
                     b.Navigation("ratings");
@@ -659,6 +812,11 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Conversation", b =>
                 {
                     b.Navigation("message");
+                });
+
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.PaymentRequestModel", b =>
+                {
+                    b.Navigation("PaymentResponse");
                 });
 
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Product", b =>

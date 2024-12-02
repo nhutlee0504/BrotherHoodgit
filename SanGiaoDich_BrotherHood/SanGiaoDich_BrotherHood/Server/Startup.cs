@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SanGiaoDich_BrotherHood.Server.Configurations;
 using SanGiaoDich_BrotherHood.Server.Data;
 using SanGiaoDich_BrotherHood.Server.Services;
 using System.Text;
@@ -34,6 +36,8 @@ namespace SanGiaoDich_BrotherHood.Server
             services.AddRazorPages();
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+            services.AddHttpClient();
 
             // Swagger configuration
             services.AddSwaggerGen(c =>
@@ -105,27 +109,35 @@ namespace SanGiaoDich_BrotherHood.Server
             services.AddScoped<IProduct, ProductResponse>();
             services.AddScoped<IFavorite, FavoriteResponse>();
             services.AddScoped<IImageProduct, ImageProductResponse>();
-            services.AddScoped<IMessage, MessageResponse>();
             services.AddScoped<IUser, UserService>();
             services.AddScoped<IAdmin, AdminService>();
+            services.AddScoped<IConversation, ConversationRespone>();
             services.AddScoped<IRating, RatingService>();
             services.AddScoped<IAddressDetail, AddressDetailResponse>();
             services.AddScoped<IBill, BillResponse>();
             services.AddScoped<IBillDetail, BillDetailResponse>();
             services.AddScoped<ICart, CartResponse>();
             services.AddScoped<ICategory, CategoryResponse>();
+            services.AddSingleton<IConfiguration>(Configuration);
+            services.AddScoped<ICartItem, CartItemReponse>();
+            services.AddScoped<FirebaseStorageService>();
+            services.AddScoped<IVnPayService, VnPayService>();
+            services.AddScoped<IVnpayThongkeService,VnpayThongkeService>();
+            services.AddScoped<IMessage,MessageResponse>();
+            services.AddSingleton<ProfanityFilterService>();
 
+            services.AddHttpClient();
 
-            // CORS policy
+            // Đăng ký các dịch vụ của bạn (ví dụ: ESMSService)
+            services.AddSingleton<ESMSService>();
+
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAllOrigins",
-                    builder =>
-                    {
-                        builder.AllowAnyOrigin()
-                               .AllowAnyMethod()
-                               .AllowAnyHeader();
-                    });
+                    builder => builder.WithOrigins("https://localhost:5001")  // Thêm URL nguồn của bạn
+                              .AllowAnyMethod()
+                              .AllowAnyHeader()
+                              .AllowCredentials());
             });
         }
 
