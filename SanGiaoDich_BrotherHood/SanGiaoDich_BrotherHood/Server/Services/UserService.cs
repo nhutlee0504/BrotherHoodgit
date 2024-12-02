@@ -345,6 +345,18 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             throw new UnauthorizedAccessException("Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.");
         }
 
-      
+        public async Task<Dictionary<string, int>> GetUserStatisticsAsync()
+        {
+            var totalUsers = await _context.Accounts.CountAsync();
+            var activeUsers = await _context.Accounts.CountAsync(a => a.IsDelete == false || a.IsDelete == null);
+            var deletedUsers = await _context.Accounts.CountAsync(a => a.IsDelete == true);
+
+            return new Dictionary<string, int>
+            {
+                { "TotalUsers", totalUsers },
+                { "ActiveUsers", activeUsers },
+                { "DeletedUsers", deletedUsers }
+            };
+        }
     }
 }

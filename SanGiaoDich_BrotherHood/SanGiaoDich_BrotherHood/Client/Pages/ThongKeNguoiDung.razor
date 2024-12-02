@@ -1,0 +1,81 @@
+﻿@page "/Admin/ThongKeNguoiDung"
+@layout AdminLayout
+@inject HttpClient Http
+
+<style>
+    /* Hiệu ứng hover cho card */
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .card:hover {
+            transform: scale(1.05); /* Tăng kích thước khi hover */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Thêm bóng mờ để tạo cảm giác nổi */
+        }
+</style>
+
+<h3 class="text-center my-4">Thống Kê Người Dùng</h3>
+
+@if (userStatistics == null)
+{
+    <div class="text-center">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3">Đang tải dữ liệu...</p>
+    </div>
+}
+else
+{
+    <div class="container">
+        <!-- Thống kê tổng quan -->
+        <div class="row my-4">
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="card text-white bg-primary mb-3 fade-in">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Tổng Số Người Dùng</h5>
+                        <p class="card-text fs-4">@userStatistics["TotalUsers"]</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="card text-white bg-success mb-3 fade-in">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Người Dùng Hoạt Động</h5>
+                        <p class="card-text fs-4">@userStatistics["ActiveUsers"]</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="card text-white bg-danger mb-3 fade-in">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Người Dùng Đã Bị Xóa</h5>
+                        <p class="card-text fs-4">@userStatistics["DeletedUsers"]</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private Dictionary<string, int> userStatistics;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Gọi API để lấy dữ liệu thống kê
+            userStatistics = await Http.GetFromJsonAsync<Dictionary<string, int>>("api/user/UserStatistics");
+        }
+        catch (Exception ex)
+        {
+            // Xử lý lỗi
+            userStatistics = new Dictionary<string, int>
+            {
+                { "TotalUsers", 0 },
+                { "ActiveUsers", 0 },
+                { "DeletedUsers", 0 }
+            };
+            Console.WriteLine($"Lỗi khi gọi API: {ex.Message}");
+        }
+    }
+}

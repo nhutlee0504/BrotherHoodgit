@@ -133,34 +133,6 @@ namespace API.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
-        [HttpGet("UserStatistics")]
-        public async Task<IActionResult> GetUserStatistics()
-        {
-            try
-            {
-                // Lấy danh sách tài khoản trừ vai trò admin
-                var accounts = await user.Accounts
-                    .Where(a => a.Role != "Admin")
-                    .ToListAsync();
-
-                // Thống kê
-                var statistics = new
-                {
-                    TotalUsers = accounts.Count,
-                    ActiveUsers = accounts.Count(a => a.IsActived == true && a.IsDelete != true),
-                    DeletedUsers = accounts.Count(a => a.IsDelete == true),
-                    InactiveUsers = accounts.Count(a => a.IsActived != true && a.IsDelete != true)
-                };
-
-                return Ok(statistics);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Lỗi: {ex.Message}");
-            }
-        }
-
-
+      
     }
 }

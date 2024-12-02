@@ -4,6 +4,8 @@
 @inject HttpClient http
 @inject NavigationManager navigation
 @inject IJSRuntime jsruntime
+@using System.Text.RegularExpressions
+
 @code {
     private Bill bill = new Bill();
     private List<CartItemUser> selectedCartItems = new();
@@ -30,8 +32,39 @@
         }
     }
 
+    private string fullNameError;
+    private string emailError;
+    private string phoneError;
+    private string deliveryAddressError;
+
+    // Phương thức kiểm tra email hợp lệ
+    private bool IsValidEmail(string email)
+    {
+        var emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+        return Regex.IsMatch(email, emailPattern);
+    }
+
+    private string PaymentType = "Thanh toán bằng tiền mặt";
+    private void UpdatePaymentType(ChangeEventArgs e)
+    {
+        PaymentType = e.Value?.ToString();
+        bill.PaymentType = PaymentType; // Cập nhật vào thuộc tính của bill
+    }
+
     private async Task PlaceOrder()
     {
+        // Kiểm tra các trường thông tin nhập vào
+        fullNameError = string.IsNullOrEmpty(bill.FullName) ? "Họ và tên không được để trống." : null;
+        emailError = string.IsNullOrEmpty(bill.Email) || !IsValidEmail(bill.Email) ? "Email không hợp lệ." : null;
+        phoneError = string.IsNullOrEmpty(bill.PhoneNumber) ? "Số điện thoại không được để trống." : null;
+        deliveryAddressError = string.IsNullOrEmpty(bill.DeliveryAddress) ? "Địa chỉ nhận hàng không được để trống." : null;
+
+        // Nếu có lỗi, không tiếp tục
+        if (fullNameError != null || emailError != null || phoneError != null || deliveryAddressError != null)
+        {
+            return;
+        }
+
         if (selectedCartItems == null || !selectedCartItems.Any())
         {
             await jsruntime.InvokeVoidAsync("alert", "Bạn chưa chọn sản phẩm nào.");
@@ -42,7 +75,7 @@
         bill.Total = totalPrice;
         bill.OrderDate = DateTime.Now;
         bill.Status = "Chờ xác nhận";
-        bill.PaymentType = "Thanh toán bằng tiền mặt";
+        bill.PaymentType = PaymentType;
 
         // Tạo chi tiết hóa đơn từ giỏ hàng
         bill.BillDetails = selectedCartItems.Select(item => new BillDetail
@@ -211,6 +244,10 @@
                             Họ và tên
                         </label>
                         <input type="text" class="form-control" id="fullName" @bind="bill.FullName" placeholder="Nhập tên" required>
+                        @if (!string.IsNullOrEmpty(fullNameError))
+                        {
+                            <span class="text-body-emphasis" style="font-size: 0.875rem;">@fullNameError</span>
+                        }
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -220,6 +257,10 @@
                             Email
                         </label>
                         <input type="email" class="form-control" id="email" @bind="bill.Email" placeholder="Nhập email" required>
+                        @if (!string.IsNullOrEmpty(emailError))
+                        {
+                            <span class="text-body-emphasis" style="font-size: 0.875rem;">@emailError</span>
+                        }
                     </div>
                 </div>
                 <div class="col-12">
@@ -229,7 +270,11 @@
                             Địa chỉ nhận hàng
                         </label>
                         <textarea class="form-control" id="deliveryAddress" @bind="bill.DeliveryAddress" placeholder="Số nhà, tên đường, quận/huyện, xã/phường, tỉnh/thành phố"></textarea>
-                        <a href="#" class="custom-link" style="color:white;">Tùy chỉnh</a>
+                        <a href="#" class="custom-link" style="color:white; float: right;">Tùy chỉnh</a>
+                        @if (!string.IsNullOrEmpty(deliveryAddressError))
+                        {
+                            <span class="text-body-emphasis" style="font-size: 0.875rem;">@deliveryAddressError</span>
+                        }
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -239,6 +284,10 @@
                             Số điện thoại
                         </label>
                         <input type="text" class="form-control" id="phoneNumber" @bind="bill.PhoneNumber" placeholder="Nhập số điện thoại" required>
+                        @if (!string.IsNullOrEmpty(phoneError))
+                        {
+                            <span class="text-body-emphasis" style="font-size: 0.875rem;">@phoneError</span>
+                        }
                     </div>
                 </div>
             </div>
@@ -315,7 +364,7 @@
                             <div class="payment-method bg-light p-3 rounded shadow-sm">
                                 <div class="payment-options">
                                     <label class="d-flex align-items-center mb-2">
-                                        <input type="radio" name="payment" class="form-check-input" checked>
+                                        <input type="radio" name="payment" class="form-check-input" value="Thanh toán bằng tiền mặt" @onchange="UpdatePaymentType" checked>
                                         <span class="ml-2">Thanh toán bằng tiền mặt</span>
                                     </label>
                                     <p class="text-muted ml-4" style="font-size: 0.9em;">
@@ -323,19 +372,11 @@
                                     </p>
 
                                     <label class="d-flex align-items-center mb-2">
-                                        <input type="radio" name="payment" class="form-check-input">
-                                        <span class="ml-2">Thanh toán qua chuyển khoản</span>
+                                        <input type="radio" name="payment" class="form-check-input" value="Thanh toán qua ví" @onchange="UpdatePaymentType">
+                                        <span class="ml-2">Thanh toán qua ví</span>
                                     </label>
                                     <p class="text-muted ml-4" style="font-size: 0.9em;">
-                                        Bạn có thể chuyển khoản qua ngân hàng theo thông tin tài khoản mà chúng tôi cung cấp.
-                                    </p>
-
-                                    <label class="d-flex align-items-center mb-2">
-                                        <input type="radio" name="payment" class="form-check-input">
-                                        <span class="ml-2">Thanh toán qua ví VnPay</span>
-                                    </label>
-                                    <p class="text-muted ml-4" style="font-size: 0.9em;">
-                                        Thanh toán nhanh chóng và an toàn qua ví điện tử VnPay. Đảm bảo an toàn thông tin.
+                                        Thanh toán nhanh chóng và an toàn qua ví. Đảm bảo an toàn thông tin.
                                     </p>
                                 </div>
                             </div>
