@@ -72,10 +72,16 @@ namespace API
                     IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
             });
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+			services.AddDbContext<ApplicationDbContext>(options =>
+		 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"),
+			 sqlOptions => sqlOptions.EnableRetryOnFailure(
+				 maxRetryCount: 3, // Số lần thử lại tối đa
+				 maxRetryDelay: TimeSpan.FromSeconds(5), // Thời gian tối đa giữa các lần thử lại
+				 errorNumbersToAdd: null) // Các mã lỗi SQL có thể thử lại
+		 )
+	 );
 
-            services.AddHttpContextAccessor(); // ??ng kư IHttpContextAccessor
+			services.AddHttpContextAccessor(); // ??ng kư IHttpContextAccessor
             services.AddScoped<IProduct, ProductResponse>();
             services.AddScoped<IFavorite, FavoriteResponse>();
             services.AddScoped<IImageProduct, ImageProductResponse>();

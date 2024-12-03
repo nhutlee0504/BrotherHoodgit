@@ -289,24 +289,3 @@ select.form-select {
     font-style: italic;
     color: #777;
 }
-
-
-.stars-rating {
-    display: inline-block;
-}
-
-.star {
-    cursor: pointer;
-    font-size: 30px;
-    color: #d3d3d3; /* Màu sao mặc định */
-    transition: color 0.2s ease;
-}
-
-    .star.selected {
-        color: #ffcd3c; /* Màu vàng khi chọn sao */
-    }
-
-    .star.hovered {
-        color: #ffcd3c; /* Màu vàng khi hover */
-    }
-

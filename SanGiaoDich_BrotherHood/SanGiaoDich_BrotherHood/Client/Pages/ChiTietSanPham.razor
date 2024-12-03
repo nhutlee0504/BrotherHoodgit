@@ -76,6 +76,26 @@
             background-color: #218838;
             border-color: #1e7e34;
         }
+
+    .rating-container {
+        display: flex;
+        flex-direction: row-reverse;
+    }
+
+    .rate {
+        appearance: none;
+    }
+
+        .rate::before {
+            content: "\2605";
+            color: #ccc;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .rate:checked::before, .rate:checked ~ .rate::before {
+            color: #ffb800;
+        }
 </style>
 
 
@@ -176,12 +196,6 @@
         </div>
         <div class="card-body">
             <p>@product?.Description</p>
-        </div>
-    </div>
-
-    <div class="mt-4">
-        <h4 class="review-title">Đánh giá</h4>
-        <div class="row">
         </div>
     </div>
 

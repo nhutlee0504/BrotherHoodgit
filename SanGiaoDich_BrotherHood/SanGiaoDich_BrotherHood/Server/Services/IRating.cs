@@ -9,7 +9,8 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 {
     public interface IRating
     {
-        public Task<Rating> AddRating(int billDetailId, int star, string comment, IFormFile image);
+        public Task<Rating> AddRating(int billDetailId, int star, string comment, string image);
         Task<IEnumerable<RatingDto>> GetRatings(int productId); // Sử dụng DTO cho kết quả
-    }
+		public Task<IEnumerable<Rating>> GetRatingUser(string username);
+	}
 }

@@ -482,76 +482,68 @@ else if (userAccount != null)
 
 		<div class="reviews-wrapper">
 
-			<!-- Nội dung đánh giá (form và danh sách) -->
 			@if (IsReviewsVisible)
 			{
+				<!-- Nút mở Modal Đánh giá -->
+				<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ratingModal">
+					Đánh giá
+				</button>
 
-				<div class="add-review-form card p-4 shadow-sm">
-					<h5 class="card-title text-center mb-4">Thêm đánh giá của bạn</h5>
-
-					<!-- Số sao -->
-					<div class="form-group mb-3">
-						<label class="form-label">Chọn số sao:</label>
-						<div class="stars-rating">
-							@for (int i = 1; i <= 5; i++)
-							{
-								<span class="star">
-									@if (i <= ratingModel.Star)
-									{
-										<i class="bi bi-star-fill"></i>
-									}
-									else
-									{
-										<i class="bi bi-star"></i>
-									}
-								</span>
-							}
+				<!-- Modal Đánh giá -->
+				<div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title" id="ratingModalLabel">Đánh giá sản phẩm</h5>
+								<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+							</div>
+							<div class="modal-body">
+								<!-- Form đánh giá -->
+								<form>
+									<div class="rating-container">
+										@for (int i = 5; i >= 1; i--) // Hiển thị số sao từ 5 đến 1
+										{
+											int m1i = i;
+											<input type="radio" id="star-@i" name="rating" class="rate" value="@i" @onclick="() => SetRating(m1i)" />
+										}
+									</div>
+									<img src="@image" alt="Alternate Text" width="10%" />
+									<textarea name="reviewText" rows="5" class="w-100" placeholder="Nhập đánh giá..." @bind="comment"></textarea>
+								</form>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+								<button type="button" class="btn btn-success" @onclick="SubmitRating">Gửi</button>
+							</div>
 						</div>
 					</div>
-
-					<!-- Nội dung đánh giá -->
-					<div class="form-group mb-3">
-						<label for="content" class="form-label">Nội dung đánh giá:</label>
-						<img src="@image" alt="Product Image" width="10%" />
-						<p>@productname</p>
-						<textarea id="content" class="form-control" @bind="ratingModel.Comment" placeholder="Nhập nội dung đánh giá"></textarea>
-					</div>
-
-					<button class="btn btn-success w-100" @onclick="SubmitRating">Gửi đánh giá</button>
 				</div>
-
 
 				<!-- Danh sách đánh giá -->
 				<div class="user-reviews">
 					<h4>Đánh giá người dùng</h4>
 					<div class="reviews-container">
-						<!-- Đánh giá cố định -->
-						<div class="review-card">
-							<div class="review-header">
-								<strong class="review-username">Người bán 1</strong>
-								<span class="review-date">02/12/2024</span>
-							</div>
-							<div class="review-content">
-								<p>Sản phẩm tuyệt vời! Chất lượng tốt, giao hàng nhanh chóng.</p>
-							</div>
-						</div>
-
-						<!-- Bạn có thể thêm các đánh giá khác như thế này -->
-						<div class="review-card">
-							<div class="review-header">
-								<strong class="review-username">Người bán 2</strong>
-								<span class="review-date">01/12/2024</span>
-							</div>
-							<div class="review-content">
-								<p>Chất lượng khá tốt, nhưng cần cải thiện dịch vụ khách hàng.</p>
-							</div>
-						</div>
+						@if (userRatings != null)
+						{
+							@foreach (var review in userRatings)
+							{
+								<div class="review-card">
+									<p>@review.Star</p>
+									<div class="review-header">
+										<strong class="review-username">@review.UserName</strong>
+									</div>
+									<div class="review-content">
+										<p>@review.Comment</p>
+									</div>
+								</div>
+							}
+						}
+						else
+						{
+							<p class="no-reviews">Không có đánh giá nào.</p>
+						}
 					</div>
-
-					<!-- Nếu không có đánh giá nào -->
-					<p class="no-reviews">Không có đánh giá nào.</p>
 				</div>
-
 			}
 		</div>
 
@@ -564,45 +556,76 @@ else if (userAccount != null)
 </style>
 @code {
 	private bool IsReviewsVisible { get; set; } = false;
+	private string comment = "";
+	private Rating ratingModel = new Rating();
+	private int selectedRating = 0;
+	private List<RatingDto> userRatings = new List<RatingDto>();
+
 	private void ToggleReviews()
 	{
 		IsReviewsVisible = !IsReviewsVisible;
 	}
-	private string comment = "Danh gia";
-	private int star = 5;
-	private Rating ratingModel = new Rating();
 
-	// Phương thức submit đánh giá
+	private void SetRating(int rating)
+	{
+		selectedRating = rating;
+	}
+
 	private async Task SubmitRating()
 	{
 		try
 		{
-			// Tạo URL để gửi yêu cầu POST (API tương đối với các tham số mới)
-			var url = $"api/Rating/AddRating?billDetailId={idBillDetail}&star=5&comment={comment}";
+			// Kiểm tra dữ liệu đầu vào
+			if (selectedRating == 0 || string.IsNullOrWhiteSpace(comment))
+			{
+				Console.WriteLine("Vui lòng nhập đánh giá và chọn số sao.");
+				return;
+			}
 
-			// Gọi API với URL tương đối
-			var response = await HttpClient.PostAsync(url, null);  // Không cần gửi formData nữa
+			// Tạo URL để gửi yêu cầu POST
+			var url = $"api/Rating/AddRating?billDetailId={idBillDetail}&star={selectedRating}&comment={comment}&image={image}";
+
+			// Gửi yêu cầu API
+			var response = await HttpClient.PostAsync(url, null);
 
 			if (response.IsSuccessStatusCode)
 			{
-				var rating = await response.Content.ReadFromJsonAsync<Rating>();
-				// Xử lý sau khi thành công
 				Console.WriteLine("Đánh giá thành công");
+				// Xử lý sau khi gửi thành công, ví dụ: làm mới danh sách đánh giá
 			}
 			else
 			{
 				var error = await response.Content.ReadAsStringAsync();
-				// Xử lý lỗi
 				Console.WriteLine($"Lỗi: {error}");
 			}
 		}
 		catch (Exception ex)
 		{
-			// Xử lý ngoại lệ nếu có
 			Console.WriteLine($"Có lỗi xảy ra: {ex.Message}");
 		}
 	}
 }
+<style>
+	.rating-container {
+		display: flex;
+		flex-direction: row-reverse;
+	}
+
+	.rate {
+		appearance: none;
+	}
+
+		.rate::before {
+			content: "\2605";
+			color: #ccc;
+			font-size: 2rem;
+			cursor: pointer;
+		}
+
+		.rate:checked::before, .rate:checked ~ .rate::before {
+			color: #ffb800;
+		}
+</style>
 <script>
 	function triggerFileInput() {
 		document.getElementById('fileInput').click();

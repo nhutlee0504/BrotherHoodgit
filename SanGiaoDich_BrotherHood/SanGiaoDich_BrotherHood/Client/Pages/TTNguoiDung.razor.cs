@@ -15,6 +15,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static Google.Apis.Requests.BatchRequest;
 using static System.Net.WebRequestMethods;
 
 namespace SanGiaoDich_BrotherHood.Client.Pages
@@ -101,14 +102,6 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                 var reviewInfo = JsonSerializer.Deserialize<ReviewInfo>(reviewInfoJson);
                 if (reviewInfo != null)
                 {
-                    //var reviewInfo2 = JsonSerializer.Deserialize<dynamic>(reviewInfoJson);
-                    //DateTime expiryTime = DateTime.Parse(reviewInfo2.ExpiryTime.ToString());
-
-                    //if (DateTime.UtcNow > expiryTime)
-                    //{
-                    //    // Nếu thời gian hiện tại đã vượt quá thời gian hết hạn, xóa dữ liệu và trả về null
-                    //    await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "reviewInfo");
-                    //}
                     idBillDetail = reviewInfo.IdBillDetail;
                     sellerName = reviewInfo.SellerName;
                     image = reviewInfo.Image;
@@ -116,7 +109,19 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                 }
             }
 
-            try
+			var response2 = await HttpClient.GetFromJsonAsync<List<RatingDto>>($"api/Rating/GetRatingsUser{username}");
+
+			if (response2 != null && response2.Any())
+			{
+				userRatings = response2;
+			}
+			else
+			{
+				// Không tìm thấy đánh giá
+				userRatings = null;
+			}
+
+			try
 			{
 				var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
 				if (string.IsNullOrEmpty(token))
