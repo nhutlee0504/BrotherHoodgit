@@ -7,9 +7,6 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
-
-
-@* @model DashboardViewModel *@
 <div class="container-fluid">
 	<ul class="breadcrumb">
 		<li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
@@ -97,6 +94,89 @@ else if (userAccount != null)
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="custom-btn custom-btn-secondary" data-bs-dismiss="modal">Đóng</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="staticBackdrop2" tabindex="-1" aria-labelledby="staticBackdropLabel2" aria-hidden="true">
+		<div class="modal-dialog modal-xl">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="staticBackdropLabel">Chỉnh sửa thông tin tài khoản</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div class="row">
+						<!-- Họ và tên -->
+						<div class="mb-3 col-md-6">
+							<label for="modalFullName" class="form-label">Họ và tên</label>
+							<input type="text" class="form-control @(fieldErrors.ContainsKey("FullName") ? "is-invalid" : "")" id="modalFullName" @bind="infoAccountDto.FullName" disabled />
+							@if (fieldErrors.ContainsKey("FullName"))
+							{
+								<small class="text-danger">@fieldErrors["FullName"]</small>
+							}
+						</div>
+
+						<!-- Email -->
+						<div class="mb-3 col-md-6">
+							<label for="modalEmail" class="form-label">Email</label>
+							<input type="email" class="form-control @(fieldErrors.ContainsKey("Email") ? "is-invalid" : "")" id="modalEmail" @bind="infoAccountDto.Email" disabled />
+							@if (fieldErrors.ContainsKey("Email"))
+							{
+								<small class="text-danger">@fieldErrors["Email"]</small>
+							}
+						</div>
+
+						<!-- Số điện thoại -->
+						<div class="mb-3 col-md-6">
+							<label for="modalPhone" class="form-label">Số điện thoại</label>
+							<input type="text" class="form-control @(fieldErrors.ContainsKey("Phone") ? "is-invalid" : "")" id="modalPhone" @bind="infoAccountDto.Phone" />
+							@if (fieldErrors.ContainsKey("Phone"))
+							{
+								<small class="text-danger">@fieldErrors["Phone"]</small>
+							}
+						</div>
+
+						<!-- Giới tính -->
+						<div class="mb-3 col-md-6">
+							<label for="modalGender" class="form-label">Giới tính</label>
+							<select class="form-select @(fieldErrors.ContainsKey("Gender") ? "is-invalid" : "")" id="modalGender" @bind="infoAccountDto.Gender" disabled>
+								<option value="">Chọn giới tính</option>
+								<option value="NAM">Nam</option>
+								<option value="NỮ">Nữ</option>
+								<option value="Khác">Khác</option>
+							</select>
+							@if (fieldErrors.ContainsKey("Gender"))
+							{
+								<small class="text-danger">@fieldErrors["Gender"]</small>
+							}
+						</div>
+
+						<!-- Ngày sinh -->
+						<div class="mb-3 col-md-6">
+							<label for="modalBirthday" class="form-label">Ngày sinh</label>
+							<input type="date" class="form-control @(fieldErrors.ContainsKey("Birthday") ? "is-invalid" : "")" id="modalBirthday" @bind="infoAccountDto.Birthday" disabled />
+							@if (fieldErrors.ContainsKey("Birthday"))
+							{
+								<small class="text-danger">@fieldErrors["Birthday"]</small>
+							}
+						</div>
+
+						<!-- Giới thiệu -->
+						<div class="mb-3 col-md-6">
+							<label for="modalIntroduct" class="form-label">Giới thiệu</label>
+							<textarea class="form-control @(fieldErrors.ContainsKey("Introduce") ? "is-invalid" : "")" id="modalIntroduct" rows="3" @bind="infoAccountDto.Introduce"></textarea>
+							@if (fieldErrors.ContainsKey("Introduce"))
+							{
+								<small class="text-danger">@fieldErrors["Introduce"]</small>
+							}
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="custom-btn custom-btn-secondary" data-bs-dismiss="modal">Đóng</button>
+					<button type="button" class="custom-btn custom-btn-primary" @onclick="UpdateAccountInfo">Lưu thay đổi</button>
 				</div>
 			</div>
 		</div>
@@ -196,7 +276,7 @@ else if (userAccount != null)
 								<a class="btn btn-outline-success" href="/address">
 									<i class="bi bi-house-up-fill"></i> Địa chỉ của bạn
 								</a>
-								<button class="btn btn-outline-success">
+								<button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop2">
 									<i class="bi bi-person-fill"></i> Thông tin cá nhân
 								</button>
 							}
@@ -216,6 +296,7 @@ else if (userAccount != null)
 							<span class="fa fa-star"></span>
 							<span class="fa fa-star"></span>
 						</p>
+						<button class="btn btn-primary" @onclick="ToggleReviews">Xem đánh giá người dùng</button>
 					</div>
 				</div>
 			</div>
@@ -395,33 +476,85 @@ else if (userAccount != null)
 					else
 					{
 						<p class="text-muted">Danh sách yêu thích trống.</p>
-					}
-					@* 					<!-- Pagination -->
-			<nav aria-label="Page navigation">
-			<ul class="pagination justify-content-center">
-			<li class="page-item @(currentFavoritesPage == 1 ? "disabled" : "")">
-			<a class="page-link text-black" aria-label="Previous" @onclick="() => ChangeFavoritesPage(currentFavoritesPage - 1)">
-			<span aria-hidden="true">&laquo;</span>
-			</a>
-			</li>
-			@for (var i = 1; i <= CalculateFavoriteTotalPages(totalFavoriteProducts, itemsPerFavoritesPage); i++)
-			{
-			<li class="page-item @(currentFavoritesPage == i ? "active" : "")">
-			<a class="page-link text-black" @onclick="() => ChangeFavoritesPage(i)">
-			<span>@i</span>
-			</a>
-			</li>
-			}
-			<li class="page-item @(currentFavoritesPage == CalculateFavoriteTotalPages(totalFavoriteProducts, itemsPerFavoritesPage) ? "disabled" : "")">
-			<a class="page-link text-black" aria-label="Next" @onclick="() => ChangeFavoritesPage(currentFavoritesPage + 1)">
-			<span aria-hidden="true">&raquo;</span>
-			</a>
-			</li>
-			</ul>
-			</nav>
-			*@				}
+					}			}
 			</div>
 		</div>
+
+		<div class="reviews-wrapper">
+
+			<!-- Nội dung đánh giá (form và danh sách) -->
+			@if (IsReviewsVisible)
+			{
+
+				<div class="add-review-form card p-4 shadow-sm">
+					<h5 class="card-title text-center mb-4">Thêm đánh giá của bạn</h5>
+
+					<!-- Số sao -->
+					<div class="form-group mb-3">
+						<label class="form-label">Chọn số sao:</label>
+						<div class="stars-rating">
+							@for (int i = 1; i <= 5; i++)
+							{
+								<span class="star">
+									@if (i <= ratingModel.Star)
+									{
+										<i class="bi bi-star-fill"></i>
+									}
+									else
+									{
+										<i class="bi bi-star"></i>
+									}
+								</span>
+							}
+						</div>
+					</div>
+
+					<!-- Nội dung đánh giá -->
+					<div class="form-group mb-3">
+						<label for="content" class="form-label">Nội dung đánh giá:</label>
+						<img src="@image" alt="Product Image" width="10%" />
+						<p>@productname</p>
+						<textarea id="content" class="form-control" @bind="ratingModel.Comment" placeholder="Nhập nội dung đánh giá"></textarea>
+					</div>
+
+					<button class="btn btn-success w-100" @onclick="SubmitRating">Gửi đánh giá</button>
+				</div>
+
+
+				<!-- Danh sách đánh giá -->
+				<div class="user-reviews">
+					<h4>Đánh giá người dùng</h4>
+					<div class="reviews-container">
+						<!-- Đánh giá cố định -->
+						<div class="review-card">
+							<div class="review-header">
+								<strong class="review-username">Người bán 1</strong>
+								<span class="review-date">02/12/2024</span>
+							</div>
+							<div class="review-content">
+								<p>Sản phẩm tuyệt vời! Chất lượng tốt, giao hàng nhanh chóng.</p>
+							</div>
+						</div>
+
+						<!-- Bạn có thể thêm các đánh giá khác như thế này -->
+						<div class="review-card">
+							<div class="review-header">
+								<strong class="review-username">Người bán 2</strong>
+								<span class="review-date">01/12/2024</span>
+							</div>
+							<div class="review-content">
+								<p>Chất lượng khá tốt, nhưng cần cải thiện dịch vụ khách hàng.</p>
+							</div>
+						</div>
+					</div>
+
+					<!-- Nếu không có đánh giá nào -->
+					<p class="no-reviews">Không có đánh giá nào.</p>
+				</div>
+
+			}
+		</div>
+
 	</div>
 }
 <style>
@@ -430,40 +563,43 @@ else if (userAccount != null)
 	}
 </style>
 @code {
-	private string ToTitleCase(string input)
+	private bool IsReviewsVisible { get; set; } = false;
+	private void ToggleReviews()
 	{
-		if (string.IsNullOrEmpty(input))
-			return input;
-
-		var words = input.Split(' ');
-		for (int i = 0; i < words.Length; i++)
-		{
-			if (words[i].Length > 0)
-			{
-				words[i] = char.ToUpper(words[i][0]) + words[i].Substring(1).ToLower();
-			}
-		}
-		return string.Join(" ", words);
+		IsReviewsVisible = !IsReviewsVisible;
 	}
-	private async Task RemoveFavorite(int productId)
+	private string comment = "Danh gia";
+	private int star = 5;
+	private Rating ratingModel = new Rating();
+
+	// Phương thức submit đánh giá
+	private async Task SubmitRating()
 	{
 		try
 		{
-			var response = await HttpClient.DeleteAsync($"api/favorite/DeleteFavorite/{productId}");
+			// Tạo URL để gửi yêu cầu POST (API tương đối với các tham số mới)
+			var url = $"api/Rating/AddRating?billDetailId={idBillDetail}&star=5&comment={comment}";
+
+			// Gọi API với URL tương đối
+			var response = await HttpClient.PostAsync(url, null);  // Không cần gửi formData nữa
+
 			if (response.IsSuccessStatusCode)
 			{
-				favorites.RemoveAll(f => f.IDProduct == productId);
-				favoriteProducts.Remove(productId);
+				var rating = await response.Content.ReadFromJsonAsync<Rating>();
+				// Xử lý sau khi thành công
+				Console.WriteLine("Đánh giá thành công");
 			}
 			else
 			{
-				var errorMessage = await response.Content.ReadAsStringAsync();
-				Console.WriteLine($"Lỗi khi xóa sản phẩm yêu thích: {errorMessage}");
+				var error = await response.Content.ReadAsStringAsync();
+				// Xử lý lỗi
+				Console.WriteLine($"Lỗi: {error}");
 			}
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Lỗi xảy ra khi xóa sản phẩm yêu thích: {ex.Message}");
+			// Xử lý ngoại lệ nếu có
+			Console.WriteLine($"Có lỗi xảy ra: {ex.Message}");
 		}
 	}
 }

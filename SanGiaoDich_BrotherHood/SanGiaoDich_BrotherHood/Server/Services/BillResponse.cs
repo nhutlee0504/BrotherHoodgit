@@ -75,6 +75,13 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             {
                 BillFind.Status = status;
             }
+            var billdetail = await _context.BillDetails.Where(x => x.IDBill == BillFind.IDBill).ToListAsync();
+            foreach(var item in billdetail)
+            {
+                var prodFind = await _context.Products.FindAsync(item.IDProduct);
+                prodFind.Status = "Đã bán";
+                await _context.SaveChangesAsync();
+            }
             await _context.SaveChangesAsync();
             return BillFind;
         }

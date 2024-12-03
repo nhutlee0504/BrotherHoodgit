@@ -12,6 +12,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static System.Net.WebRequestMethods;
@@ -36,9 +37,13 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		private string productErrorMessage;
 		private Dictionary<int, string> categoryNames = new Dictionary<int, string>();
 		private Dictionary<int, string> productImages = new Dictionary<int, string>();
+        private string sellerName;
+        private string image;
+        private int idBillDetail;
+		private string productname;
 
 
-		private Dictionary<int, List<string>> productImageLists = new Dictionary<int, List<string>>();
+        private Dictionary<int, List<string>> productImageLists = new Dictionary<int, List<string>>();
 
 		private int currentPage = 1;
 		private int itemsPerPage = 4; 
@@ -52,7 +57,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         private bool loading = false;
         private string successEmail;
 
-        private class AccountInfoDto
+		private class AccountInfoDto
 		{
 			public string UserName { get; set; }
 			public string FullName { get; set; }
@@ -69,7 +74,16 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			public string url { get; set; }
 		}
 
-		private IBrowserFile selectedFile;
+        public class ReviewInfo
+        {
+            public int IdBillDetail { get; set; }
+            public string SellerName { get; set; }
+            public string Image { get; set; }
+			public string ProductName { get; set; }
+			public DateTime ExpiryTime { get; set; }
+		}
+
+        private IBrowserFile selectedFile;
 		protected override async Task OnInitializedAsync()
 		{
 			await LoadUserData();
@@ -80,8 +94,29 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			totalPosts = products.Count;
 			await LoadProductImages();
 			UpdatePageProducts();
-		
-			try
+            var reviewInfoJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "reviewInfo");
+
+            if (!string.IsNullOrEmpty(reviewInfoJson))
+            {
+                var reviewInfo = JsonSerializer.Deserialize<ReviewInfo>(reviewInfoJson);
+                if (reviewInfo != null)
+                {
+                    //var reviewInfo2 = JsonSerializer.Deserialize<dynamic>(reviewInfoJson);
+                    //DateTime expiryTime = DateTime.Parse(reviewInfo2.ExpiryTime.ToString());
+
+                    //if (DateTime.UtcNow > expiryTime)
+                    //{
+                    //    // Nếu thời gian hiện tại đã vượt quá thời gian hết hạn, xóa dữ liệu và trả về null
+                    //    await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "reviewInfo");
+                    //}
+                    idBillDetail = reviewInfo.IdBillDetail;
+                    sellerName = reviewInfo.SellerName;
+                    image = reviewInfo.Image;
+					productname = reviewInfo.ProductName;
+                }
+            }
+
+            try
 			{
 				var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
 				if (string.IsNullOrEmpty(token))
@@ -90,7 +125,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 					return;
 				}
 
-				var response = await HttpClient.GetAsync("api/User/GetMyInfo");
+                var response = await HttpClient.GetAsync("api/User/GetMyInfo");
 
 				if (response.IsSuccessStatusCode)
 				{
@@ -409,7 +444,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		}
 		private async Task LoadCategoryNames(IEnumerable<Product> products)
 		{
-			foreach (var product in products)
+			foreach (var product in aProduct)
 			{
 				if (!categoryNames.ContainsKey(product.IDCategory))
 				{
@@ -499,8 +534,6 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			return phone.Length == 10 && phone.All(char.IsDigit);
 		}
 
-		// Hàm kiểm tra tuổi (phải lớn hơn 18)
-		// Hàm kiểm tra tuổi (phải lớn hơn 18)
 		private bool IsAgeValid(DateTime? birthday)
 		{
 			if (!birthday.HasValue)
@@ -613,5 +646,42 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             var random = new Random();
             return new string(Enumerable.Repeat(chars, 6).Select(s => s[random.Next(s.Length)]).ToArray());
         }
-    }
+
+        private string ToTitleCase(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return input;
+
+            var words = input.Split(' ');
+            for (int i = 0; i < words.Length; i++)
+            {
+                if (words[i].Length > 0)
+                {
+                    words[i] = char.ToUpper(words[i][0]) + words[i].Substring(1).ToLower();
+                }
+            }
+            return string.Join(" ", words);
+        }
+        private async Task RemoveFavorite(int productId)
+        {
+            try
+            {
+                var response = await HttpClient.DeleteAsync($"api/favorite/DeleteFavorite/{productId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    favorites.RemoveAll(f => f.IDProduct == productId);
+                    favoriteProducts.Remove(productId);
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Lỗi khi xóa sản phẩm yêu thích: {errorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi xảy ra khi xóa sản phẩm yêu thích: {ex.Message}");
+            }
+        }
+	}
 }

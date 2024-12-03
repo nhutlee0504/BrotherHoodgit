@@ -682,8 +682,7 @@
             {
                 // Notify the user that the bill has been marked as completed
                 await jsrunetime.InvokeVoidAsync("alert", "Hóa đơn đã được hoàn thành!");
-                // Reload the bill data
-                await LoadBill();
+                NavigationManager.NavigateTo("/bill", forceLoad: true);
             }
             else
             {
@@ -710,8 +709,7 @@
             {
                 // Notify the user that the bill has been marked as received
                 await jsrunetime.InvokeVoidAsync("alert", "Hóa đơn đã được xác nhận là đã nhận!");
-                // Reload the bill data
-                await LoadBill();
+                NavigationManager.NavigateTo("/bill", forceLoad: true);
             }
             else
             {
