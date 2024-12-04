@@ -144,24 +144,21 @@
 
 
 <script>
-        // Khi người dùng click vào nút "Test Modal"
     document.getElementById('testModalButton').addEventListener('click', function() {
         var myModal = new bootstrap.Modal(document.getElementById('successModal'));
-        myModal.show(); // Hiển thị modal
+        myModal.show(); 
     });
 
 </script>
 <style>
    
-    /* Tùy chỉnh giao diện cho phần chọn ảnh */
     .upload-section h3 {
         font-size: 1.5rem;
-        color: #28a745; /* Màu xanh lá cho tiêu đề */
+        color: #28a745; 
         font-weight: bold;
         margin-bottom: 15px;
     }
 
-    /* Label thay thế cho nút file */
     .upload-section input[type="file"] + label {
         display: inline-block;
         padding: 12px 24px;
@@ -176,12 +173,10 @@
         text-align: center;
     }
 
-    /* Hiệu ứng khi hover vào nút chọn ảnh */
     .upload-section input[type="file"]:hover + label {
         background-color: #218838;
     }
 
-    /* Nút xác nhận */
     .upload-section button {
         width: 100%;
         padding: 12px;
@@ -198,7 +193,6 @@
             background-color: #218838;
         }
 
-    /* Cảnh báo lỗi */
     .alert-danger {
         font-size: 0.875rem;
         padding: 10px;
@@ -208,7 +202,6 @@
         border-radius: 5px;
         margin-top: 15px;
     }
-    /* Container chung */
     .container {
         margin-top: 30px;
         font-family: Arial, sans-serif;
@@ -219,14 +212,11 @@
         background-color: #f5f5f5;
         cursor: not-allowed;
     }
-    /* Tiêu đề */
     h3 {
         font-size: 1.5rem;
         color: #28a745;
         margin-bottom: 20px;
     }
-
-    /* Phần upload ảnh */
     .upload-section {
         padding: 20px;
         border: 1px solid #ddd;
@@ -256,8 +246,6 @@
             .upload-section button:hover {
                 background-color: #218838;
             }
-
-    /* Form xác thực */
     .card {
         border: 1px solid #ddd;
         border-radius: 8px;

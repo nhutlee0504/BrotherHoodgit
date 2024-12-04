@@ -18,6 +18,7 @@ using SanGiaoDich_BrotherHood.Server.Configurations;
 using SanGiaoDich_BrotherHood.Server.Data;
 using SanGiaoDich_BrotherHood.Server.Services;
 using System;
+using System.Net.Http;
 using System.Text;
 
 namespace SanGiaoDich_BrotherHood.Server
@@ -129,8 +130,8 @@ namespace SanGiaoDich_BrotherHood.Server
             services.AddSingleton<ProfanityFilterService>();
             services.AddSingleton<HuggingFaceService>();
             services.AddHttpClient();
-
            
+
             // Đăng ký các dịch vụ của bạn (ví dụ: ESMSService)
             services.AddSingleton<ESMSService>();
 

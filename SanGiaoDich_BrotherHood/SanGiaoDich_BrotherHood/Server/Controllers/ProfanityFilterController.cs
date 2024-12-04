@@ -71,11 +71,11 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorResponse = await response.Content.ReadAsStringAsync();
-                    return StatusCode((int)response.StatusCode, errorResponse); // Trả lại mã lỗi và thông báo chi tiết
+                    return StatusCode((int)response.StatusCode, errorResponse); 
                 }
 
                 var responseBody = await response.Content.ReadAsStringAsync();
-                return Ok(responseBody); // Trả về kết quả thành công
+                return Ok(responseBody);
             }
             catch (Exception ex)
             {

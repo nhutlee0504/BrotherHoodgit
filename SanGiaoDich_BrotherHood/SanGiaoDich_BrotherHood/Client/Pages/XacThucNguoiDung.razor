@@ -1,19 +1,20 @@
-﻿@page "/gen"
-@using System.Text.Json.Serialization
-@inject HttpClient httpClient
+﻿@page "/gemini"
+@using Microsoft.Extensions.Configuration
+@inject HttpClient HttpClient
+@inject IConfiguration Configuration
 
 <div class="container mt-4">
     <h3>Tạo Mô Tả Sản Phẩm</h3>
+
     <div class="mb-3">
-        <label for="productName" class="form-label">Tên Sản Phẩm</label>
-        <input id="productName" class="form-control" @bind="ProductName" placeholder="Nhập tên sản phẩm..." />
+        <label for="inputText" class="form-label">Nhập Tên Sản Phẩm</label>
+        <input id="inputText" class="form-control" @bind="InputText" placeholder="Nhập tên sản phẩm..." />
     </div>
 
     <button class="btn btn-primary" @onclick="GenerateDescriptionAsync" disabled="@IsLoading">
         @if (IsLoading)
         {
             <span class="spinner-border spinner-border-sm"></span>
-            <span>Đang tạo...</span>
         }
         else
         {
@@ -22,12 +23,11 @@
     </button>
 
     <div class="mt-4">
-        @if (!string.IsNullOrWhiteSpace(Description))
+        @if (!string.IsNullOrWhiteSpace(ResponseText))
         {
-            <h5>Mô Tả Sản Phẩm:</h5>
-            <p>@Description</p>
+            <h5>Kết Quả:</h5>
+            <p>@ResponseText</p>
         }
-
         @if (!string.IsNullOrWhiteSpace(ErrorMessage))
         {
             <div class="alert alert-danger">@ErrorMessage</div>
@@ -36,38 +36,51 @@
 </div>
 
 @code {
-    private string ProductName { get; set; } = "";
-    private string Description { get; set; } = "";
-    private bool IsLoading { get; set; } = false;
+    private string InputText { get; set; } = "";
+    private string ResponseText { get; set; } = "";
     private string ErrorMessage { get; set; } = "";
+    private bool IsLoading { get; set; } = false;
 
     private async Task GenerateDescriptionAsync()
     {
+        if (string.IsNullOrWhiteSpace(InputText))
+        {
+            ErrorMessage = "Vui lòng nhập tên sản phẩm!";
+            return;
+        }
+
+        IsLoading = true;
+        ErrorMessage = "";
+        ResponseText = "";
+
         try
         {
-            IsLoading = true;
-            ErrorMessage = "";
-            Description = "";
+            var apiKey = "AIzaSyCzfoNKKRut7xcECF_VZxm9tda-u1P8jts";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={apiKey}";
 
-            // Gửi yêu cầu POST tới API
-            var response = await httpClient.PostAsJsonAsync("api/ProfanityFilter/generate", ProductName);
+            var requestBody = new
+            {
+                contents = new[]
+                {
+                    new
+                    {
+                        parts = new[]
+                        {
+                            new { text = $"Describe the product: {InputText}" }
+                        }
+                    }
+                }
+            };
 
+            var response = await HttpClient.PostAsJsonAsync(url, requestBody);
             if (response.IsSuccessStatusCode)
             {
-                // Đọc dữ liệu từ API
-                var result = await response.Content.ReadFromJsonAsync<ResponseModel>();
-                if (result != null && !string.IsNullOrWhiteSpace(result.Description))
-                {
-                    Description = result.Description;
-                }
-                else
-                {
-                    Description = "Không tìm thấy mô tả.";
-                }
+                var result = await response.Content.ReadFromJsonAsync<GeminiResponse>();
+                ResponseText = result?.candidates?.FirstOrDefault()?.content?.parts?.FirstOrDefault()?.text ?? "Không có nội dung trả về.";
             }
             else
             {
-                ErrorMessage = $"Lỗi: {response.StatusCode}";
+                ErrorMessage = $"Lỗi: {response.ReasonPhrase}";
             }
         }
         catch (Exception ex)
@@ -80,12 +93,23 @@
         }
     }
 
-    public class ResponseModel
+    public class GeminiResponse
     {
-        [JsonPropertyName("product")]
-        public string Product { get; set; }
+        public Candidate[] candidates { get; set; }
 
-        [JsonPropertyName("description")]
-        public string Description { get; set; }
+        public class Candidate
+        {
+            public Content content { get; set; }
+
+            public class Content
+            {
+                public Part[] parts { get; set; }
+
+                public class Part
+                {
+                    public string text { get; set; }
+                }
+            }
+        }
     }
 }
