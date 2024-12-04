@@ -109,17 +109,17 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                 }
             }
 
-			var response2 = await HttpClient.GetFromJsonAsync<List<RatingDto>>($"api/Rating/GetRatingsUser{username}");
+			//var response2 = await HttpClient.GetFromJsonAsync<List<RatingDto>>($"api/Rating/GetRatingsUser{username}");
 
-			if (response2 != null && response2.Any())
-			{
-				userRatings = response2;
-			}
-			else
-			{
-				// Không tìm thấy đánh giá
-				userRatings = null;
-			}
+			//if (response2 != null && response2.Any())
+			//{
+			//	userRatings = response2;
+			//}
+			//else
+			//{
+			//	// Không tìm thấy đánh giá
+			//	userRatings = null;
+			//}
 
 			try
 			{

@@ -296,8 +296,8 @@ else if (userAccount != null)
 							<span class="fa fa-star"></span>
 							<span class="fa fa-star"></span>
 						</p>
-						<button class="btn btn-primary" @onclick="ToggleReviews">Xem đánh giá người dùng</button>
-					</div>
+@* 						<button class="btn btn-primary" @onclick="ToggleReviews">Xem đánh giá người dùng</button>
+ *@					</div>
 				</div>
 			</div>
 
@@ -482,7 +482,7 @@ else if (userAccount != null)
 
 		<div class="reviews-wrapper">
 
-			@if (IsReviewsVisible)
+			@* @if (IsReviewsVisible)
 			{
 				<!-- Nút mở Modal Đánh giá -->
 				<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ratingModal">
@@ -544,7 +544,7 @@ else if (userAccount != null)
 						}
 					</div>
 				</div>
-			}
+			} *@
 		</div>
 
 	</div>
@@ -555,55 +555,57 @@ else if (userAccount != null)
 	}
 </style>
 @code {
-	private bool IsReviewsVisible { get; set; } = false;
-	private string comment = "";
-	private Rating ratingModel = new Rating();
-	private int selectedRating = 0;
-	private List<RatingDto> userRatings = new List<RatingDto>();
+	// private bool IsReviewsVisible { get; set; } = false;
+	// private string comment = "";
+	// private Rating ratingModel = new Rating();
+	// private int selectedRating = 0;
+	// private List<RatingDto> userRatings = new List<RatingDto>();
 
-	private void ToggleReviews()
-	{
-		IsReviewsVisible = !IsReviewsVisible;
-	}
+	// private void ToggleReviews()
+	// {
+	// 	IsReviewsVisible = !IsReviewsVisible;
+	// }
 
-	private void SetRating(int rating)
-	{
-		selectedRating = rating;
-	}
+	// private void SetRating(int rating)
+	// {
+	// 	selectedRating = rating;
+	// }
 
-	private async Task SubmitRating()
-	{
-		try
-		{
-			// Kiểm tra dữ liệu đầu vào
-			if (selectedRating == 0 || string.IsNullOrWhiteSpace(comment))
-			{
-				Console.WriteLine("Vui lòng nhập đánh giá và chọn số sao.");
-				return;
-			}
+	// private async Task SubmitRating()
+	// {
+	// 	try
+	// 	{
+	// 		// Kiểm tra dữ liệu đầu vào
+	// 		if (selectedRating == 0 || string.IsNullOrWhiteSpace(comment))
+	// 		{
+	// 			Console.WriteLine("Vui lòng nhập đánh giá và chọn số sao.");
+	// 			return;
+	// 		}
 
-			// Tạo URL để gửi yêu cầu POST
-			var url = $"api/Rating/AddRating?billDetailId={idBillDetail}&star={selectedRating}&comment={comment}&image={image}";
+	// 		// Tạo URL để gửi yêu cầu POST
+	// 		var url = $"api/Rating/AddRating?billDetailId={idBillDetail}&star={selectedRating}&comment={comment}&image={image}";
 
-			// Gửi yêu cầu API
-			var response = await HttpClient.PostAsync(url, null);
+	// 		// Gửi yêu cầu API
+	// 		var response = await HttpClient.PostAsync(url, null);
 
-			if (response.IsSuccessStatusCode)
-			{
-				Console.WriteLine("Đánh giá thành công");
-				// Xử lý sau khi gửi thành công, ví dụ: làm mới danh sách đánh giá
-			}
-			else
-			{
-				var error = await response.Content.ReadAsStringAsync();
-				Console.WriteLine($"Lỗi: {error}");
-			}
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"Có lỗi xảy ra: {ex.Message}");
-		}
-	}
+	// 		if (response.IsSuccessStatusCode)
+	// 		{
+	// 			Console.WriteLine("Đánh giá thành công");
+	// 			await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "reviewInfo");
+	// 			NavigationManager.NavigateTo($"ThongTinNguoiDung/{username}", forceLoad: true);
+	// 			// Xử lý sau khi gửi thành công, ví dụ: làm mới danh sách đánh giá
+	// 		}
+	// 		else
+	// 		{
+	// 			var error = await response.Content.ReadAsStringAsync();
+	// 			Console.WriteLine($"Lỗi: {error}");
+	// 		}
+	// 	}
+	// 	catch (Exception ex)
+	// 	{
+	// 		Console.WriteLine($"Có lỗi xảy ra: {ex.Message}");
+	// 	}
+	// }
 }
 <style>
 	.rating-container {
