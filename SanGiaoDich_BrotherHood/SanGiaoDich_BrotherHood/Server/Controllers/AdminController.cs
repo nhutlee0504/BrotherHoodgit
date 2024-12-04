@@ -60,7 +60,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return BadRequest(ex.Message); // Thông báo lỗi đơn giản
+                return BadRequest(ex.Message);
             }
         }
     }

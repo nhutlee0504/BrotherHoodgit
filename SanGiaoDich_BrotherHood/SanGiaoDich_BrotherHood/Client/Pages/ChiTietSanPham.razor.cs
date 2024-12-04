@@ -117,8 +117,6 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 
                     await LoadRelatedProducts();
                 }
-
-                // Kiểm tra token và lấy danh sách yêu thích nếu có
                 var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
                 if (!string.IsNullOrEmpty(token))
                 {
@@ -127,7 +125,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             }
             catch (Exception ex)
             {
-                errorMessage = ex.Message; // Ghi lại thông điệp lỗi
+                errorMessage = ex.Message; 
             }
         }
 
@@ -161,7 +159,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			var account = await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
 			if (account != null)
 			{
-				name = account.UserName; // Gán tên người dùng vào biến name
+				name = account.UserName;
 			}
 			return account;
 		}

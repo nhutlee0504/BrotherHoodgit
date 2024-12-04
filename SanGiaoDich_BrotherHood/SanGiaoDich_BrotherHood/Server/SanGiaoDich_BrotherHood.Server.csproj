@@ -5,6 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.AI.OpenAI" Version="2.0.0" />
+    <PackageReference Include="Azure.AI.TextAnalytics" Version="5.3.0" />
+    <PackageReference Include="Azure.Identity" Version="1.13.1" />
     <PackageReference Include="Dapper" Version="2.1.35" />
     <PackageReference Include="FirebaseAdmin" Version="3.1.0" />
     <PackageReference Include="FirebaseAuthentication.net" Version="4.1.0" />
@@ -13,6 +16,7 @@
     <PackageReference Include="Google.Apis.CloudNaturalLanguage.v1" Version="1.68.0.3594" />
     <PackageReference Include="Google.Cloud.Iam.V1" Version="3.3.0" />
     <PackageReference Include="Google.Cloud.Language.V1" Version="3.7.0" />
+    <PackageReference Include="Google.Cloud.Translation.V2" Version="3.4.0" />
     <PackageReference Include="MailKit" Version="4.8.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="5.0.17" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="5.0.17" />

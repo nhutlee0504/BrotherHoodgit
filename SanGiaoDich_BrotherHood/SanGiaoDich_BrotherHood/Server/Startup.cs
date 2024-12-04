@@ -17,6 +17,7 @@ using Microsoft.OpenApi.Models;
 using SanGiaoDich_BrotherHood.Server.Configurations;
 using SanGiaoDich_BrotherHood.Server.Data;
 using SanGiaoDich_BrotherHood.Server.Services;
+using System;
 using System.Text;
 
 namespace SanGiaoDich_BrotherHood.Server
@@ -102,10 +103,11 @@ namespace SanGiaoDich_BrotherHood.Server
 				options.Fields.Add("name");
 				options.SaveTokens = true;
 			});
-
-
-			// Dependency injections
-			services.AddHttpContextAccessor();
+            services.AddHttpClient<HuggingFaceService>(client =>
+            {
+                client.BaseAddress = new Uri("https://api-inference.huggingface.co/models/gpt2");
+            });
+            services.AddHttpContextAccessor();
             services.AddScoped<IProduct, ProductResponse>();
             services.AddScoped<IFavorite, FavoriteResponse>();
             services.AddScoped<IImageProduct, ImageProductResponse>();
@@ -125,9 +127,10 @@ namespace SanGiaoDich_BrotherHood.Server
             services.AddScoped<IVnpayThongkeService,VnpayThongkeService>();
             services.AddScoped<IMessage,MessageResponse>();
             services.AddSingleton<ProfanityFilterService>();
-
+            services.AddSingleton<HuggingFaceService>();
             services.AddHttpClient();
 
+           
             // Đăng ký các dịch vụ của bạn (ví dụ: ESMSService)
             services.AddSingleton<ESMSService>();
 

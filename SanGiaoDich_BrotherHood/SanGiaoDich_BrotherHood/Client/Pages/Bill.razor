@@ -632,10 +632,6 @@
             if (response.IsSuccessStatusCode)
             {
 
-                // Notify the user that the bill has been marked as received
-                await jsrunetime.InvokeVoidAsync("alert", "Hóa đơn đã được xác nhận là đã nhận!");
-                // Reload the bill data
-
                 await jsrunetime.InvokeVoidAsync("alert", "Hóa đơn đã được xác nhận là đã nhận!");
                 await LoadBill();
             }

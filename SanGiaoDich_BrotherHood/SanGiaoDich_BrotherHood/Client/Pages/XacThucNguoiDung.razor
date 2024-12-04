@@ -1,0 +1,91 @@
+﻿@page "/gen"
+@using System.Text.Json.Serialization
+@inject HttpClient httpClient
+
+<div class="container mt-4">
+    <h3>Tạo Mô Tả Sản Phẩm</h3>
+    <div class="mb-3">
+        <label for="productName" class="form-label">Tên Sản Phẩm</label>
+        <input id="productName" class="form-control" @bind="ProductName" placeholder="Nhập tên sản phẩm..." />
+    </div>
+
+    <button class="btn btn-primary" @onclick="GenerateDescriptionAsync" disabled="@IsLoading">
+        @if (IsLoading)
+        {
+            <span class="spinner-border spinner-border-sm"></span>
+            <span>Đang tạo...</span>
+        }
+        else
+        {
+            <span>Tạo Mô Tả</span>
+        }
+    </button>
+
+    <div class="mt-4">
+        @if (!string.IsNullOrWhiteSpace(Description))
+        {
+            <h5>Mô Tả Sản Phẩm:</h5>
+            <p>@Description</p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <div class="alert alert-danger">@ErrorMessage</div>
+        }
+    </div>
+</div>
+
+@code {
+    private string ProductName { get; set; } = "";
+    private string Description { get; set; } = "";
+    private bool IsLoading { get; set; } = false;
+    private string ErrorMessage { get; set; } = "";
+
+    private async Task GenerateDescriptionAsync()
+    {
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = "";
+            Description = "";
+
+            // Gửi yêu cầu POST tới API
+            var response = await httpClient.PostAsJsonAsync("api/ProfanityFilter/generate", ProductName);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Đọc dữ liệu từ API
+                var result = await response.Content.ReadFromJsonAsync<ResponseModel>();
+                if (result != null && !string.IsNullOrWhiteSpace(result.Description))
+                {
+                    Description = result.Description;
+                }
+                else
+                {
+                    Description = "Không tìm thấy mô tả.";
+                }
+            }
+            else
+            {
+                ErrorMessage = $"Lỗi: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Đã xảy ra lỗi: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    public class ResponseModel
+    {
+        [JsonPropertyName("product")]
+        public string Product { get; set; }
+
+        [JsonPropertyName("description")]
+        public string Description { get; set; }
+    }
+}
