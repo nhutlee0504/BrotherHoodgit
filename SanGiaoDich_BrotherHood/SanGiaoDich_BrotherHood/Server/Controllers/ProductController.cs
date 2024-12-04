@@ -214,5 +214,68 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 				return StatusCode(500, "An error occurred while upgrading the product priority level.");
 			}
 		}
+        [HttpGet("StatisticsByStatus")]
+        public async Task<IActionResult> GetStatisticsByStatus()
+        {
+            var statistics = await prod.GetStatisticsByStatusAsync();
+            return Ok(statistics);
+        }
+
+        [HttpGet("GetTotalRevenue")]
+        public async Task<IActionResult> GetTotalRevenue()
+        {
+            try
+            {
+                // Lấy tổng doanh thu từ service
+                var totalRevenue = await prod.GetTotalRevenueAsync();
+                return Ok(totalRevenue);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi khi tính toán doanh thu: {ex.Message}");
+            }
+        }
+
+        [HttpGet("GetRevenueByDate/{date}")]
+        public async Task<IActionResult> GetRevenueByDate(DateTime date)
+        {
+            try
+            {
+                var revenue = await prod.GetRevenueByDateAsync(date);
+                return Ok(revenue);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi khi tính doanh thu theo ngày: {ex.Message}");
+            }
+        }
+
+        [HttpGet("GetRevenueByWeek/{startDate}")]
+        public async Task<IActionResult> GetRevenueByWeek(DateTime startDate)
+        {
+            try
+            {
+                var revenue = await prod.GetRevenueByWeekAsync(startDate);
+                return Ok(revenue);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi khi tính doanh thu theo tuần: {ex.Message}");
+            }
+        }
+
+        [HttpGet("GetRevenueByMonth/{month}/{year}")]
+        public async Task<IActionResult> GetRevenueByMonth(int month, int year)
+        {
+            try
+            {
+                var revenue = await prod.GetRevenueByMonthAsync(month, year);
+                return Ok(revenue);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi khi tính doanh thu theo tháng: {ex.Message}");
+            }
+        }
     }
 }

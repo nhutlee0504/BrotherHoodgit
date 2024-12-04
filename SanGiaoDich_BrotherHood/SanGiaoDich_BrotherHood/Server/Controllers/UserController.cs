@@ -362,6 +362,12 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpGet("UserStatistics")]
+        public async Task<IActionResult> GetUserStatistics()
+        {
+            var statistics = await _user.GetUserStatisticsAsync();
+            return Ok(statistics);
+        }
 
     }
 }

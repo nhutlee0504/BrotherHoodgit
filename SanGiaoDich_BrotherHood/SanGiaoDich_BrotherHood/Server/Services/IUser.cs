@@ -20,5 +20,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 		Task<Account> UpdateProfileImage(IFormFile imageFile);
         public Task<Account> ChangePassword(string username, InfoAccountDto info);
         public Task<Account> AcceptIDCard(RecognitionDto recognitionDto);
+        Task<Dictionary<string, int>> GetUserStatisticsAsync();
     }
 }

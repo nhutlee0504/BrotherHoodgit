@@ -1,0 +1,207 @@
+﻿@page "/Admin/ThongKeDoanhThu"
+@layout AdminLayout
+@inject HttpClient Http
+
+<style>
+    /* Hiệu ứng hover cho card */
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .card:hover {
+            transform: scale(1.05); /* Tăng kích thước khi hover */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Thêm bóng mờ để tạo cảm giác nổi */
+        }
+</style>
+
+<h3 class="text-center my-4">Thống Kê Doanh Thu</h3>
+
+@if (totalRevenue == null)
+{
+    <div class="text-center">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3">Đang tải dữ liệu...</p>
+    </div>
+}
+else
+{
+    <div class="container">
+        <!-- Doanh thu tổng -->
+        <div class="row my-4">
+            <div class="col-md-12">
+                <div class="card text-white bg-success mb-3">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Tổng Doanh Thu</h5>
+                        <p class="card-text fs-4">@totalRevenue.Value.ToString("C")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chọn khoảng thời gian -->
+        <div class="row my-4">
+            <div class="col-md-12">
+                <h4>Chọn Thống Kê</h4>
+
+                <!-- Chọn Ngày -->
+                <div class="form-group">
+                    <label for="datePicker">Ngày</label>
+                    <input type="date" class="form-control" id="datePicker" @bind="selectedDate" />
+                    <button class="btn btn-primary mt-2" @onclick="GetRevenueByDate">Xem Doanh Thu Theo Ngày</button>
+                </div>
+
+                <!-- Chọn Tuần -->
+                <div class="form-group">
+                    <label for="weekPicker">Tuần</label>
+                    <input type="week" class="form-control" id="weekPicker" @bind="selectedWeek" />
+                    <button class="btn btn-primary mt-2" @onclick="GetRevenueByWeek">Xem Doanh Thu Theo Tuần</button>
+                </div>
+
+                <!-- Chọn Tháng -->
+                <div class="form-group">
+                    <label for="monthPicker">Tháng</label>
+                    <input type="month" class="form-control" id="monthPicker" @bind="selectedMonth" />
+                    <button class="btn btn-primary mt-2" @onclick="GetRevenueByMonth">Xem Doanh Thu Theo Tháng</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danh sách sản phẩm -->
+        <div class="row my-4">
+            <div class="col-md-12">
+                <h4>Danh Sách Sản Phẩm</h4>
+                @if (products == null)
+                {
+                    <p class="text-center">Đang tải dữ liệu sản phẩm...</p>
+                }
+                else if (!products.Any())
+                {
+                    <p class="text-center">Không có sản phẩm nào.</p>
+                }
+                else
+                {
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr class="text-center">
+                                <th>ID</th>
+                                <th>Tên Sản Phẩm</th>
+                                <th>Số Lượng</th>
+                                <th>Giá</th>
+                                <th>Trạng Thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in products.Where(x => x.Status == "Đã duyệt"))
+                            {
+                                <tr>
+                                    <td class="text-center">@product.IDProduct</td>
+                                    <td>@product.Name</td>
+                                    <td class="text-center">@product.Quantity</td>
+                                    <td class="text-right">@product.Price.ToString("C")</td>
+                                    <td class="text-center">@product.Status</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private decimal? totalRevenue;
+    private List<Product> products;
+    private DateTime selectedDate;
+    private string selectedWeek;
+    private DateTime selectedMonth;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Gọi API để lấy tổng doanh thu
+            totalRevenue = await Http.GetFromJsonAsync<decimal?>("api/product/GetTotalRevenue");
+
+            // Gọi API để lấy danh sách sản phẩm
+            products = await Http.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
+        }
+        catch (Exception ex)
+        {
+            // Xử lý lỗi
+            totalRevenue = null;
+            products = null;
+            Console.WriteLine($"Lỗi khi gọi API: {ex.Message}");
+        }
+    }
+
+    private async Task GetRevenueByDate()
+    {
+        if (selectedDate != null)
+        {
+            try
+            {
+                // Gọi API thống kê theo ngày
+                totalRevenue = await Http.GetFromJsonAsync<decimal?>($"api/product/GetRevenueByDate/{selectedDate:yyyy-MM-dd}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi gọi API thống kê theo ngày: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task GetRevenueByWeek()
+    {
+        if (!string.IsNullOrEmpty(selectedWeek))
+        {
+            try
+            {
+                // Tính toán ngày bắt đầu của tuần từ chuỗi tuần
+                var weekParts = selectedWeek.Split('-');
+                var year = int.Parse(weekParts[0]);
+                var weekNumber = int.Parse(weekParts[1]);
+                var jan1 = new DateTime(year, 1, 1);
+                var daysOffset = DayOfWeek.Monday - jan1.DayOfWeek;
+                var startOfWeek = jan1.AddDays(daysOffset + (weekNumber - 1) * 7);
+
+                // Gọi API với ngày bắt đầu của tuần
+                totalRevenue = await Http.GetFromJsonAsync<decimal?>($"api/product/GetRevenueByWeek/{startOfWeek:yyyy-MM-dd}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi gọi API thống kê theo tuần: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task GetRevenueByMonth()
+    {
+        if (!string.IsNullOrEmpty(selectedMonth.ToString()))
+        {
+            try
+            {
+                // Tách tháng và năm từ chuỗi selectedMonth (yyyy-MM)
+                var monthYear = selectedMonth.ToString().Split("-");
+                var month = int.Parse(monthYear[1]);
+                var year = int.Parse(monthYear[0]);
+
+                // Gọi API thống kê theo tháng
+                totalRevenue = await Http.GetFromJsonAsync<decimal?>($"api/product/GetRevenueByMonth/{month}/{year}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi gọi API thống kê theo tháng: {ex.Message}");
+            }
+        }
+    }
+
+    public class Product
+    {
+        public int IDProduct { get; set; }
+        public string Name { get; set; }
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+        public string Status { get; set; }
+    }
+}

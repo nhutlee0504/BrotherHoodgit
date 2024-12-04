@@ -280,7 +280,19 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             Regex regex = new Regex(pattern);
             return regex.IsMatch(phone);
         }
+        public async Task<Dictionary<string, int>> GetUserStatisticsAsync()
+        {
+            var totalUsers = await _context.Accounts.CountAsync();
+            var activeUsers = await _context.Accounts.CountAsync(a => a.IsDelete == false || a.IsDelete == null);
+            var deletedUsers = await _context.Accounts.CountAsync(a => a.IsDelete == true);
 
+            return new Dictionary<string, int>
+       {
+           { "TotalUsers", totalUsers },
+           { "ActiveUsers", activeUsers },
+           { "DeletedUsers", deletedUsers }
+       };
+        }
         private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()
         {
             var userClaim = _httpContextAccessor.HttpContext?.User;
