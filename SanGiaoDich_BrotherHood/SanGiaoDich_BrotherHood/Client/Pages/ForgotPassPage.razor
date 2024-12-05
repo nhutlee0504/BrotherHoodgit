@@ -288,7 +288,7 @@
             }
             else
             {
-                messageCodeDanger = null;
+                messageCodeDanger = null; 
                 messageCodeWarning = null;
                 await js.InvokeVoidAsync("localStorage.setItem", "Email", Email);
                 navigation.NavigateTo($"/ChangeForgottenPass");

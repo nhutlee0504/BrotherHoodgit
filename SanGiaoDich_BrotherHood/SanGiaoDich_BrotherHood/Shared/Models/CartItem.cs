@@ -25,7 +25,6 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         [JsonIgnore]
         public Product Product { get; set; } // Đảm bảo chỉ có 1 quan hệ với Product
         public DateTime CreatedDate { get; set; }
-       
     }
 
 }

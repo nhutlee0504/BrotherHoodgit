@@ -30,7 +30,74 @@
     .heart-unchecked {
         color: gray; /* Màu xám khi chưa yêu thích */
     }
+
+    .bg-green {
+        background-color: #28a745; /* Màu xanh lá */
+        color: white; /* Màu chữ trắng */
+    }
+
+    .card-header h4 {
+        margin: 0;
+        font-size: 1.5rem; /* Tuỳ chỉnh kích thước chữ */
+    }
 </style>
+
+<style>
+    .product-card {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .product-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+    .card-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .card-text {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 15px;
+    }
+
+    .btn-primary {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+
+    .rating-container {
+        display: flex;
+        flex-direction: row-reverse;
+    }
+
+    .rate {
+        appearance: none;
+    }
+
+        .rate::before {
+            content: "\2605";
+            color: #ccc;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .rate:checked::before, .rate:checked ~ .rate::before {
+            color: #ffb800;
+        }
+</style>
+
 
 
 <div class="container">
@@ -73,7 +140,7 @@
             <!-- Thông tin người bán -->
             <div class="profile-card mb-3">
                 <div class="profile-avatar">
-                    <a href="ThongTinNguoiDung">
+                    <a href="ThongTinNguoiDung/@name">
                         <img src="@user?.ImageAccount" alt="Người bán" class="img-fluid rounded-circle" style="max-width: 100px;" />
                     </a>
 
@@ -105,13 +172,13 @@
                     </p>
                 </div>
             </div>
-            <!-- Thay thế checkbox bằng hình trái tim -->
-            <div class="favorite-heart">
-                <i class="fas fa-heart @((isFavorite) ? "heart-checked" : "heart-unchecked")" @onclick="ToggleFavorite"></i>
+
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h3 style="font-weight: bolder;">@product?.Name</h3>
+                <div class="favorite-heart">
+                    <i class="fas fa-heart @((isFavorite) ? "heart-checked" : "heart-unchecked")" @onclick="ToggleFavorite"></i>
+                </div>
             </div>
-
-
-            <h3 style="font-weight:bolder">@product?.Name</h3>
             <h4 class="text-success mb-2"><i class="bi bi-cash-coin"></i>@product?.Price.ToString("N0") VND</h4>
             <p><strong>Loại sản phẩm:</strong> @categoryName</p>
             <p><i class="bi bi-clock"></i> Đăng vào lúc: @(product?.StartDate?.ToString("dd/MM/yyyy") ?? "Chưa xác định")</p>
@@ -123,31 +190,56 @@
         </div>
     </div>
 
-    <!-- Mô tả sản phẩm -->
     <div class="product-description card mt-4">
-        <div class="card-header text-white">
+        <div class="card-header bg-green text-white">
             <h4 class="card-title">Mô tả sản phẩm</h4>
         </div>
         <div class="card-body">
-            <p></p>
+            <p>@product?.Description</p>
         </div>
     </div>
 
-    <!-- Đánh giá sản phẩm -->
     <div class="mt-4">
-        <h4 class="review-title">Đánh giá</h4>
         <div class="row">
-            <!-- Your review cards logic can be placed here -->
-        </div>
-    </div>
-
-    <!-- Sản phẩm liên quan -->
-    <div class="mt-4">
-        <h4 style="font-weight: bold; color: #28a745; border-bottom: 2px solid #28a745; padding-bottom: 10px; text-align: center;">
-            Sản phẩm liên quan
-        </h4>
-        <div class="row">
-            <!-- Your related products logic can be placed here -->
+            <div class="mt-4">
+                <h4 class="text-center" style="font-weight: bold; color: #28a745; border-bottom: 2px solid #28a745; padding-bottom: 10px;">
+                    Sản phẩm liên quan
+                </h4>
+                <div class="row mt-3">
+                    @if (relatedProducts != null && relatedProducts.Any())
+                    {
+                        @foreach (var relatedProduct in relatedProducts)
+                        {
+                            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                                <div class="card product-card h-100 shadow-sm">
+                                    <a @onclick="() => NavigateToProductDetail(relatedProduct.IDProduct)">
+                                        <img src="@relatedProduct.imageProducts" class="card-img-top" alt="@relatedProduct.Name" style="height: 150px; object-fit: cover; border-radius: 10px 10px 0 0;">
+                                    </a>
+                                    <div class="card-body">
+                                        <h5 class="card-title text-truncate" title="@relatedProduct.Name">@relatedProduct.Name</h5>
+                                        <p class="card-text text-success fw-bold">@relatedProduct.Price.ToString("N0") VND</p>
+                                        <a href="/ChiTietSanPham/@relatedProduct.IDProduct" class="btn btn-sm btn-primary w-100">Xem chi tiết</a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-center">Không có sản phẩm nào cùng loại.</p>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+@code {
+    [Inject] NavigationManager NavigationManager { get; set; }
+
+    private void NavigateToProductDetail(int productId)
+    {
+      
+        NavigationManager.NavigateTo($"/ChiTietSanPham/{productId}?forceReload=true", true);
+    }
+}

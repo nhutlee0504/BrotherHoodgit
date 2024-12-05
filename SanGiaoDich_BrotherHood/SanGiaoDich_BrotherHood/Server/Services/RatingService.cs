@@ -29,7 +29,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             _configuration = configuration;
         }
 
-        public async Task<Rating> AddRating(int billDetailId, int star, string comment, IFormFile image)
+        public async Task<Rating> AddRating(int billDetailId, int star, string comment, string image)
         {
             var userInfo = GetUserInfoFromClaims(); // Lấy thông tin người dùng
 
@@ -65,6 +65,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 Star = star,
                 Comment = comment,
                 UserName = userInfo.UserName,
+                Image = image
                 // Xử lý file ảnh nếu cần (giả sử bạn đã xử lý file ảnh)
             };
 
@@ -74,8 +75,42 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             return rating;
         }
 
+		public async Task<IEnumerable<Rating>> GetRatingUser(string username)
+		{
+			// Tìm tất cả sản phẩm thuộc về người dùng
+			var products = await _context.Products
+				.Where(x => x.UserName == username)
+				.ToListAsync();
 
-        public async Task<IEnumerable<RatingDto>> GetRatings(int productId)
+			if (products == null || !products.Any())
+			{
+				throw new Exception("Người dùng không có sản phẩm nào.");
+			}
+
+			// Lấy tất cả IDProduct từ danh sách sản phẩm
+			var productIds = products.Select(p => p.IDProduct).ToList();
+
+			// Tìm tất cả các IDBillDetail liên quan đến danh sách sản phẩm
+			var billDetailIds = await _context.BillDetails
+				.Where(x => productIds.Contains(x.IDProduct))
+				.Select(x => x.IDBillDetail)
+				.ToListAsync();
+
+			if (billDetailIds == null || !billDetailIds.Any())
+			{
+				throw new Exception("Không tìm thấy chi tiết hóa đơn liên quan.");
+			}
+
+			// Lấy tất cả các đánh giá liên quan đến danh sách BillDetails
+			var ratings = await _context.Ratings
+				.Where(r => billDetailIds.Contains(r.IDBillDetail))
+				.ToListAsync();
+
+			return ratings;
+		}
+
+
+		public async Task<IEnumerable<RatingDto>> GetRatings(int productId)
         {
             return await _context.Ratings
                 .Include(r => r.Account)

@@ -29,16 +29,15 @@ namespace API.Services
             {
                 var existingConversation = await _context.Conversations
                     .FirstOrDefaultAsync(c =>
-                        (c.Username == username && c.UserGive == userGive ||
-                         c.Username == userGive && c.UserGive == username)
+                        (c.UserName == username && c.UserName == userGive ||
+                         c.UserName == userGive && c.UserName == username)
                         && !c.IsDeleted);
 
                 if (existingConversation == null)
                 {
                     var newConversation = new Conversation
                     {
-                        Username = username,
-                        UserGive = userGive,
+                        UserName = username,
                         CreatedDate = DateTime.Now,
                         IsDeleted = false
                     };
@@ -76,8 +75,8 @@ namespace API.Services
                 // Lấy ConversationID của hội thoại giữa username và selectedUser
                 var conversation = await _context.Conversations
                     .FirstOrDefaultAsync(c =>
-                        (c.Username == username && c.UserGive == selectedUser) ||
-                        (c.Username == selectedUser && c.UserGive == username));
+                        (c.UserName == username && c.UserName == selectedUser) ||
+                        (c.UserName == selectedUser && c.UserName == username));
 
                 // Nếu không tìm thấy hội thoại, trả về danh sách rỗng
                 if (conversation == null)
@@ -97,8 +96,5 @@ namespace API.Services
                 throw;
             }
         }
-
-        
     }
 }
-

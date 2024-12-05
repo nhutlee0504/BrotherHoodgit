@@ -22,19 +22,11 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         private bool isLoading = true;
         AccountInfoDto accountInfo;
         private bool IsLoggedIn { get; set; } = false;
-
-
+        private string name = string.Empty;
         protected override async Task OnInitializedAsync()
         {
-            await CheckTokenAndLoadAccountInfo();
-            if (IsLoggedIn)
-            {
-                await LoadProductDetails();
-            }
-            else
-            {
-                Navigation.NavigateTo("/login");
-            }
+           
+            await LoadProductDetails();
         }
 
         private async Task CheckTokenAndLoadAccountInfo()
@@ -115,6 +107,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                     categoryName = await GetCategoryNameById(product.IDCategory);
                     user = await GetSellerByUsername(product.UserName);
                     images = await GetImagesByProductId(product.IDProduct);
+
+                    await LoadRelatedProducts();
                 }
 
                 // Kiểm tra token và lấy danh sách yêu thích nếu có
@@ -157,8 +151,13 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             {
                 return null;
             }
-            return await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
-        }
+			var account = await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
+			if (account != null)
+			{
+				name = account.UserName; // Gán tên người dùng vào biến name
+			}
+			return account;
+		}
 
         private async Task<List<ImageProduct>> GetImagesByProductId(int id)
         {
@@ -227,9 +226,18 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             }
         }
 
+
         private async Task GoToMessagingPage()
         {
-            if (product != null && accountInfo != null)
+			await CheckTokenAndLoadAccountInfo();
+			if (IsLoggedIn)
+			{
+			}
+			else
+			{
+				Navigation.NavigateTo("/login");
+			}
+			if (product != null && accountInfo != null)
             {
                 try
                 {
@@ -258,7 +266,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                     if (response.IsSuccessStatusCode)
                     {
                         // Sau khi gửi tin nhắn thành công, điều hướng đến trang tin nhắn
-                        Navigation.NavigateTo($"/message?productName={Uri.EscapeDataString(product.Name)}");
+                        Navigation.NavigateTo($"/nhantin?productName={Uri.EscapeDataString(product.Name)}");
                     }
                     else
                     {
@@ -323,6 +331,37 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                 return null;
             }
         }
+        private List<Product> relatedProducts;
+        private async Task LoadRelatedProducts()
+        {
+            if (product != null)
+            {
+                try
+                {
+                    // Gọi API lấy toàn bộ sản phẩm
+                    var response = await httpclient.GetAsync("api/product/GetAllProduct");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var allProducts = await response.Content.ReadFromJsonAsync<List<Product>>();
 
+                        // Lọc các sản phẩm cùng loại và loại bỏ sản phẩm hiện tại
+                        relatedProducts = allProducts
+                            .Where(p => p.IDCategory == product.IDCategory && p.IDProduct != product.IDProduct)
+                            .Take(4) // Lấy tối đa 4 sản phẩm
+                            .ToList();
+                    }
+                    else
+                    {
+                        errorMessage = "Không thể tải danh sách sản phẩm: " + response.ReasonPhrase;
+                        relatedProducts = new List<Product>();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorMessage = "Có lỗi xảy ra khi tải sản phẩm cùng loại: " + ex.Message;
+                    relatedProducts = new List<Product>();
+                }
+            }
+        }
     }
 }

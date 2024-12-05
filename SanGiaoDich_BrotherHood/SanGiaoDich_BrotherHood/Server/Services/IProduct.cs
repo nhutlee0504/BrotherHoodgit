@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using SanGiaoDich_BrotherHood.Server.Dto;
 using SanGiaoDich_BrotherHood.Shared.Models;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -21,7 +22,11 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public Task<Product> CancleProduct(int idproduct);
         public Task <Product> DeleteProductById(int id);
         public Task<Product> UpdateProrityLevel(int id);
-       public Task<IEnumerable<dynamic>> GetStatisticsByStatusAsync();
+        public Task<IEnumerable<dynamic>> GetStatisticsByStatusAsync();
+        Task<decimal> GetTotalRevenueAsync();
+        Task<decimal> GetRevenueByDateAsync(DateTime date);
+        Task<decimal> GetRevenueByWeekAsync(DateTime startDate);
+        Task<decimal> GetRevenueByMonthAsync(int month, int year);
 
     }
 }

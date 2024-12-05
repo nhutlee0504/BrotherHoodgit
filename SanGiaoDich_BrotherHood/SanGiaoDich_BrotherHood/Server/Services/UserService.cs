@@ -66,7 +66,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 IsDelete = false,
                 CreatedTime = DateTime.Now,
                 Role = "Người dùng",
-                PreSystem = 10000,
+                PreSystem = 25000,
                 IsActived = true,
                 ImageAccount = "https://firebasestorage.googleapis.com/v0/b/dbbrotherhood-ac2f1.appspot.com/o/ImageTest%2Favatar-default.svg?alt=media&token=fb4e7099-b322-412e-9da7-0f80d2311785"
             };
@@ -125,7 +125,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
             return user; 
         }
-        public async Task<Account> UpdateAccountInfo(InfoAccountDto infoAccountDto)
+        public async Task<Account> UpdateAccountInfo(string email)
         {
             var userClaims = GetUserInfoFromClaims();
             var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userClaims.UserName);
@@ -134,12 +134,12 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             {
                 throw new UnauthorizedAccessException("Không tìm thấy người dùng.");
             }
-            user.FullName = infoAccountDto.FullName;
-            user.Email = infoAccountDto.Email;
-            user.PhoneNumber = infoAccountDto.Phone;
-            user.Gender = infoAccountDto.Gender;
-            user.Birthday = infoAccountDto.Birthday;
-            user.Introduce = infoAccountDto.Introduce;
+            //user.FullName = infoAccountDto.FullName;
+            user.Email = email;
+            //user.PhoneNumber = infoAccountDto.Phone;
+            //user.Gender = infoAccountDto.Gender;
+            //user.Birthday = infoAccountDto.Birthday;
+            //user.Introduce = infoAccountDto.Introduce;
 
             await _context.SaveChangesAsync();
             return user; 
@@ -225,7 +225,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 issuer: _configuration["JWT:ValidIssuer"],
                 audience: _configuration["JWT:ValidAudience"],
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
+                expires: DateTime.Now.AddHours(12),
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
@@ -280,7 +280,19 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             Regex regex = new Regex(pattern);
             return regex.IsMatch(phone);
         }
+        public async Task<Dictionary<string, int>> GetUserStatisticsAsync()
+        {
+            var totalUsers = await _context.Accounts.CountAsync();
+            var activeUsers = await _context.Accounts.CountAsync(a => a.IsDelete == false || a.IsDelete == null);
+            var deletedUsers = await _context.Accounts.CountAsync(a => a.IsDelete == true);
 
+            return new Dictionary<string, int>
+       {
+           { "TotalUsers", totalUsers },
+           { "ActiveUsers", activeUsers },
+           { "DeletedUsers", deletedUsers }
+       };
+        }
         private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()
         {
             var userClaim = _httpContextAccessor.HttpContext?.User;
@@ -345,6 +357,25 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             throw new UnauthorizedAccessException("Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.");
         }
 
-      
+        public async Task<Account> AcceptIDCard(RecognitionDto recognitionDto)
+        {
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.UserName == recognitionDto.UserName);
+
+            if (account == null)
+            {
+                throw new ArgumentException("Không tìm thấy tài khoản với username đã cung cấp.");
+            }
+            account.FullName = recognitionDto.Name;
+            account.Gender = recognitionDto.Sex;
+            account.ID = recognitionDto.Id;
+            account.Dob = recognitionDto.Dob;
+            account.Home = recognitionDto.Home;
+            account.Nationality = recognitionDto.Nationality;
+            account.Doe = recognitionDto.Doe;
+            _context.Accounts.Update(account);
+            await _context.SaveChangesAsync();
+
+            return account;
+        }
     }
 }

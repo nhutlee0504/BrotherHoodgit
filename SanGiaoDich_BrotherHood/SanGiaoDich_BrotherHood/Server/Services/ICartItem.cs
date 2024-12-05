@@ -10,5 +10,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         Task<CartItem> AddCartItem(CartItemDto cartItem);
         public Task<IEnumerable<CartItem>> GetAllCartItems(int idCart);
         Task<bool> DeleteCartItem(int cartItemId);
+        Task<bool> updateStatus(int idProduct);
     }
 }

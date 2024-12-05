@@ -42,7 +42,11 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         public bool? IsDelete { get; set; }
         public decimal? PreSystem {  get; set; }
         public bool? IsActived { get; set; }
-        //public int GoogleID { get; set; }
+        public string ID { get; set; }
+        public string Dob { get; set; }
+        public string Home { get; set; }
+        public string Nationality { get; set; }
+        public string Doe { get; set; }
 
 
         public ICollection<Product> products { get; set; }

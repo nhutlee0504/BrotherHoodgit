@@ -11,6 +11,5 @@ namespace API.Services
         Task<Message> AddMessageWithConversation(string username, string userGive, Message messageModel);
         Task<List<Message>> GetMessagesByConversationIdAsync(int conversationId);
         Task<List<Message>> GetMessagesBetweenUsers(string username, string selectedUser);
-
     }
 }

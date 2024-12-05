@@ -164,6 +164,14 @@
             color: #007bff;
         }
 
+    .product-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+    }
+
+
 </style>
 <div class="row">
     <div class="col-md-12">
@@ -174,19 +182,19 @@
                     <div class="carousel-item active">
                         <!-- Image with no mask -->
                         <div class="bg-image">
-                            <img src="/AnhSanPham/Untitled project-Layer 1 (1).jpeg" style="height:auto;" class="img-fluid w-100" alt="Logo">
+                            <img src="/AnhGiaoDien/jordan-2.webp" class="img-fluid w-100" alt="Logo">
                         </div>
                     </div>
                     <div class="carousel-item">
                         <!-- Image with no mask -->
                         <div class="bg-image">
-                            <img src="/AnhSanPham/Untitled project-Layer 1.jpeg" style="height:auto;" class="img-fluid w-100" alt="Logo">
+                            <img src="/AnhGiaoDien/chup_hinh_san_pham_ao_thun_namnu.jpg" class="img-fluid w-100" alt="Logo">
                         </div>
                     </div>
                     <div class="carousel-item">
                         <!-- Image with no mask -->
                         <div class="bg-image">
-                            <img src="/AnhSanPham/Untitled project-Layer 1 (1).jpeg" style="height:auto;" class="img-fluid w-100" alt="Logo">
+                            <img src="/AnhGiaoDien/hinhneniphone14_1280x720-800-resize.jpg" class="img-fluid w-100" alt="Logo">
                         </div>
                     </div>
                 </div>
@@ -199,9 +207,9 @@
                     <span class="visually-hidden">Next</span>
                 </button>
             </div>
-
         </section>
     </div>
+
     <!-- Features section inside a card -->
     <div class="container">
         <div class="card features-card">
@@ -241,6 +249,19 @@
 
 
 </div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mt-3 mb-5 shadow" style="border:none;">
+            <div class="card-body">
+                <h1>BrotherHood Trading - Kênh Mua Bán, Rao Vặt Trực Tuyến</h1>
+                <p>BrothersHood chính thức gia nhập thị trường Việt Nam vào đầu năm 2025, với mục tiêu mang đến cho bạn một nền tảng rao vặt trung gian, kết nối người mua với người bán qua những giao dịch đơn giản, tiện lợi, nhanh chóng và an toàn, đem lại hiệu quả đáng ngạc nhiên.</p>
+                <p>Đến nay, BrothersHood tự hào là website rao vặt được ưa chuộng hàng đầu. Hàng ngàn món hời từ quần áo, giày, nón hiệ được đăng tin, rao bán trên BrothersHood.</p>
+                <p>Với BrothersHood, bạn có thể dễ dàng mua bán, trao đổi bất cứ loại mặt hàng nào, từ đồ cũ đến đồ mới, trong nhiều lĩnh vực khác nhau.</p>
+            </div>
+        </div>
+
+    </div>
+</div>
 <div class="container-fluid banner-advertisement mt-4 mb-4">
     <div class="row">
         <div class="col-12 p-0">
@@ -262,16 +283,19 @@
 @code {
 
 
+    private Dictionary<int, string> categories = new Dictionary<int, string>();
     private List<Product> products = new List<Product>();
     private Dictionary<int, List<string>> productImages = new Dictionary<int, List<string>>();
+
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             products = await httpClient.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
+            var categoryList = await httpClient.GetFromJsonAsync<List<Category>>("api/category/GetCategories");
+            categories = categoryList?.ToDictionary(c => c.IDCategory, c => c.NameCate) ?? new Dictionary<int, string>();
             productImages = new Dictionary<int, List<string>>();
-
             foreach (var product in products)
             {
                 var images = await httpClient.GetFromJsonAsync<List<ImageProduct>>($"api/ImageProduct/GetImageProduct/{product.IDProduct}");
@@ -280,13 +304,16 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error fetching products or images: {ex.Message}");
+            Console.WriteLine($"Error fetching products, categories, or images: {ex.Message}");
         }
-
     }
+
 }
 <div class="row d-flex justify-content-center container-fluid g-3">
-    @foreach (var product in products)
+    @foreach (var product in products
+    .Where(p => p.Status == "Đã duyệt")  
+    .OrderByDescending(p => p.ProrityLevel == "Ưu tiên") 
+    .ThenBy(p => p.Name).Take(8))
     {
         <div class="col-md-3 col-6 mb-4 d-flex">
             <a href="@($"/ChiTietSanPham/{product.IDProduct}")" class="card shadow" style="border-radius: 25px; display: flex; flex-direction: column; height: 100%; border:none; text-decoration: none; color: inherit;">
@@ -309,26 +336,30 @@
                 }
 
                 <div class="card-body">
-                    @if(product.ProrityLevel == "Ưu tiên")
+                    @if (product.ProrityLevel == "Ưu tiên")
                     {
                         <h5 class="fs-5" style="font-weight:bolder">
                             <span class="badge text-bg-success" style="background-color: green; padding: 5px 10px;">
-                                <i class="bi bi-shield-check"></i> @product.ProrityLevel
+                                @product.ProrityLevel
                             </span>
-                            @product.Name
+                            <div class="product-name">
+                                @product.Name
+                            </div>
                         </h5>
                     }
                     else
                     {
                         <h5 class="fs-5" style="font-weight:bolder">
- 
-                            @product.Name
+                            <div class="product-name">
+                                @product.Name
+                            </div>
                         </h5>
                     }
                     <p class="price" style="color:green; font-weight:bolder">@product.Price.ToString("N0") VND</p>
                     <div class="row">
                         <div class="col-md-6 col-6" style="font-style:italic">
-                            <i class="bi bi-tag-fill"></i> 
+                            <i class="bi bi-tag-fill"></i>
+                            @(categories.ContainsKey(product.IDCategory) ? categories[product.IDCategory] : "Không xác định")
                         </div>
                         <div class="col-md-6 col-6 d-flex justify-content-end" style="color:blue; font-weight:bolder; text-decoration-line:underline">
                             @product.StartDate?.ToString("dd/MM/yyyy")
@@ -337,26 +368,14 @@
                 </div>
             </a>
         </div>
-
     }
 </div>
-<div class="load-more">
+
+@* <div class="load-more">
     <a href="#">Xem thêm</a>
     <i class='far fa-arrow-alt-circle-down'></i>
-</div>
-<dib class="row">
-    <div class="col-md-12">
-        <div class="card mt-3 mb-5" style="border:none;">
-            <div class="card-body">
-                <h1>BrothersHood - Kênh Mua Bán, Rao Vặt Trực Tuyến Hàng Đầu</h1>
-                <p>BrothersHood chính thức gia nhập thị trường Việt Nam vào đầu năm 2012, với mục tiêu mang đến cho bạn một nền tảng rao vặt trung gian, kết nối người mua với người bán qua những giao dịch đơn giản, tiện lợi, nhanh chóng và an toàn, đem lại hiệu quả đáng ngạc nhiên.</p>
-                <p>Đến nay, BrothersHood tự hào là website rao vặt được ưa chuộng hàng đầu tại Việt Nam. Hàng ngàn món hời từ bất động sản, nhà cửa, xe cộ, đồ điện tử, thú cưng, vật dụng cá nhân, đến tìm việc làm, thông tin tuyển dụng, và các dịch vụ - du lịch được đăng tin, rao bán trên BrothersHood.</p>
-                <p>Với BrothersHood, bạn có thể dễ dàng mua bán, trao đổi bất cứ loại mặt hàng nào, từ đồ cũ đến đồ mới, trong nhiều lĩnh vực khác nhau.</p>
-            </div>
-        </div>
+</div> *@
 
-    </div>
-</dib>
 <div class="offer-section mb-5">
     <div class="offer-section-content">
         <h2>Nhận ưu đãi đặc biệt từ chúng tôi!</h2>

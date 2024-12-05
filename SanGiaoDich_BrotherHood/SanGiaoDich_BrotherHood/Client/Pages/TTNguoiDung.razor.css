@@ -155,3 +155,137 @@ select.form-select {
 .is-invalid {
     border: 2px solid red;
 }
+.verified-text {
+    color: green; 
+    font-size: 18px; 
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px; 
+}
+
+    .verified-text .fa-check-circle {
+        font-size: 20px;
+        color: green;
+    }
+.btn-verify {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: #fff;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+    .btn-verify:hover {
+        background-color: #218838;
+    }
+
+.reviews-wrapper {
+    margin: 20px auto;
+    max-width: 800px;
+    font-family: Arial, sans-serif;
+    color: #333;
+}
+
+.add-review-form {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+    .add-review-form h5 {
+        margin-bottom: 15px;
+        font-size: 18px;
+        color: #555;
+    }
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+    .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        resize: vertical;
+    }
+
+.btn-submit {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+    .btn-submit:hover {
+        background-color: #0056b3;
+    }
+
+.user-reviews {
+    margin-top: 20px;
+}
+
+    .user-reviews h4 {
+        font-size: 20px;
+        margin-bottom: 15px;
+        color: #444;
+    }
+
+.reviews-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.review-card {
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.review-username {
+    font-weight: bold;
+    color: #007bff;
+}
+
+.review-date {
+    font-size: 12px;
+    color: #888;
+}
+
+.review-content p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.no-reviews {
+    font-style: italic;
+    color: #777;
+}

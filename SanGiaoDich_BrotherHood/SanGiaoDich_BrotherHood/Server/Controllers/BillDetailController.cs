@@ -5,6 +5,7 @@ using SanGiaoDich_BrotherHood.Shared.Models;
 using SanGiaoDich_BrotherHood.Server.Services;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using SanGiaoDich_BrotherHood.Shared.Dto;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -30,19 +31,24 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             return Ok(await billDetail.GetBillDetailsByIDBill(IDBill));
         }
 
-        [HttpPost]
-        public async Task<ActionResult> AddBillDetail(BillDetail billDt)
+        [HttpPost("AddBillDetail")]
+        public async Task<ActionResult> AddBillDetail(BillDetailDto billDt)
         {
-            var bdt = await billDetail.AddBillDetail(new BillDetail
-            {
-                IDBill = billDt.IDBill,
-                IDProduct = billDt.IDProduct,
-                Quantity = billDt.Quantity,
-                Price = billDt.Price
-            });
+            var bdt = await billDetail.AddBillDetail(billDt);
             if (bdt == null)
                 return BadRequest();
-            return CreatedAtAction("AddBillDetail", bdt);
+            return Ok(bdt);
+        }
+
+        [HttpDelete("RemoveProductBillDetail/{idBillDetail}")]
+        public async Task<ActionResult> RemoveProductBillDetail(int idBillDetail)
+        {
+            var rbd = await billDetail.DeleteProductBillDetail(idBillDetail);
+            if (rbd == null)
+            {
+                return BadRequest();
+            }
+            return Ok(rbd);
         }
     }
 }

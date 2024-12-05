@@ -104,7 +104,7 @@ namespace API.Services
 
             return user;
         }
-        public async Task<Account> UpdateAccountInfo(InfoAccountDto infoAccountDto)
+        public async Task<Account> UpdateAccountInfo(string email)
         {
             var userClaims = GetUserInfoFromClaims();
             var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userClaims.UserName);
@@ -113,16 +113,16 @@ namespace API.Services
             {
                 throw new UnauthorizedAccessException("Không tìm thấy người dùng.");
             }
-            if (!IsValidPhone(infoAccountDto.Phone))
-            {
-                throw new ArgumentException("Số điện thoại không hợp lệ");
-            }
-            user.FullName = infoAccountDto.FullName;
-            user.Email = infoAccountDto.Email;
-            user.PhoneNumber = infoAccountDto.Phone;
-            user.Gender = infoAccountDto.Gender;
-            user.Birthday = infoAccountDto.Birthday;
-            user.Introduce = infoAccountDto.Introduce;
+            //if (!IsValidPhone(infoAccountDto.Phone))
+            //{
+            //    throw new ArgumentException("Số điện thoại không hợp lệ");
+            //}
+            //user.FullName = infoAccountDto.FullName;
+            user.Email = email;
+            //user.PhoneNumber = infoAccountDto.Phone;
+            //user.Gender = infoAccountDto.Gender;
+            //user.Birthday = infoAccountDto.Birthday;
+            //user.Introduce = infoAccountDto.Introduce;
 
             await _context.SaveChangesAsync();
             return user;

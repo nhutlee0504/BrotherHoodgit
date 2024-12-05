@@ -60,5 +60,18 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             await _context.SaveChangesAsync();
             return true;
         }
-    }
+
+		public async Task<bool> updateStatus(int idProduct)
+		{
+            var prodFind = await _context.Products.FindAsync(idProduct);
+            if (prodFind == null) {
+			return false;
+			}
+            var re = await _context.CartItems.Where(_ => _.IDProduct == idProduct).ToListAsync();
+            _context.CartItems.RemoveRange(re);
+            prodFind.Status = "Đang giao dịch";
+            await _context.SaveChangesAsync();
+            return true;
+		}
+	}
 }

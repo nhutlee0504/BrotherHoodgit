@@ -41,27 +41,10 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 
         [HttpGet]
         [Route("GetProductById/{id}")]
-        public async Task<IActionResult> GetProductById(int id)
+        public async Task<Product> GetProductById(int id)
         {
-            try
-            {
-                var product = await prod.GetProductById(id);
-                if (product == null)
-                {
-                    // Trả về lỗi 404 nếu không tìm thấy sản phẩm
-                    return NotFound("Không tìm thấy sản phẩm tương ứng.");
-                }
-
-                // Trả về thông tin sản phẩm nếu tìm thấy
-                return Ok(product);
-            }
-            catch (NotImplementedException ex)
-            {
-                // Xử lý lỗi và trả về mã lỗi 500 (Internal Server Error) nếu có lỗi ngoài dự kiến
-                return NotFound(ex.Message);
-            }
+            return await prod.GetProductById(id);
         }
-
 
         [HttpGet("GetProductByName/{name}")]
         public async Task<IEnumerable<Product>> GetProductByName(string name)
@@ -238,5 +221,61 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             return Ok(statistics);
         }
 
+        [HttpGet("GetTotalRevenue")]
+        public async Task<IActionResult> GetTotalRevenue()
+        {
+            try
+            {
+                // Lấy tổng doanh thu từ service
+                var totalRevenue = await prod.GetTotalRevenueAsync();
+                return Ok(totalRevenue);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi khi tính toán doanh thu: {ex.Message}");
+            }
+        }
+
+        [HttpGet("GetRevenueByDate/{date}")]
+        public async Task<IActionResult> GetRevenueByDate(DateTime date)
+        {
+            try
+            {
+                var revenue = await prod.GetRevenueByDateAsync(date);
+                return Ok(revenue);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi khi tính doanh thu theo ngày: {ex.Message}");
+            }
+        }
+
+        [HttpGet("GetRevenueByWeek/{startDate}")]
+        public async Task<IActionResult> GetRevenueByWeek(DateTime startDate)
+        {
+            try
+            {
+                var revenue = await prod.GetRevenueByWeekAsync(startDate);
+                return Ok(revenue);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi khi tính doanh thu theo tuần: {ex.Message}");
+            }
+        }
+
+        [HttpGet("GetRevenueByMonth/{month}/{year}")]
+        public async Task<IActionResult> GetRevenueByMonth(int month, int year)
+        {
+            try
+            {
+                var revenue = await prod.GetRevenueByMonthAsync(month, year);
+                return Ok(revenue);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi khi tính doanh thu theo tháng: {ex.Message}");
+            }
+        }
     }
 }

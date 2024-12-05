@@ -79,11 +79,11 @@ namespace API.Controllers
         }
 
 		[HttpPut("UpdateAccountInfo")]
-		public async Task<IActionResult> UpdateAccountInfo([FromBody] InfoAccountDto infoAccountDto)
+		public async Task<IActionResult> UpdateAccountInfo(string email)
 		{
 			try
 			{
-				var updatedUser = await user.UpdateAccountInfo(infoAccountDto);
+				var updatedUser = await user.UpdateAccountInfo(email);
 				return Ok(updatedUser); // Return updated user info
 			}
 			catch (UnauthorizedAccessException ex)

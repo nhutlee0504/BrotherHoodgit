@@ -67,5 +67,30 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             return Ok(await bill.UpdateBill(IDBill, bl));
         }
+
+        [HttpPost("AcceptBill/{idBill}")]
+        public async Task<IActionResult> AcceptBill(int idBill)
+        {
+            return Ok(await bill.AcceptBill(idBill));
+        }
+
+        [HttpPost("CancelBill/{idBill}")]
+        public async Task<IActionResult> CancelBill(int idBill)
+        {
+            return Ok(await bill.CancelBill(idBill));
+        }
+
+        [HttpPost("done/{id}")]
+        public async Task<IActionResult> DoneBill(int id, string status)
+        {
+            var bi = await bill.DoneBill(id, status);
+
+            if (bi == null)
+            {
+                return NotFound($"Bill with ID {id} not found.");
+            }
+
+            return Ok(bill);
+        }
     }
 }

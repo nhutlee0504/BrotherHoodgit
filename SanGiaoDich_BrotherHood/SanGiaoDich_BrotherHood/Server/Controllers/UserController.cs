@@ -110,11 +110,11 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 
 		[HttpPut]
         [Route("UpdateAccountInfo")]
-		public async Task<IActionResult> UpdateAccountInfo(InfoAccountDto infoAccountDto)
+		public async Task<IActionResult> UpdateAccountInfo(string email)
 		{
 			try
 			{
-				var updatedUser = await _user.UpdateAccountInfo(infoAccountDto);
+				var updatedUser = await _user.UpdateAccountInfo(email);
 				return Ok(updatedUser);
 			}
 			catch (UnauthorizedAccessException ex)
@@ -227,8 +227,12 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                     PreSystem = 10000,
                     IsActived = true
                 };
-
+                var newCart = new Cart
+                {
+                    UserName = newUser.UserName
+                };
                 _context.Accounts.Add(newUser);
+                _context.Carts.Add(newCart);    
                 await _context.SaveChangesAsync();
 
                 token = GenerateJwtToken(newUser);
@@ -249,8 +253,6 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         [HttpGet("LogginDung")]
         public IActionResult LogginDung(string token)
         {
-            // Bạn có thể lưu token vào session hoặc thực hiện các xử lý khác
-            // Ví dụ, trả về view hoặc làm gì đó với token
             if (string.IsNullOrEmpty(token))
             {
                 return BadRequest("Token không hợp lệ.");
@@ -259,38 +261,30 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         }
         private string GenerateJwtToken(Account user)
         {
-            // Kiểm tra người dùng không null
             if (user == null) throw new ArgumentNullException(nameof(user));
-
-            // Khóa bí mật để ký token
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            // Tạo danh sách claims chứa thông tin người dùng
             var claims = new List<Claim>
     {
-        new Claim(ClaimTypes.Name, user.UserName ?? string.Empty), // Tên người dùng
-        new Claim(ClaimTypes.Email, user.Email ?? string.Empty), // Email
-        new Claim(ClaimTypes.Role, user.Role ?? string.Empty), // Vai trò người dùng
-        new Claim("FullName", user.FullName ?? string.Empty), // Họ và tên
-        new Claim("PhoneNumber", user.PhoneNumber ?? string.Empty), // Số điện thoại
-        new Claim("Gender", user.Gender ?? string.Empty), // Giới tính
-        new Claim("Birthday", user.Birthday?.ToString("o") ?? string.Empty), // Ngày sinh (chuyển sang định dạng chuẩn)
-        new Claim("ImageAccount", user.ImageAccount ?? string.Empty), // Hình ảnh tài khoản
-        new Claim("IsDelete", user.IsDelete.ToString()), // Trạng thái xóa
-        new Claim("TimeBanned", user.TimeBanned?.ToString("o") ?? string.Empty) // Thời gian bị cấm (nếu có)
+        new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
+        new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+        new Claim(ClaimTypes.Role, user.Role ?? string.Empty), 
+        new Claim("FullName", user.FullName ?? string.Empty), 
+        new Claim("PhoneNumber", user.PhoneNumber ?? string.Empty),
+        new Claim("Gender", user.Gender ?? string.Empty),
+        new Claim("Birthday", user.Birthday?.ToString("o") ?? string.Empty), 
+        new Claim("ImageAccount", user.ImageAccount ?? string.Empty), 
+        new Claim("IsDelete", user.IsDelete.ToString()), 
+        new Claim("TimeBanned", user.TimeBanned?.ToString("o") ?? string.Empty)
     };
-
-            // Tạo JWT token
             var token = new JwtSecurityToken(
-                issuer: _configuration["JWT:ValidIssuer"], // Issuer (người phát hành)
-                audience: _configuration["JWT:ValidAudience"], // Audience (người nhận)
-                claims: claims, // Claims chứa thông tin người dùng
-                expires: DateTime.Now.AddMinutes(30), // Thời gian hết hạn (30 phút)
-                signingCredentials: creds // Thông tin ký token
+                issuer: _configuration["JWT:ValidIssuer"], 
+                audience: _configuration["JWT:ValidAudience"], 
+                claims: claims, 
+                expires: DateTime.Now.AddMinutes(30), 
+                signingCredentials: creds 
             );
-
-            // Trả về token dưới dạng chuỗi
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
@@ -299,7 +293,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             var properties = new AuthenticationProperties
             {
-                RedirectUri = Url.Action("FacebookResponse")  // Điều hướng sau khi Facebook xử lý đăng nhập
+                RedirectUri = Url.Action("FacebookResponse")  
             };
 
             return Challenge(properties, FacebookDefaults.AuthenticationScheme);
@@ -342,7 +336,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                     CreatedTime = DateTime.Now,
                     Role = "Người dùng",
                     IsDelete = false,
-                    PreSystem = 10000,
+                    PreSystem = 25000,
                     IsActived = true,
                 };
 
@@ -352,10 +346,28 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 token = GenerateJwtToken(newUser);
             }
 
-            // Trả về token và chuyển hướng về trang login kèm token trong URL
+         
             return Redirect($"/login?token={token}");
         }
-
+        [HttpPost("AcceptIDCard")]
+        public async Task<IActionResult> AcceptIDCard([FromBody] RecognitionDto recognitionDto)
+        {
+            try
+            {
+                var account = await _user.AcceptIDCard(recognitionDto);
+                return Ok(account);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpGet("UserStatistics")]
+        public async Task<IActionResult> GetUserStatistics()
+        {
+            var statistics = await _user.GetUserStatisticsAsync();
+            return Ok(statistics);
+        }
 
     }
 }

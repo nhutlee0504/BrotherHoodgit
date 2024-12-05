@@ -7,16 +7,31 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
-@* @model DashboardViewModel *@
 <div class="container-fluid">
 	<ul class="breadcrumb">
 		<li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
-		<li class="breadcrumb-item"><a href="#">Thông tin của bạn</a></li>
+		@if (isCurrentUser)
+		{
+			<li class="breadcrumb-item"><a href="#">Thông tin của bạn</a></li>
+		}
+		else
+		{
+			<li class="breadcrumb-item"><a href="#">Thông tin của @username</a></li>
+		}
+
 	</ul>
 </div>
 @if (!string.IsNullOrEmpty(errorMessage))
 {
 	<div class="alert alert-danger">@errorMessage</div>
+}
+@if (isLoading)
+{
+	<div class="text-center">
+		<div class="spinner-border text-primary" role="status">
+			<span class="sr-only">Đang tải...</span>
+		</div>
+	</div>
 }
 else if (userAccount != null)
 {
@@ -29,10 +44,74 @@ else if (userAccount != null)
 				</div>
 				<div class="modal-body">
 					<div class="row">
+						<div class="mb-3 col-md-10 offset-1">
+							@if (loading)
+							{
+								<div class="d-flex justify-content-center">
+									<div class="spinner-border" role="status">
+										<span class="visually-hidden">Loading...</span>
+									</div>
+								</div>
+							}
+							<label for="modalEmail" class="form-label">Email</label>
+							<!-- Email -->
+							<div class="row">
+								<div class="col-md-9">
+									<input type="email" class="form-control @((fieldErrors.ContainsKey("Email") ? "is-invalid" : ""))" id="modalEmail" @bind="infoAccountDto.Email" />
+									@if (fieldErrors.ContainsKey("Email"))
+									{
+										<div class="invalid-feedback">
+											@fieldErrors["Email"]
+										</div>
+									}
+									@if (!string.IsNullOrEmpty(successEmail))
+									{
+										<p class="text-success">@successEmail</p>
+									}
+								</div>
+								<div class="col-md-3">
+									<button type="button" class="custom-btn custom-btn-primary" @onclick="CheckMail">Gửi Mail</button>
+								</div>
+							</div>
+							<!--Mã xác nhận-->
+							<div class="row mt-3">
+								<label>Mã xác nhận</label>
+								<div class="col-md-9">
+									<input type="text" class="form-control" id="modalOTP" @bind-value="reciveCode" placeholder="Nhập mã xác nhận được gửi qua Email của bạn" />
+									<div class="col-md-9">
+										@if (!string.IsNullOrEmpty(errorCode))
+										{
+											<p class="text-danger">@errorCode</p>
+										}
+									</div>
+								</div>
+								<div class="col-md-3">
+									<button type="button" class="custom-btn custom-btn-primary" @onclick="UpdateAccountInfo">Xác nhận</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="custom-btn custom-btn-secondary" data-bs-dismiss="modal">Đóng</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="staticBackdrop2" tabindex="-1" aria-labelledby="staticBackdropLabel2" aria-hidden="true">
+		<div class="modal-dialog modal-xl">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="staticBackdropLabel">Chỉnh sửa thông tin tài khoản</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div class="row">
 						<!-- Họ và tên -->
 						<div class="mb-3 col-md-6">
 							<label for="modalFullName" class="form-label">Họ và tên</label>
-							<input type="text" class="form-control @(fieldErrors.ContainsKey("FullName") ? "is-invalid" : "")" id="modalFullName" @bind="infoAccountDto.FullName" />
+							<input type="text" class="form-control @(fieldErrors.ContainsKey("FullName") ? "is-invalid" : "")" id="modalFullName" @bind="infoAccountDto.FullName" disabled />
 							@if (fieldErrors.ContainsKey("FullName"))
 							{
 								<small class="text-danger">@fieldErrors["FullName"]</small>
@@ -42,7 +121,7 @@ else if (userAccount != null)
 						<!-- Email -->
 						<div class="mb-3 col-md-6">
 							<label for="modalEmail" class="form-label">Email</label>
-							<input type="email" class="form-control @(fieldErrors.ContainsKey("Email") ? "is-invalid" : "")" id="modalEmail" @bind="infoAccountDto.Email" />
+							<input type="email" class="form-control @(fieldErrors.ContainsKey("Email") ? "is-invalid" : "")" id="modalEmail" @bind="infoAccountDto.Email" disabled />
 							@if (fieldErrors.ContainsKey("Email"))
 							{
 								<small class="text-danger">@fieldErrors["Email"]</small>
@@ -62,10 +141,10 @@ else if (userAccount != null)
 						<!-- Giới tính -->
 						<div class="mb-3 col-md-6">
 							<label for="modalGender" class="form-label">Giới tính</label>
-							<select class="form-select @(fieldErrors.ContainsKey("Gender") ? "is-invalid" : "")" id="modalGender" @bind="infoAccountDto.Gender">
+							<select class="form-select @(fieldErrors.ContainsKey("Gender") ? "is-invalid" : "")" id="modalGender" @bind="infoAccountDto.Gender" disabled>
 								<option value="">Chọn giới tính</option>
-								<option value="Nam">Nam</option>
-								<option value="Nữ">Nữ</option>
+								<option value="NAM">Nam</option>
+								<option value="NỮ">Nữ</option>
 								<option value="Khác">Khác</option>
 							</select>
 							@if (fieldErrors.ContainsKey("Gender"))
@@ -77,7 +156,7 @@ else if (userAccount != null)
 						<!-- Ngày sinh -->
 						<div class="mb-3 col-md-6">
 							<label for="modalBirthday" class="form-label">Ngày sinh</label>
-							<input type="date" class="form-control @(fieldErrors.ContainsKey("Birthday") ? "is-invalid" : "")" id="modalBirthday" @bind="infoAccountDto.Birthday" />
+							<input type="date" class="form-control @(fieldErrors.ContainsKey("Birthday") ? "is-invalid" : "")" id="modalBirthday" @bind="infoAccountDto.Birthday" disabled />
 							@if (fieldErrors.ContainsKey("Birthday"))
 							{
 								<small class="text-danger">@fieldErrors["Birthday"]</small>
@@ -103,18 +182,24 @@ else if (userAccount != null)
 		</div>
 	</div>
 
+
 	<div class="container mt-4">
 		<div class="row">
+			<!-- Left Sidebar: User Info -->
 			<div class="col-md-5">
+				<!-- User Profile Card -->
 				<div class="card shadow mb-3" style="border:none;">
 					<div class="card-body text-center">
 						<img src="@userAccount.ImageAccount" class="rounded-circle img-fluid" style="width: 100px;">
-						<h5 class="mt-3">@userAccount.FullName</h5>
-						<p class="text-muted">#CodeUser</p>
-						<button class="btn btn-outline-primary btn-sm mb-3" type="button" onclick="triggerFileInput()">
-							<i class="fa fa-upload"></i> Tải ảnh lên
-						</button>
+						<h5 class="mt-3">@ToTitleCase(@userAccount.FullName)</h5>
+						@if (isCurrentUser)
+						{
+							<button class="btn btn-outline-primary btn-sm mb-3" type="button" onclick="triggerFileInput()">
+								<i class="fa fa-upload"></i> Tải ảnh lên
+							</button>
+						}
 
+						<!-- Input file -->
 						<InputFile id="fileInput"
 								   class="btn btn-outline-primary btn-sm mb-3"
 								   OnChange="async e => { selectedFile = e.File; await UploadFile(); }"
@@ -129,30 +214,76 @@ else if (userAccount != null)
 						}
 						else
 						{
-							<p>Chưa có địa chỉ nào.</p>
+							@if (userAccount.Home != null)
+							{
+								<p>Địa chỉ:@ToTitleCase(@userAccount.Home)</p>
+							}
+							else
+							{
+								<p>Chưa có địa chỉ nào.</p>
+							}
+
 						}
+						@if (isCurrentUser)
+						{
+							@if (string.IsNullOrEmpty(userAccount.ID) || userAccount.ID == "0")
+							{
+								<a href="/XacThucCCCD" class="btn-verify">Xác thực 2 bước</a>
+							}
+							else
+							{
+								<div class="row ">
+									<p class="verified-text justify-content-center">
+										<i class="fa fa-check-circle"></i> Tài khoản đã xác thực
+									</p>
+								</div>
+
+							}
+						}
+
+					</div>
+				</div>
+				<!-- Action Buttons -->
+				<div class="row mb-3">
+					<div class="col-12 d-grid gap-2">
+
+						<div class="d-flex justify-content-around">
+							@if (isCurrentUser)
+							{
+								<button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+									<i class="fas fa-user-edit"></i> Xác thực Email
+								</button>
+								<a href="changePass">
+									<button class="btn btn-outline-secondary">
+										<i class="fas fa-lock"></i> Đổi mật khẩu
+									</button>
+								</a>
+								<a href="post">
+									<button class="btn btn-success">
+										<i class="fas fa-plus-circle"></i> Đăng bài
+									</button>
+								</a>
+							}
+						</div>
 					</div>
 				</div>
 				<div class="row mb-3">
 					<div class="col-12 d-grid gap-2">
+
 						<div class="d-flex justify-content-around">
-							<button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">	<i class="fas fa-user-edit"></i> Cập nhật thông tin</button>
-							@* 	<button class="btn btn-outline-success">
-						<i class="fas fa-user-edit"></i> Cập nhật thông tin
-						</button> *@
-							<a href="changePass">
-								<button class="btn btn-outline-secondary">
-									<i class="fas fa-lock"></i> Đổi mật khẩu
+							@if (isCurrentUser)
+							{
+								<a class="btn btn-outline-success" href="/address">
+									<i class="bi bi-house-up-fill"></i> Địa chỉ của bạn
+								</a>
+								<button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop2">
+									<i class="bi bi-person-fill"></i> Thông tin cá nhân
 								</button>
-							</a>
-							<a href="post">
-								<button class="btn btn-success">
-									<i class="fas fa-plus-circle"></i> Đăng bài
-								</button>
-							</a>
+							}
 						</div>
 					</div>
 				</div>
+				<!-- Order and Reputation Info -->
 				<div class="card shadow mb-3" style="border:none">
 					<div class="card-body">
 						<p><i class="fa fa-shopping-cart"></i> Tổng số đơn hàng đã mua: 0</p>
@@ -165,181 +296,338 @@ else if (userAccount != null)
 							<span class="fa fa-star"></span>
 							<span class="fa fa-star"></span>
 						</p>
-					</div>
-				</div>
-				<div class="card shadow mb-3" style="border:none;">
-					<div class="card-body d-flex align-items-center justify-content-start">
-						<i class="fa-solid fa-wallet" style="font-size: 30px; margin-right: 15px;"></i> <!-- Icon for payment info -->
-						<div>
-							<p>Tổng số tiền đã nạp: 0</p>
-							<p>Tổng số tiền đã thanh toán: 0</p>
-						</div>
-					</div>
+@* 						<button class="btn btn-primary" @onclick="ToggleReviews">Xem đánh giá người dùng</button>
+ *@					</div>
 				</div>
 			</div>
+
+			<!-- Right Panel: Product Listings -->
 			<div class="col-md-7">
+				<!-- Thêm Tabs -->
 				<div class="d-flex justify-content-center">
 					<ul class="nav nav-tabs mb-3">
 						<li class="nav-item">
-							<a class="nav-link active" href="#">
+							<a class="nav-link @(activeTab == "posts" ? "active" : "")" href="javascript:void(0)"
+							   @onclick="SwitchTabToPosts">
 								<i class="fas fa-pencil-alt"></i> Bài đăng của bạn
 							</a>
 						</li>
 						<li class="nav-item">
-							<a class="nav-link" href="#">
+							<a class="nav-link @(activeTab == "favorites" ? "active" : "")" href="javascript:void(0)"
+							   @onclick="SwitchTabToFavorites">
 								<i class="fas fa-heart"></i> Sản phẩm yêu thích
 							</a>
 						</li>
 					</ul>
 				</div>
-				@if (userProducts != null && userProducts.Any())
+
+				@if (activeTab == "posts")
 				{
-					foreach (var productList in userProducts.Where(x => x.UserName == username))
+					@* Hiển thị bài đăng của bạn *@
+					@if (userProducts != null && userProducts.Any())
 					{
-						var catename = GetCategoryById(productList.IDCategory);
-						<div class="card mb-3 position-relative shadow-sm" style="border-radius: 10px;">
-							<div class="row g-0">
-								<div class="col-md-4">
-									<img src="@GetImage(productList.IDProduct)" class="img-fluid rounded-start" alt="@productList.Name" />
-								</div>
+						foreach (var productList in userProducts)
+						{
+							var catename = GetCategoryById(productList.IDCategory);
+							<div class="card mb-3 position-relative shadow-sm" style="border-radius: 10px;">
+								<div class="row g-0">
+									<div class="col-md-4">
+										<img src="@GetImage(productList.IDProduct)" class="img-fluid rounded-start" alt="@productList.Name" />
+									</div>
 
-								<div class="col-md-8">
-									<div class="card-body">
-										<h5 class="card-title">@productList.Name</h5>
-										<p class="card-text text-muted" style="color:green;">
-											<i class="fa fa-tag"></i> @productList.Price.ToString("N0") VND
-										</p>
-										<p class="card-text text-muted">
-											<i class="fa fa-list-alt"></i> Loại: @categoryNames.GetValueOrDefault(productList.IDCategory, "Không xác định")
-										</p>
-										<p class="card-text text-muted">
-											<i class="fa fa-user"></i> Người bán: @productList.UserName
-										</p>
-										<p class="card-text text-muted">
-											<i class=""></i>Mức độ: @productList.ProrityLevel
-										</p>
-										<p class="card-text text-muted">
-											<i class="fa fa-check-circle"></i> Trạng thái:
-											<span class="text-success">@productList.Status</span>
-										</p>
-										<p class="card-text text-muted">
-											<i class="fa fa-clock"></i> Thời gian đăng: @productList.StartDate.ToString()
-										</p>
-										<div class="d-flex justify-content-end">
-											@if (productList.Status == "Đã duyệt")
-											{
-												@if (productList.ProrityLevel == "Phổ thông")
+									<div class="col-md-8">
+										<div class="card-body">
+											<h5 class="card-title">@productList.Name</h5>
+											<p class="card-text text-muted" style="color:green;">
+												<i class="fa fa-tag"></i> @productList.Price.ToString("N0") VND
+											</p>
+											@* Hiển thị tên danh mục tương ứng *@
+											<p class="card-text text-muted">
+												<i class="fa fa-list-alt"></i> Loại: @categoryNames.GetValueOrDefault(productList.IDCategory, "Không xác định")
+											</p>
+											<p class="card-text text-muted">
+												<i class="fa fa-user"></i> Người bán: @productList.UserName
+											</p>
+											<p class="card-text text-muted">
+												<i class=""></i>Mức độ: <span class="text-success">@productList.ProrityLevel</span>
+											</p>
+											<p class="card-text text-muted">
+												<i class="fa fa-check-circle"></i> Trạng thái:
+												<span class="text-success">@productList.Status</span>
+											</p>
+											<p class="card-text text-muted">
+												<i class="fa fa-clock"></i> Thời gian đăng: @productList.StartDate.ToString()
+											</p>
+											<div class="d-flex justify-content-end">
+												@if (productList.Status == "Đã duyệt")
 												{
-													<button class="btn btn-info me-2" @onclick="() => UpgradePriorityLevel(productList.IDProduct)">
-														<i class="fa fa-arrow-up"></i> Nâng cấp
-													</button>
+													@if (isCurrentUser)
+													{
+														@if (productList.ProrityLevel == "Phổ thông")
+														{
+															<button class="btn btn-info me-2" @onclick="() => UpgradePriorityLevel(productList.IDProduct)">
+																<i class="fa fa-arrow-up"></i> Nâng cấp
+															</button>
+														}
+														<a href="/updatepost/@productList.IDProduct">
+															<button class="btn btn-warning me-2">
+																<i class="fa fa-edit"></i> Sửa
+															</button>
+														</a>
+														<button class="btn btn-danger me-2" @onclick="() => DeleteProduct(productList.IDProduct)">
+															<i class="fa fa-trash"></i> Xóa
+														</button>
+													}
 												}
-												<a href="/updatepost/@productList.IDProduct">
-													<button class="btn btn-warning me-2">
-														<i class="fa fa-edit"></i> Sửa
-													</button>
-												</a>
-												<button class="btn btn-danger me-2" @onclick="() => DeleteProduct(productList.IDProduct)">
-													<i class="fa fa-trash"></i> Xóa
-												</button>
-											}
-										</div>
+											</div>
 
+										</div>
 									</div>
 								</div>
+								<div class="position-absolute top-0 end-0 p-2">
+									<i class="fa fa-heart" style="font-size: 1.5rem; color: grey; cursor: pointer;"></i>
+								</div>
 							</div>
-							<div class="position-absolute top-0 end-0 p-2">
-								<i class="fa fa-heart" style="font-size: 1.5rem; color: grey; cursor: pointer;"></i>
-							</div>
-						</div>
+						}
 					}
+					else if (!string.IsNullOrEmpty(productErrorMessage))
+					{
+						<div class="alert alert-waring">@productErrorMessage</div>
+					}
+					else
+					{
+						<p class="text-muted">Không có sản phẩm nào được đăng.</p>
+					}
+					<!-- Pagination -->
+					<nav aria-label="Page navigation">
+						<ul class="pagination justify-content-center">
+							<li class="page-item @(currentPage == 1 ? "disabled" : "")">
+								<a class="page-link text-black" aria-label="Previous" @onclick="() => ChangePage(currentPage - 1)">
+									<span aria-hidden="true">&laquo;</span>
+								</a>
+							</li>
+							@for (var i = 1; i <= CalculateTotalPages(totalPosts, itemsPerPage); i++)
+							{
+								<li class="page-item @(currentPage == i ? "active" : "")">
+									<a class="page-link text-black" @onclick="() => ChangePage(i)">
+										@i
+									</a>
+								</li>
+							}
+							<li class="page-item @(currentPage == CalculateTotalPages(totalPosts, itemsPerPage) ? "disabled" : "")">
+								<a class="page-link text-black" aria-label="Next" @onclick="() => ChangePage(currentPage + 1)">
+									<span aria-hidden="true">&raquo;</span>
+								</a>
+							</li>
+						</ul>
+					</nav>
+
 				}
-				else if (!string.IsNullOrEmpty(productErrorMessage))
+				else if (activeTab == "favorites")
 				{
-					<div class="alert alert-danger">@productErrorMessage</div>
-				}
-				else
-				{
-					<p class="text-muted">Không có sản phẩm nào được đăng.</p>
-				}
-				<nav aria-label="Page navigation">
-					<ul class="pagination justify-content-center">
-						<li class="page-item"><a class="page-link" href="#">1</a></li>
-						<li class="page-item"><a class="page-link" href="#">2</a></li>
-						<li class="page-item"><a class="page-link" href="#">3</a></li>
-						<li class="page-item"><a class="page-link" href="#">...</a></li>
-						<li class="page-item"><a class="page-link" href="#">67</a></li>
-						<li class="page-item"><a class="page-link" href="#">68</a></li>
-					</ul>
-				</nav>
+					@if (isLoadingFavorites)
+					{
+						<p>Đang tải danh sách yêu thích...</p>
+					}
+					else if (!string.IsNullOrEmpty(favoriteErrorMessage))
+					{
+						<p class="text-danger">@favoriteErrorMessage</p>
+					}
+					else if (favorites.Count > 0)
+					{
+						foreach (var item in favorites)
+						{
+							var product = favoriteProducts.ContainsKey(item.IDProduct) ? favoriteProducts[item.IDProduct] : null;
+							if (product != null)
+							{
+								var catename = GetCategoryById(product.IDCategory); // Lấy tên danh mục nếu cần
+								<div class="card mb-3 position-relative shadow-sm" style="border-radius: 10px;">
+									<div class="row g-0">
+										<div class="col-md-4">
+											<img src="@GetImage(item.IDProduct)" class="img-fluid rounded-start" alt="@product.Name" />
+										</div>
+										<div class="col-md-8">
+											<div class="card-body">
+												<h5 class="card-title">@product.Name</h5>
+												<p class="card-text text-muted" style="color:green;">
+													<i class="fa fa-tag"></i> @product.Price.ToString("N0") VND
+												</p>
+												<p class="card-text text-muted">
+													<i class="fa fa-list-alt"></i> Loại: @categoryNames.GetValueOrDefault(product.IDCategory, "Không xác định")
+												</p>
+												<p class="card-text text-muted">
+													<i class="fa fa-user"></i> Người bán: @product.UserName
+												</p>
+												<div class="d-flex justify-content-end">
+													<button class="btn btn-danger me-2" @onclick="() => RemoveFavorite(item.IDProduct)">
+														<i class="fa fa-trash"></i> Xóa
+													</button>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="position-absolute top-0 end-0 p-2">
+										<i class="fa fa-heart" style="font-size: 1.5rem; color: red; cursor: pointer;"></i>
+									</div>
+								</div>
+							}
+						}
+					}
+					else
+					{
+						<p class="text-muted">Danh sách yêu thích trống.</p>
+					}			}
 			</div>
 		</div>
+
+		<div class="reviews-wrapper">
+
+			@* @if (IsReviewsVisible)
+			{
+				<!-- Nút mở Modal Đánh giá -->
+				<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ratingModal">
+					Đánh giá
+				</button>
+
+				<!-- Modal Đánh giá -->
+				<div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title" id="ratingModalLabel">Đánh giá sản phẩm</h5>
+								<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+							</div>
+							<div class="modal-body">
+								<!-- Form đánh giá -->
+								<form>
+									<div class="rating-container">
+										@for (int i = 5; i >= 1; i--) // Hiển thị số sao từ 5 đến 1
+										{
+											int m1i = i;
+											<input type="radio" id="star-@i" name="rating" class="rate" value="@i" @onclick="() => SetRating(m1i)" />
+										}
+									</div>
+									<img src="@image" alt="Alternate Text" width="10%" />
+									<textarea name="reviewText" rows="5" class="w-100" placeholder="Nhập đánh giá..." @bind="comment"></textarea>
+								</form>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+								<button type="button" class="btn btn-success" @onclick="SubmitRating">Gửi</button>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Danh sách đánh giá -->
+				<div class="user-reviews">
+					<h4>Đánh giá người dùng</h4>
+					<div class="reviews-container">
+						@if (userRatings != null)
+						{
+							@foreach (var review in userRatings)
+							{
+								<div class="review-card">
+									<p>@review.Star</p>
+									<div class="review-header">
+										<strong class="review-username">@review.UserName</strong>
+									</div>
+									<div class="review-content">
+										<p>@review.Comment</p>
+									</div>
+								</div>
+							}
+						}
+						else
+						{
+							<p class="no-reviews">Không có đánh giá nào.</p>
+						}
+					</div>
+				</div>
+			} *@
+		</div>
+
 	</div>
 }
-
 <style>
 	.checked {
 		color: yellow;
 	}
 </style>
 @code {
-	private async Task DeleteProduct(int productId)
-	{
-		try
-		{
-			var response = await HttpClient.DeleteAsync($"api/product/DeleteProduct/{productId}");
+	// private bool IsReviewsVisible { get; set; } = false;
+	// private string comment = "";
+	// private Rating ratingModel = new Rating();
+	// private int selectedRating = 0;
+	// private List<RatingDto> userRatings = new List<RatingDto>();
 
-			if (response.IsSuccessStatusCode)
-			{
-				var productToDelete = userProducts.FirstOrDefault(p => p.IDProduct == productId);
-				if (productToDelete != null)
-				{
-					productToDelete.Status = "Đã xóa";
-				}
-				await JSRuntime.InvokeVoidAsync("alert", "Sản phẩm đã được xóa thành công!");
-			}
-			else
-			{
-				var errorResponse = await response.Content.ReadAsStringAsync();
-				await JSRuntime.InvokeVoidAsync("alert", $"Lỗi: {errorResponse}");
-			}
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"Lỗi xảy ra khi xóa sản phẩm: {ex.Message}");
-			await JSRuntime.InvokeVoidAsync("alert", "Đã xảy ra lỗi khi xóa sản phẩm.");
-		}
-	}
+	// private void ToggleReviews()
+	// {
+	// 	IsReviewsVisible = !IsReviewsVisible;
+	// }
 
-	private async Task UpgradePriorityLevel(int productId)
-	{
-		try
-		{
-			var response = await HttpClient.PutAsync($"api/product/UpgradeProrityLevel/{productId}", null);
-			if (response.IsSuccessStatusCode)
-			{
-				var productToUpdate = userProducts.FirstOrDefault(p => p.IDProduct == productId);
-				if (productToUpdate != null)
-				{
-					productToUpdate.ProrityLevel = "Ưu tiên";
-				}
-				await JSRuntime.InvokeVoidAsync("alert", "Sản phẩm đã được nâng cấp thành công!");
-			}
-			else
-			{
-				var errorResponse = await response.Content.ReadAsStringAsync();
-				Console.WriteLine($"Lỗi khi nâng cấp sản phẩm: {errorResponse}");
-				await JSRuntime.InvokeVoidAsync("alert", $"Lỗi: {errorResponse}");
-			}
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"Lỗi xảy ra khi nâng cấp sản phẩm: {ex.Message}");
-			await JSRuntime.InvokeVoidAsync("alert", "Đã xảy ra lỗi khi nâng cấp sản phẩm.");
-		}
-	}
+	// private void SetRating(int rating)
+	// {
+	// 	selectedRating = rating;
+	// }
+
+	// private async Task SubmitRating()
+	// {
+	// 	try
+	// 	{
+	// 		// Kiểm tra dữ liệu đầu vào
+	// 		if (selectedRating == 0 || string.IsNullOrWhiteSpace(comment))
+	// 		{
+	// 			Console.WriteLine("Vui lòng nhập đánh giá và chọn số sao.");
+	// 			return;
+	// 		}
+
+	// 		// Tạo URL để gửi yêu cầu POST
+	// 		var url = $"api/Rating/AddRating?billDetailId={idBillDetail}&star={selectedRating}&comment={comment}&image={image}";
+
+	// 		// Gửi yêu cầu API
+	// 		var response = await HttpClient.PostAsync(url, null);
+
+	// 		if (response.IsSuccessStatusCode)
+	// 		{
+	// 			Console.WriteLine("Đánh giá thành công");
+	// 			await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "reviewInfo");
+	// 			NavigationManager.NavigateTo($"ThongTinNguoiDung/{username}", forceLoad: true);
+	// 			// Xử lý sau khi gửi thành công, ví dụ: làm mới danh sách đánh giá
+	// 		}
+	// 		else
+	// 		{
+	// 			var error = await response.Content.ReadAsStringAsync();
+	// 			Console.WriteLine($"Lỗi: {error}");
+	// 		}
+	// 	}
+	// 	catch (Exception ex)
+	// 	{
+	// 		Console.WriteLine($"Có lỗi xảy ra: {ex.Message}");
+	// 	}
+	// }
 }
+<style>
+	.rating-container {
+		display: flex;
+		flex-direction: row-reverse;
+	}
 
+	.rate {
+		appearance: none;
+	}
+
+		.rate::before {
+			content: "\2605";
+			color: #ccc;
+			font-size: 2rem;
+			cursor: pointer;
+		}
+
+		.rate:checked::before, .rate:checked ~ .rate::before {
+			color: #ffb800;
+		}
+</style>
 <script>
 	function triggerFileInput() {
 		document.getElementById('fileInput').click();
