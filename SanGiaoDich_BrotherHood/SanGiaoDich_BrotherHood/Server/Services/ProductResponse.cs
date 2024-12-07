@@ -531,26 +531,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
             return revenue;
         }
-        public async Task<IEnumerable<dynamic>> GetStatisticsByStatusAsync()
-        {
-            var products = await _context.Products.ToListAsync();
-
-            if (products == null || !products.Any())
-            {
-                throw new InvalidOperationException("Không có sản phẩm nào để thống kê.");
-            }
-
-            var statistics = products
-                .GroupBy(p => p.Status)
-                .Select(group => new
-                {
-                    Status = group.Key,
-                    Count = group.Count()
-                })
-                .ToList();
-
-            return statistics;
-        }
+       
     }
       
 }

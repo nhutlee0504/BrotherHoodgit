@@ -85,7 +85,7 @@ namespace API
             services.AddScoped<IProduct, ProductResponse>();
             services.AddScoped<IFavorite, FavoriteResponse>();
             services.AddScoped<IImageProduct, ImageProductResponse>();
-            services.AddScoped<IMessage, MessageResponse>();
+            //services.AddScoped<IMessage, MessageResponse>();
             services.AddScoped<IUser, UserService>();
             services.AddScoped<IAdmin, AdminService>();
             services.AddScoped<IRating, RatingService>();

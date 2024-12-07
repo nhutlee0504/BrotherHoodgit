@@ -50,6 +50,7 @@ else
                 <th>Họ và tên</th>
                 <th>Email</th>
                 <th>Số điện thoại</th>
+                <th>Quyền</th> <!-- Thêm cột -->
                 <th>Trạng thái</th>
                 <th>Hành động</th>
             </tr>
@@ -62,6 +63,7 @@ else
                     <td>@user.FullName</td>
                     <td>@user.Email</td>
                     <td class="text-center">@user.PhoneNumber</td>
+                    <td>@user.Role</td> <!-- Hiển thị quyền -->
                     <td>@(user.IsDelete == true ? "Bị cấm" : "Hoạt động")</td>
                     <td class="text-center">
                         <button class="btn btn-primary me-2">Chỉnh sửa</button>
@@ -78,6 +80,7 @@ else
             }
         </tbody>
     </table>
+
 }
 
 @code {
