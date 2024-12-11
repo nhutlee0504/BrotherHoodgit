@@ -5,349 +5,102 @@
 @inject NavigationManager Navigation
 
 <style>
-    body {
-        background-color: #f4f7f6;
-        
-    }
-
-    #ChatBox {
-        background: #fff;
-        border-radius: 0.55rem;
-        border: 1px solid #ced4da;
-    }
-
-        #ChatBox * {
-            /* width */
-            /* Track */
-            /* Handle */
-            /* Handle on hover */
-        }
-
-            #ChatBox *::-webkit-scrollbar {
-                width: 5px;
-            }
-
-            #ChatBox *::-webkit-scrollbar-track {
-                background: transparent;
-            }
-
-            #ChatBox *::-webkit-scrollbar-thumb {
-                -webkit-transition: 0.3s all;
-                -moz-transition: 0.3s all;
-                -ms-transition: 0.3s all;
-                -o-transition: 0.3s all;
-                transition: 0.3s all;
-                background-color: #cccccc;
-                border-radius: 0.25rem;
-            }
-
-                #ChatBox *::-webkit-scrollbar-thumb:hover {
-                    background-color: #555;
-                }
-
-        #ChatBox .user-avatar {
-            border-radius: 9999999px;
-            border: 5px solid #00000015;
-            overflow: hidden;
-        }
-
-        #ChatBox .sidebar {
-            border-right: 1px solid #ced4da;
-            padding: 1rem;
-        }
-
-            #ChatBox .sidebar .users-list {
-                list-style-type: none;
-                padding: 0;
-                margin: 0;
-                max-height: 100%;
-                overflow-x: hidden;
-                overflow-y: scroll;
-            }
-
-                #ChatBox .sidebar .users-list li {
-                    cursor: pointer;
-                    padding: 0.25rem;
-                    -webkit-transition: 0.3s all;
-                    -moz-transition: 0.3s all;
-                    -ms-transition: 0.3s all;
-                    -o-transition: 0.3s all;
-                    transition: 0.3s all;
-                    margin-bottom: 0.25rem;
-                }
-
-                    #ChatBox .sidebar .users-list li.active, #ChatBox .sidebar .users-list li:hover {
-                        background: #75e8b2;
-                        border-radius: 0.25rem;
-                        color: white;
-
-                    }
-
-                    #ChatBox .sidebar .users-list li .user-name {
-                        font-size: 1rem;
-                    }
-
-                    #ChatBox .sidebar .users-list li .status {
-                        text-transform: uppercase;
-                        font-weight: bold;
-                        font-size: 9px;
-                        color: #adb5bd;
-                    }
-
-        #ChatBox .chat-frame {
-            padding: 1rem;
-        }
-
-            #ChatBox .chat-frame .action-frame {
-                padding-bottom: 1rem;
-                border-bottom: 1px solid #ced4da;
-            }
-
-            #ChatBox .chat-frame .message-history {
-                max-height: 500px;
-                overflow-x: hidden;
-                overflow-y: scroll;
-            }
-
-                #ChatBox .chat-frame .message-history .message-line {
-                    padding: 1rem;
-                }
-
-                    #ChatBox .chat-frame .message-history .message-line .user-avatar {
-                        width: fit-content;
-                    }
-
-                    #ChatBox .chat-frame .message-history .message-line.reply .message:before {
-                        left: 20px;
-                        right: initial;
-                    }
-
-                    #ChatBox .chat-frame .message-history .message-line .message {
-                        background: #efefef;
-                        border-radius: 0.55rem;
-                        font-size: 14px;
-                        color: #2d2d2d;
-                        padding: 1rem;
-                        width: fit-content;
-                        position: relative;
-                    }
-
-                        #ChatBox .chat-frame .message-history .message-line .message:before {
-                            content: "";
-                            display: block;
-                            position: absolute;
-                            top: -25px;
-                            right: 20px;
-                            border-top: 15px solid transparent;
-                            border-right: 15px solid transparent;
-                            border-bottom: 15px solid #efefef;
-                            border-left: 15px solid transparent;
-                        }
-
-            #ChatBox .chat-frame .inputs {
-                padding-top: 1rem;
-                border-top: 1px solid #ced4da;
-                
-            }
-
-    .user-avatar {
-        width: 40px;
-        height: 40px;
-        overflow: hidden;
-        border-radius: 50%; 
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-        .user-avatar .user-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center; 
-        }
-
+  
 </style>
 
-<div class="container">
-    <div id="ChatBox">
-        <div class="row">
-            <div class="col-md-4">
-                <div class="sidebar h-100">
-                    <form>
-                        <div class="form-group">
-                            <div class="input-group mb-3">
-                                <span class="input-group-text" id="basic-addon1"><i class="fas fa-search"></i></span>
-                                <input type="text" class="form-control" placeholder="Tìm kiếm...." aria-label="Search user" aria-describedby="basic-addon1" @bind="searchTerm">
-                            </div>
+<div class="container-fluid">
+    <div id="ChatBox" class="sidebar-visible">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Nút toggle-sidebar ở phần chat frame -->
+            <button class="toggle-sidebar d-md-none" onclick="ToggleSidebar()">&#9776;</button>
+            <form>
+                <div class="form-group">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon1"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Tìm kiếm...." @bind="searchTerm">
+                    </div>
+                </div>
+            </form>
+            <hr>
+            <ul class="users-list">
+                @foreach (var conversation in filteredConversationList)
+                {
+                    var otherUser = conversation.Username == username ? conversation.UserGive : conversation.Username;
+                    var userInfo = userInfoCache.ContainsKey(otherUser) ? userInfoCache[otherUser] : ("default-image.png", "Unknown User");
+
+                    <li class="list-group-item user-profile conversation-item d-flex align-items-center @(selectedUser == conversation.Username ? "active" : "")"
+                        @onclick="() => { LoadMessages(conversation); HideSidebar(); }">
+                        <div class="user-avatar me-3">
+                            <img src="@userInfo.Item1" alt="User Image" class="user-image" />
                         </div>
-                    </form>
-                    <hr>
-                    <ul class="users-list">
-                        @foreach (var conversation in filteredConversationList)
-                        {
-                            var otherUser = conversation.Username == username ? conversation.UserGive : conversation.Username;
-                            var userInfo = userInfoCache.ContainsKey(otherUser) ? userInfoCache[otherUser] : ("default-image.png", "Unknown User");
 
-                            <li class="list-group-item user-profile conversation-item d-flex align-items-center @(selectedUser == conversation.Username ? "active" : "")"
-                                @onclick="() => LoadMessages(conversation)">
-                                <div class="user-avatar me-3">
-                                    <img src="@userInfo.Item1" alt="User Image" class="user-image" />
-                                </div>
+                        <div class="d-flex flex-column">
+                            <strong class="user-name">
+                                @userInfo.Item2
+                            </strong>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
 
-                                <div class="d-flex flex-column">
-                                    <strong class="user-name">
-                                        @userInfo.Item2
-                                    </strong>
-                                </div>
-                            </li>
-                        }
-
-                    </ul>
+        <!-- Chat Frame -->
+        <div class="chat-frame">
+            <button class="toggle-sidebar d-md-none" onclick="ToggleSidebar()">&#9776;</button>
+            <div class="action-frame d-flex align-items-center">
+                <div class="user-avatar me-3">
+                    <img src="https://plhold.com/avatar/60?text=Avatar" alt="User Avatar" />
+                </div>
+                <div class="d-flex flex-column">
+                    <strong class="user-name">@selectedUser</strong>
                 </div>
             </div>
-            <div class="col-md-8">
-                <div class="chat-frame d-flex flex-column justify-content-between">
-                    <div class="action-frame d-flex align-items-center">
-                        <div class="user-avatar me-3">
-                            <img src="https://plhold.com/avatar/60?text=Angelien+Austėja+Rakes" alt="" />
+            <div class="message-history py-3">
+                @if (messageList.Any())
+                {
+                    @foreach (var message in messageList)
+                    {
+                        <div class="message-line d-flex flex-column @(message.UserSend == username ? "text-end" : "text-start")">
+                            <p class="message">
+                                @message.Content
+                                <small class="date d-block mt-1">
+                                    @message.CreatedDate.ToString("HH:mm dd/MM/yyyy")
+                                </small>
+                            </p>
                         </div>
-                        <div class="d-flex flex-column">
-                            <strong class="user-name">@selectedUser</strong>
-                        </div>
-                        <div class="action-buttons d-flex ms-auto">
-                            <button class="btn btn-outline-secondary me-2"><i class="fas fa-camera"></i></button>
-                            <button class="btn btn-outline-info me-2"><i class="fas fa-image"></i></button>
-                            <button class="btn btn-outline-primary me-2"><i class="fas fa-cogs"></i></button>
-                            <div class="dropstart">
-                                <button class="btn btn-outline-success dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                                    <li><a class="dropdown-item" href="#">Block</a></li>
-                                    <li><a class="dropdown-item" href="#">Ignore</a></li>
-                                    <li><a class="dropdown-item" href="#">Remove friend</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="message-history py-3">
-                        @* Đoạn chat *@
-                        @if (!string.IsNullOrEmpty(errorMessage))
-                        {
-                            <div class="alert alert-danger" role="alert">
-                                @errorMessage
-                            </div>
-                        }
-                        @if (messageList.Any())
-                        {
-                            @foreach (var message in messageList)
-                            {
-                                <div class="message-line d-flex flex-column @(message.UserSend == username ? "text-end" : "text-start")">
-                                    <div class="d-flex @(message.UserSend == username ? "justify-content-end" : "align-items-end") mb-3">
-                                        @* <div class="user-avatar">
-                                                <img src="https://plhold.com/avatar/60?text=@message.UserSend" alt="Avatar of @message.UserSend" />
-                                            </div> *@
-                                    </div>
-                                    <p class="message @(message.UserSend == username ? "ms-auto" : "")">
-                                        @message.Content
-                                        <small class="date d-flex @(message.UserSend == username ? "justify-content-start" : "justify-content-end") mt-3">
-                                            @message.CreatedDate.ToString("HH:mm dd/MM/yyyy")
-                                        </small>
-                                    </p>
-                                </div>
-                            }
-                        }
-                        else
-                        {
-                            <p>Chưa có tin nhắn nào.</p>
-                        }
-
-                <!-- Tools dropdown -->
-                @* <div class="dropdown">
-                    <button class="btn-settings" type="button">
-                        <i class="fa-solid fa-briefcase"></i>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a href="#">Công cụ 1</a></li>
-                        <li><a href="#">Công cụ 2</a></li>
-                        <li><a href="#">Công cụ 3</a></li>
-                    </ul>
-                </div> *@
-
-
+                    }
+                }
+                else
+                {
+                    <p class="text-center">Chưa có tin nhắn nào.</p>
+                }
             </div>
-            <div class="col-md-8">
-                <div class="chat-frame d-flex flex-column justify-content-between">
-                    <div class="action-frame d-flex align-items-center">
-                        <div class="user-avatar me-3">
-                            <img src="https://plhold.com/avatar/60?text=Angelien+Austėja+Rakes" alt="" />
-                        </div>
-                        <div class="d-flex flex-column">
-                            <strong class="user-name">@selectedUser</strong>
-                        </div>
-                        <div class="action-buttons d-flex ms-auto">
-                            <button class="btn btn-outline-secondary me-2"><i class="fas fa-camera"></i></button>
-                            <button class="btn btn-outline-info me-2"><i class="fas fa-image"></i></button>
-                            <button class="btn btn-outline-primary me-2"><i class="fas fa-cogs"></i></button>
-                            <div class="dropstart">
-                                <button class="btn btn-outline-success dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                                    <li><a class="dropdown-item" href="#">Block</a></li>
-                                    <li><a class="dropdown-item" href="#">Ignore</a></li>
-                                    <li><a class="dropdown-item" href="#">Remove friend</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="message-history py-3">
-                        @* Đoạn chat *@
-                        @if (!string.IsNullOrEmpty(errorMessage))
-                        {
-                            <div class="alert alert-danger" role="alert">
-                                @errorMessage
-                            </div>
-                        }
-                        @if (messageList.Any())
-                        {
-                            @foreach (var message in messageList)
-                            {
-                                <div class="message-line d-flex flex-column @(message.UserSend == username ? "text-end" : "text-start")">
-                                    <div class="d-flex @(message.UserSend == username ? "justify-content-end" : "align-items-end") mb-3">
-                                        @* <div class="user-avatar">
-                                                <img src="https://plhold.com/avatar/60?text=@message.UserSend" alt="Avatar of @message.UserSend" />
-                                            </div> *@
-                                    </div>
-                                    <p class="message @(message.UserSend == username ? "ms-auto" : "")">
-                                        @message.Content
-                                        <small class="date d-flex @(message.UserSend == username ? "justify-content-start" : "justify-content-end") mt-3">
-                                            @message.CreatedDate.ToString("HH:mm dd/MM/yyyy")
-                                        </small>
-                                    </p>
-                                </div>
-                            }
-                        }
-                        else
-                        {
-                            <p class="justify-content:center;">Chưa có tin nhắn nào.</p>
-                        }
-
-                    </div>
-                    <div class="inputs mt-auto">
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" placeholder="Nhập tinh nhắn" aria-label="Nhắn tin" aria-describedby="button-addon2" @bind="messageContent">
-                            <button class="btn btn-outline-secondary" type="button" id="button-addon2" @onclick="SendMessage" disabled="@string.IsNullOrWhiteSpace(selectedUser)"><i class="fas fa-paper-plane"></i></button>
-                        </div>
-                    </div>
+            <div class="inputs mt-auto">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Nhập tin nhắn" @bind="messageContent">
+                    <button class="btn" @onclick="SendMessage" disabled="@string.IsNullOrWhiteSpace(selectedUser)">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
-    </div>
-</div>
+
+<script>
+    function ToggleSidebar() {
+        const chatBox = document.getElementById('ChatBox');
+        chatBox.classList.toggle('sidebar-visible');
+    }
+
+
+    function HideSidebar() {
+        const chatBox = document.getElementById('ChatBox');
+        chatBox.classList.remove('sidebar-visible');
+    }
+</script>
+
 
 
 @code{
@@ -377,6 +130,13 @@
         }
     }
 
+    private void HideSidebar()
+    {
+        // Gọi JavaScript để ẩn sidebar
+        jsruntime.InvokeVoidAsync("ToggleSidebar");
+    }
+
+    // Các phương thức và biến khác như LoadMessages, messageList...
     // Hàm kiểm tra token và tải thông tin người dùng
     private async Task CheckTokenAndLoadAccountInfo()
     {
