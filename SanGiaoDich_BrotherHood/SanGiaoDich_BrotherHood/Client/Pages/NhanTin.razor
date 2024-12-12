@@ -28,7 +28,7 @@
                     <li class="list-group-item user-profile conversation-item d-flex align-items-center @(selectedUser == conversation.Username ? "active" : "")"
                         @onclick="() => { LoadMessages(conversation); HideSidebar(); }">
                         <div class="user-avatar me-3">
-                            <img src="@userInfo.Item1" alt="User Image" class="user-image" />
+                            <img src="@userInfo.Item1" alt="User Image" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover;" />
                         </div>
 
                         <div class="d-flex flex-column">
@@ -46,7 +46,7 @@
             <button class="toggle-sidebar d-md-none" onclick="ToggleSidebar()">&#9776;</button>
             <div class="action-frame d-flex align-items-center">
                 <div class="user-avatar me-3">
-                    <img src="https://plhold.com/avatar/60?text=Avatar" alt="User Avatar" />
+                    <img src="@selectedUserImage" alt="User Avatar" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover;" />
                 </div>
                 <div class="d-flex flex-column">
                     <strong class="user-name">@selectedUser</strong>
@@ -112,6 +112,7 @@
     private List<Conversation> conversationList = new();
     private List<Messages> messageList = new();
     private string username;
+    private string selectedUserImage;
     private string selectedUser;
     private string messageContent;
     private System.Timers.Timer refreshTimer;
@@ -184,7 +185,6 @@
     }
     private Dictionary<string, (string Image, string FullName)> userInfoCache = new();
 
-
     private async Task LoadConversations()
     {
         try
@@ -244,7 +244,23 @@
     {
         try
         {
+            // Xác định người dùng được chọn
             selectedUser = conversation.Username == username ? conversation.UserGive : conversation.Username;
+
+            // Lấy thông tin ảnh từ userInfoCache
+            if (userInfoCache.ContainsKey(selectedUser))
+            {
+                selectedUserImage = userInfoCache[selectedUser].Image;
+            }
+            else
+            {
+                // Nếu chưa có trong cache, tải thông tin người dùng
+                var userInfo = await GetUserInfoFromAccount(selectedUser);
+                selectedUserImage = userInfo.Image;
+                userInfoCache[selectedUser] = userInfo; // Cập nhật vào cache
+            }
+
+            // Tải danh sách tin nhắn
             var url = $"api/Message/GetMessagesBetween?username={username}&selectedUser={selectedUser}";
             messageList = await http.GetFromJsonAsync<List<Messages>>(url);
         }
@@ -253,6 +269,7 @@
             Console.WriteLine($"Lỗi khi tải tin nhắn: {ex.Message}");
         }
     }
+
     private async Task SendMessage()
     {
         try
