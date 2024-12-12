@@ -97,3 +97,81 @@
     font-size: 1.5rem;
     font-weight: 600;
 }
+
+
+
+.checkout-container {
+    background-color: #f8f9fa;
+}
+
+.modern-input {
+    border: 1px solid #28a745;
+    border-radius: 0.5rem;
+    background-color: #dff0d8;
+    padding: 0.5rem;
+}
+
+    .modern-input:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+
+.form-group {
+    margin-bottom: 0.5rem;
+}
+
+.submit-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 0.5rem 2rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+}
+
+    .submit-btn:hover {
+        background-color: #218838;
+    }
+
+.title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.subtitle {
+    font-size: 1.5rem;
+    color: rgb(255, 255, 255);
+    display: flex;
+    align-items: center;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+}
+
+.icon {
+    color: #ffffff;
+    font-size: 1.5rem;
+    margin-right: 10px;
+}
+
+.payment-options input[type="radio"] {
+    appearance: none; /* Ẩn nút radio mặc định */
+    width: 20px;
+    height: 20px;
+    border: 2px solid #28a745; /* Màu viền cho nút */
+    border-radius: 50%; /* Định hình tròn */
+    position: relative;
+    outline: none;
+    cursor: pointer;
+}
+
+    .payment-options input[type="radio"]:checked {
+        background-color: #28a745; /* Màu nền cho nút được chọn */
+        border: 2px solid #28a745; /* Màu viền */
+    }
+
+.payment-options label:hover {
+    background-color: #f8f9fa; /* Màu nền khi hover */
+    transition: background-color 0.3s; /* Hiệu ứng chuyển đổi */
+}

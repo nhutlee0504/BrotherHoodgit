@@ -45,18 +45,53 @@
         }
     }
 
+    private string payType = "Thanh toán bằng tiền mặt";
+    private void UpdatePaymentType(string paymentType)
+    {
+        payType = paymentType; // Cập nhật giá trị của payType
+        bill.PaymentType = payType; // Đồng thời cập nhật vào bill
+    }
     private async Task PlaceOrder()
     {
-        if (selectedCartItems == null || !selectedCartItems.Any())
+        // Validate required fields
+        if (string.IsNullOrEmpty(bill.FullName))
         {
-            await jsruntime.InvokeVoidAsync("alert", "Bạn chưa chọn sản phẩm nào.");
+            errorMessage = "Họ và tên không được để trống.";
+            await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
+            return;
+        }
+        if (string.IsNullOrEmpty(bill.Email))
+        {
+            errorMessage = "Email không được để trống.";
+            await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
+            return;
+        }
+        if (string.IsNullOrEmpty(bill.DeliveryAddress))
+        {
+            errorMessage = "Địa chỉ nhận hàng không được để trống.";
+            await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
+            return;
+        }
+        if (string.IsNullOrEmpty(bill.PhoneNumber))
+        {
+            errorMessage = "Số điện thoại không được để trống.";
+            await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
             return;
         }
 
+        // Check if selected cart items are empty
+        if (selectedCartItems == null || !selectedCartItems.Any())
+        {
+            errorMessage = "Bạn chưa chọn sản phẩm nào.";
+            await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
+            return;
+        }
+
+        // Proceed with placing the order if all fields are valid
         bill.Total = totalPrice;
         bill.OrderDate = DateTime.Now;
         bill.Status = "Chờ xác nhận";
-        bill.PaymentType = "Thanh toán bằng tiền mặt";
+        bill.PaymentType = payType;
 
         try
         {
@@ -81,48 +116,54 @@
                     if (!billDetailResponse.IsSuccessStatusCode)
                     {
                         var error = await billDetailResponse.Content.ReadAsStringAsync();
-                        await jsruntime.InvokeVoidAsync("alert", $"Đã có lỗi khi thêm chi tiết đơn hàng: {error}");
+                        errorMessage = $"Đã có lỗi khi thêm chi tiết đơn hàng: {error}";
+                        await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
+                        return;
                     }
                 }
 
-                // Xóa từng sản phẩm khỏi giỏ hàng sau khi thanh toán thành công
                 foreach (var item in selectedCartItems)
                 {
                     var deleteResponse = await http.DeleteAsync($"api/CartItem/delete/{item.CartItemID}");
                     if (!deleteResponse.IsSuccessStatusCode)
                     {
                         var error = await deleteResponse.Content.ReadAsStringAsync();
-                        await jsruntime.InvokeVoidAsync("alert", $"Không thể xóa sản phẩm {item.ProductName} khỏi giỏ hàng: {error}");
+                        errorMessage = $"Không thể xóa sản phẩm {item.ProductName} khỏi giỏ hàng: {error}";
+                        await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
+                        return;
                     }
                 }
 
-                // Cập nhật giao diện
+                // Clear cart and reset total price
                 selectedCartItems.Clear();
                 totalPrice = 0;
-                await jsruntime.InvokeVoidAsync("alert", "Đặt hàng thành công");
-                navigation.NavigateTo("/");
+
+                // Show success modal
+                await jsruntime.InvokeVoidAsync("ShowModal", "orderModal");
+                navigation.NavigateTo("/", forceLoad: true);
             }
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                await jsruntime.InvokeVoidAsync("alert", $"Đặt hàng thất bại: {error}");
+                errorMessage = $"Đặt hàng thất bại: {error}";
+                await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
             }
         }
         catch (Exception ex)
         {
-            await jsruntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra: {ex.Message}");
+            errorMessage = $"Có lỗi xảy ra: {ex.Message}";
+            await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
         }
     }
-
     private async void selectAddress(int id)
-    {
-        var address = addresses.Where(x => x.IDAddress == id).FirstOrDefault();
-        if (address != null)
         {
-            bill.DeliveryAddress = $"{address.AdditionalDetail}, {address.Wardcommune}, {address.District}, {address.ProvinceCity}";
-            await jsruntime.InvokeVoidAsync("hideModal", "modalAddress");
+            var address = addresses.Where(x => x.IDAddress == id).FirstOrDefault();
+            if (address != null)
+            {
+                bill.DeliveryAddress = $"{address.AdditionalDetail}, {address.Wardcommune}, {address.District}, {address.ProvinceCity}";
+                await jsruntime.InvokeVoidAsync("hideModal", "modalAddress");
+            }
         }
-    }
 
     public class Bill
     {
@@ -166,8 +207,10 @@
         public string FullName { get; set; }
         public string PhoneNumber { get; set; }
         public string Email { get; set; }
-        public string AvatarUrl { get; set; }
+        public string ImageAccount { get; set; }
     }
+
+    private string errorMessage;
 }
 <style>
 
@@ -283,6 +326,7 @@
                 <i class="fas fa-box-open" style="color: #28a745; margin-right: 10px;"></i> Thông tin sản phẩm
             </h2>
             <div class="product-info">
+                <!-- Product Container -->
                 <div class="product-info">
                     <div class="product-container bg-white p-4 rounded shadow-sm mb-4">
                         @if (selectedCartItems != null && selectedCartItems.Any())
@@ -314,31 +358,92 @@
                     </div>
                 </div>
 
-                <div class="total-amount mt-3 p-3 rounded bg-light shadow-sm" style="border: 1px solid #ddd;">
-                    <h4 class="text-dark font-weight-bold mb-3 text-center">
-                        <i class="fas fa-wallet text-success me-2" style="font-size: 1.5em;"></i> Tổng tiền
-                    </h4>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-dark">Giá sản phẩm:</span>
-                        <span class="font-weight-bold">@($"{totalPrice:N0} VNĐ")</span>
+                <div class="seller-info-total-amount mt-4">
+                    <div class="mb-3">
+                        <h6 class="text-uppercase text-secondary font-weight-bold mb-1" style="font-size: 1rem; letter-spacing: 0.05em;">
+                            <i class="fas fa-store text-primary me-2"></i>Người bán
+                        </h6>
+                        <hr class="mt-1 mb-3" style="border-top: 1px solid #ddd;">
                     </div>
-                    <hr class="bg-success mt-2" style="height: 2px; border-radius: 5px;">
-                    <div class="d-flex justify-content-between">
-                        <span class="text-danger font-weight-bold" style="font-size: 1.5em;">Tổng cộng:</span>
-                        <span class="text-danger font-weight-bold" style="font-size: 1.5em;">@($"{totalPrice:N0} VNĐ")</span>
+                    <div class="seller-info position-relative p-2 bg-white border rounded shadow-sm d-flex align-items-center">
+                        <div class="position-relative">
+                            <img src="@sellerInfo?.ImageAccount" alt="Seller Image" class="rounded-circle me-4" style="width: 45px; height: 45px; object-fit: cover;">
+
+                        </div>
+                        <div>
+                            <p class="mb-2 font-weight-bold text-dark" style="font-size: 1.1em;">
+                                <i class="fas fa-user mr-2 text-primary"></i>@sellerInfo?.FullName<span class="badge bg-success" s>Đối tác</span>
+                            </p>
+                            <p class="mb-2 text-muted">
+                                <i class="fas fa-phone-alt mr-2 text-success"></i>@sellerInfo?.PhoneNumber
+                            </p>
+                            <p class="mb-0 text-muted">
+                                <i class="fas fa-envelope mr-2 text-warning"></i>@sellerInfo?.Email
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <h6 class="text-uppercase text-secondary font-weight-bold mb-1" style="font-size: 1rem; letter-spacing: 0.05em;">
+                                <i class="fas fa-credit-card mr-2"></i> Hình thức thanh toán
+                            </h6>
+                            <hr class="mt-1 mb-3" style="border-top: 1px solid #ddd;">
+                            <div class="payment-method bg-light p-3 rounded shadow-sm">
+                                <div class="payment-options">
+                                    <label class="d-flex align-items-center mb-2">
+                                        <input type="radio" name="payment" class="form-check-input" @onchange="@(() => UpdatePaymentType("Thanh toán bằng tiền mặt"))" checked>
+                                        <span class="ml-2">Thanh toán bằng tiền mặt</span>
+                                    </label>
+                                    <p class="text-muted ml-4" style="font-size: 0.9em;">
+                                        Bạn sẽ thanh toán trực tiếp cho người giao hàng khi nhận hàng.
+                                    </p>
+
+                                    <label class="d-flex align-items-center mb-2">
+                                        <input type="radio" name="payment" class="form-check-input" @onchange="@(() => UpdatePaymentType("Thanh toán qua ví VnPay"))">
+                                        <span class="ml-2">Thanh toán qua ví VnPay</span>
+                                    </label>
+                                    <p class="text-muted ml-4" style="font-size: 0.9em;">
+                                        Thanh toán nhanh chóng và an toàn qua ví điện tử VnPay. Đảm bảo an toàn thông tin.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Amount Section -->
+                    <div class="total-amount mt-3 p-3 rounded bg-light shadow-sm" style="border: 1px solid #ddd;">
+                        <h4 class="text-dark font-weight-bold mb-3 text-center">
+                            <i class="fas fa-wallet text-success me-2" style="font-size: 1.5em;"></i> Tổng tiền
+                        </h4>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-dark">Giá sản phẩm:</span>
+                            <span class="font-weight-bold">@($"{totalPrice:N0} VNĐ")</span>
+                        </div>
+                        @*  <div class="d-flex justify-content-between mb-2">
+                        <span class="text-dark">Thuế (10%):</span>
+                        <span class="font-weight-bold">@($"{tax:N0} VNĐ")</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                        <span class="text-dark">Vận chuyển:</span>
+                        <span class="font-weight-bold">@($"{shippingFee:N0} VNĐ")</span>
+                        </div> *@
+                        <hr class="bg-success mt-2" style="height: 2px; border-radius: 5px;">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-danger font-weight-bold" style="font-size: 1.5em;">Tổng cộng:</span>
+                            <span class="text-danger font-weight-bold" style="font-size: 1.5em;">@($"{totalPrice:N0} VNĐ")</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Submit Button -->
                 <div class="text-center mt-4">
-                    <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#orderModal">Đặt hàng</button>
+                    <button class="btn btn-success btn-lg" @onclick="PlaceOrder">Đặt hàng</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Modal thông báo đặt hàng -->
 <div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -355,12 +460,41 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="errorModalLabel">Thông báo lỗi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>@errorMessage</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 <script>
     function hideModal(modalId) {
         const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
         if (modal) {
             modal.hide();
+        }
+    }
+</script>
+<script>
+    function ShowModal(modalId) {
+        const modalElement = document.getElementById(modalId);
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        } else {
+            console.error("Modal element not found:", modalId);
         }
     }
 </script>
