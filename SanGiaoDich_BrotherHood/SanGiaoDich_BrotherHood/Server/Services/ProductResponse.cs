@@ -128,6 +128,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
             return products.Select(p => new Product
             {
+                IDProduct = p.IDProduct,
                 Name = p.Name,
                 Price = p.Price,
                 UserName = p.UserName,
