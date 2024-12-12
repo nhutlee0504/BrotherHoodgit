@@ -31,6 +31,7 @@
         public string ImageUrl { get; set; }
         public bool IsSelected { get; set; }
         public string UserName { get; set; }
+        public string FullName { get; set; }
     }
 
 
@@ -86,9 +87,9 @@
             {
                 itemUsers = await cartItemsResponse.Content.ReadFromJsonAsync<List<CartItemUser>>();
 
-                // Tiến hành xử lý chi tiết cho mỗi sản phẩm
                 foreach (var item in itemUsers)
                 {
+                    // Lấy thông tin sản phẩm
                     var product = await GetProductById(item.IdProduct);
                     if (product != null)
                     {
@@ -98,9 +99,25 @@
                         item.CategoryName = await GetCategoryNameById(product.IDCategory);
                         var images = await GetImagesByProductId(item.IdProduct);
                         item.ImageUrl = images.FirstOrDefault()?.Image;
-                        item.UserName = product.UserName; // Giả sử API trả về thông tin chủ shop
+                        item.UserName = product.UserName;
+                    }
+
+                    // Gọi API để lấy FullName thông qua UserName
+                    var accountResponse = await http.GetAsync($"api/User/GetAccountInfoByName/{item.UserName}");
+                    if (accountResponse.IsSuccessStatusCode)
+                    {
+                        var account = await accountResponse.Content.ReadFromJsonAsync<AccountInfoDto>();
+                        if (account != null)
+                        {
+                            item.FullName = account.FullName; // Gắn FullName vào item
+                        }
+                    }
+                    else
+                    {
+                        errorMessage = "Không thể lấy thông tin người dùng.";
                     }
                 }
+
                 foreach (var shopKey in itemUsers.Select(i => i.UserName).Distinct())
                 {
                     shopLockStates[shopKey] = false;
@@ -118,6 +135,7 @@
             errorMessage = $"Có lỗi xảy ra khi tải sản phẩm giỏ hàng: {ex.Message}";
         }
     }
+
 
     private async Task CheckTokenAndLoadAccountInfo()
     {
@@ -428,11 +446,11 @@
                                         <!-- Checkbox của shop -->
                                         <input type="checkbox" @onchange="(e) => ToggleSelectAll((bool)e.Value, shop.Key)"
                                                disabled="@shopLockStates.GetValueOrDefault(shop.Key, false)">
-                                        <i class="bi bi-shop ms-2 me-2"></i> Shop: @shop.Key
+                                        <i class="bi bi-shop ms-2 me-2"></i> Shop: @shop.FirstOrDefault()?.FullName
+
                                     </div>
                                 </td>
                             </tr>
-
 
                             <!-- Danh sách sản phẩm của shop -->
                             @foreach (var item in shop)
@@ -452,8 +470,6 @@
                                             </span>
                                         </div>
                                     </td>
-
-
 
                                     <!-- Cột hình ảnh -->
                                     <td class="text-center align-middle">
@@ -517,47 +533,3 @@
     </div>
     <div class="col-1 col-md-1"></div>
 </div>
-
-@* 
-<div class="related-products">
-    <h2>Sản phẩm liên quan</h2>
-    <div class="product-list">
-        <div class="product-item">
-            <img src="https://shopdunk.com/images/thumbs/0029155_iphone-16-pro-max-256gb_240.png" alt="Product Image">
-            <div class="product-info">
-                <p class="product-name">Tên sản phẩm</p>
-                <p class="product-price">140.000VND</p>
-                <p class="product-location">Cần Thơ</p>
-                <p class="product-date">01/09/2024</p>
-            </div>
-        </div>
-        <div class="product-item">
-            <img src="https://shopdunk.com/images/thumbs/0029837_iphone-16-128gb_240.png" alt="Product Image">
-            <div class="product-info">
-                <p class="product-name">Tên sản phẩm</p>
-                <p class="product-price">140.000VND</p>
-                <p class="product-location">Cần Thơ</p>
-                <p class="product-date">01/09/2024</p>
-            </div>
-        </div>
-        <div class="product-item">
-            <img src="https://shopdunk.com/images/thumbs/0029336_iphone-16-plus-128gb_240.png" alt="Product Image">
-            <div class="product-info">
-                <p class="product-name">Tên sản phẩm</p>
-                <p class="product-price">140.000VND</p>
-                <p class="product-location">Cần Thơ</p>
-                <p class="product-date">01/09/2024</p>
-            </div>
-        </div>
-        <div class="product-item">
-            <img src="https://shopdunk.com/images/thumbs/0029337_iphone-16-pro-128gb_240.png" alt="Product Image">
-            <div class="product-info">
-                <p class="product-name">Tên sản phẩm</p>
-                <p class="product-price">140.000VND</p>
-                <p class="product-location">Cần Thơ</p>
-                <p class="product-date">01/09/2024</p>
-            </div>
-        </div>
-    </div>
-</div> *@
-

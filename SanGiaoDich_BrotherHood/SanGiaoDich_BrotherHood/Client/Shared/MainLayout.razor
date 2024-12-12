@@ -394,7 +394,15 @@
                                 {
                                     <div class="dropdown user-dropdown">
                                         <a class="user-dropdown-toggle" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="fas fa-user-circle"></i>
+                                            @if(accountInfo.ImageAccount == null)
+                                            {
+                                                <i class="fas fa-user-circle"></i>
+
+                                            }
+                                            else
+                                            {
+                                                <img src="@accountInfo.ImageAccount" alt="User Avatar" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                            }
                                         </a>
                                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                             <li>
@@ -460,11 +468,23 @@
                     <a class="menu-item">
                         <div class="btn-group dropup">
                             <a class="dropdown-toggle" href="#" style="padding:0;margin-bottom:7px;margin-top:2px;" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user-circle"></i>
+                                @if (IsLoggedIn && accountInfo.ImageAccount != null)
+                                {
+                                    <img src="@accountInfo.ImageAccount" alt="Avatar"
+                                         class="rounded-circle me-3" style="width: 30px; height: 30px; object-fit: cover;">
+                                }
+                                else
+                                {
+                                    <i class="fas fa-user-circle fa-2x"></i>
+                                }
                             </a>
 
                             <ul class="dropdown-menu" aria-labelledby="userDropdown">
-                                @if (!IsLoggedIn)
+                                @if (isLoading)
+                                {
+                                    <span>Loading...</span>
+                                }
+                                else if (!IsLoggedIn)
                                 {
                                     <li>
                                         <a class="custom-dropdown-item" href="/register">

@@ -86,6 +86,10 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 					Comment = r.Comment,
 					Image = r.Image,
 					UserName = r.UserName,
+                    FullName = r.FullName,
+                    ImageAccount = r.ImageAccount,
+                    ProductImage = r.ProductImage,
+                    ProductName = r.ProductName,
 				}).ToList();
 
 				return Ok(ratingDtos);
@@ -96,5 +100,19 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 			}
 		}
 
-	}
+        [HttpGet("IsProductRated")]
+        public async Task<IActionResult> IsProductRated(int billDetailId)
+        {
+            try
+            {
+                var isRated = await _ratingService.IsProductRated(billDetailId);
+                return Ok(isRated);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+    }
 }
