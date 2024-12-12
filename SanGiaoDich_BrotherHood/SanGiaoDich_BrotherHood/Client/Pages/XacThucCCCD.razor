@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using Newtonsoft.Json
 @using System.Text.Json
+@using System.IO
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
 @inject IJSRuntime jsruntime
@@ -15,26 +16,65 @@
 <div class="container">
     <div class="row">
         <div class="col-md-4">
-            <div class="upload-section">
-                <h3>Chọn ảnh CCCD</h3>
-                <InputFile OnChange="HandleFileSelected" accept="image/*" class="custom-file-input" />
+            <!-- Phần tải ảnh CCCD -->
+            <div class="upload-section card p-4 shadow-sm">
+                <h3 class="text-center mb-4">Chọn ảnh CCCD</h3>
+
+                <!-- Input cho ảnh CCCD -->
+                <div class="form-group">
+                    <InputFile OnChange="HandleCccdFileSelected" accept="image/*" class="form-control-file" />
+                </div>
 
                 @if (UploadedFile != null)
                 {
-                    <div class="mt-2">
-                        <!-- Hiển thị ảnh xem trước -->
-                        <img src="@PreviewImage" alt="Preview" class="img-fluid mb-3" />
-                        <button class="btn btn-success w-100" @onclick="VerifyFile">Xác Thực</button>
+                    <!-- Hiển thị ảnh xem trước CCCD -->
+                    <div class="mt-3 text-center">
+                        <img src="@PreviewImage" alt="Ảnh CCCD đã chọn" class="img-fluid mb-3" style="max-height: 200px; object-fit: contain;" />
                     </div>
-                }
-
-                @if (!string.IsNullOrEmpty(Error))
-                {
-                    <div class="alert alert-danger mt-2">@Error</div>
                 }
             </div>
 
+            <!-- Phần tải ảnh khuôn mặt -->
+            <div class="upload-section card mt-4 p-4 shadow-sm">
+                <h3 class="text-center mb-4">Chọn ảnh khuôn mặt</h3>
+
+                <!-- Input cho ảnh khuôn mặt -->
+                <div class="form-group">
+                    <InputFile id="faceFile" OnChange="HandleFaceFileSelected" accept="image/*" class="form-control-file" />
+                </div>
+
+                @if (faceFile != null)
+                {
+                    <!-- Hiển thị ảnh xem trước khuôn mặt -->
+                    <div class="mt-3 text-center">
+                        <img src="@PreviewImageFace" alt="Ảnh khuôn mặt đã chọn" class="img-fluid mb-3" style="max-height: 200px; object-fit: contain;" />
+                    </div>
+                }
+            </div>
+
+            <!-- Nút xác thực -->
+            @if (UploadedFile != null && faceFile != null)
+            {
+                <div class="text-center mt-4">
+                    <button class="btn btn-success w-100" @onclick="VerifyFile">Xác Thực</button>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Error))
+            {
+                <div class="alert alert-danger mt-3 text-center">@Error</div>
+            }
+            @if (!string.IsNullOrEmpty(Result))
+            {
+                <div class="result-section card mt-4 p-4 shadow-sm">
+                    <h4 class="text-center mb-3">Kết quả xác thực</h4>
+                    <div class="alert alert-info text-center">
+                        @Result
+                    </div>
+                </div>
+            }
         </div>
+
+
 
         <div class="col-md-8">
             <EditForm Model="editContext" OnValidSubmit="SubmitForm">
@@ -68,27 +108,59 @@
                         <label for="Doe" class="form-label">Ngày Hết Hạn:</label>
                         <InputText id="Doe" class="form-control" @bind-Value="RecognitionData.Doe" readonly />
                     </div>
+                    @if (RecognitionData.Id == null)
+                    {
 
-                    <button type="submit" class="btn btn-success w-100" >Xác Nhận</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-success w-100">Xác Nhận</button>
+                    }
+
                 </div>
             </EditForm>
         </div>
 
     </div>
 </div>
+@if (showModal)
+{
+    <div class="modal show" tabindex="-1" style="display: block;" aria-labelledby="modalLabel" aria-hidden="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalLabel">Thông Báo</h5>
+                    <button type="button" class="btn-close" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="fa fa-check-circle" style="color: #28a745; font-size: 50px;"></i>
+                    <p class="mt-3">Thông tin đã được lưu thành công!</p>
+                </div>
+                <div class="modal-footer">
+                    <a type="button" class="btn btn-success" href="/ThongTinNguoiDung/@accountInfo.UserName">Đóng</a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 
+<script>
+    document.getElementById('testModalButton').addEventListener('click', function () {
+        var myModal = new bootstrap.Modal(document.getElementById('successModal'));
+        myModal.show();
+    });
 
+</script>
 <style>
-    /* Tùy chỉnh giao diện cho phần chọn ảnh */
+
     .upload-section h3 {
         font-size: 1.5rem;
-        color: #28a745; /* Màu xanh lá cho tiêu đề */
+        color: #28a745;
         font-weight: bold;
         margin-bottom: 15px;
     }
 
-    /* Label thay thế cho nút file */
     .upload-section input[type="file"] + label {
         display: inline-block;
         padding: 12px 24px;
@@ -103,12 +175,10 @@
         text-align: center;
     }
 
-    /* Hiệu ứng khi hover vào nút chọn ảnh */
     .upload-section input[type="file"]:hover + label {
         background-color: #218838;
     }
 
-    /* Nút xác nhận */
     .upload-section button {
         width: 100%;
         padding: 12px;
@@ -125,7 +195,6 @@
             background-color: #218838;
         }
 
-    /* Cảnh báo lỗi */
     .alert-danger {
         font-size: 0.875rem;
         padding: 10px;
@@ -135,7 +204,7 @@
         border-radius: 5px;
         margin-top: 15px;
     }
-    /* Container chung */
+
     .container {
         margin-top: 30px;
         font-family: Arial, sans-serif;
@@ -146,14 +215,13 @@
         background-color: #f5f5f5;
         cursor: not-allowed;
     }
-    /* Tiêu đề */
+
     h3 {
         font-size: 1.5rem;
         color: #28a745;
         margin-bottom: 20px;
     }
 
-    /* Phần upload ảnh */
     .upload-section {
         padding: 20px;
         border: 1px solid #ddd;
@@ -184,7 +252,6 @@
                 background-color: #218838;
             }
 
-    /* Form xác thực */
     .card {
         border: 1px solid #ddd;
         border-radius: 8px;
@@ -239,58 +306,74 @@
 
 </style>
 @code {
+
+    private IBrowserFile? faceFile;
     private IBrowserFile? UploadedFile;
+    public string? Result;
     private string? Error;
+    private bool showModal = false;
     private RecognitionDto RecognitionData = new RecognitionDto();
     private EditContext editContext;
     private string PreviewImage { get; set; }
+    private string PreviewImageFace { get; set; }
+
     protected override void OnInitialized()
     {
         RecognitionData = new RecognitionDto();
         editContext = new EditContext(RecognitionData);
     }
 
-    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+
+    private async Task HandleCccdFileSelected(InputFileChangeEventArgs e)
     {
         var file = e.File;
         if (file != null && file.ContentType.StartsWith("image"))
         {
             try
             {
-                // Lưu trữ tệp đã chọn vào UploadedFile
                 UploadedFile = file;
                 PreviewImage = await GetImagePreviewUrl(file);
             }
             catch (Exception ex)
             {
-                Error = "Có lỗi xảy ra khi tải ảnh lên.";
+                Error = "Có lỗi xảy ra khi tải ảnh CCCD.";
             }
         }
         else
         {
-            Error = "Vui lòng chọn một tệp ảnh.";
+            Error = "Vui lòng chọn một tệp ảnh hợp lệ cho CCCD.";
         }
-        if (RecognitionData != null)
+    }
+
+    private async Task HandleFaceFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null && file.ContentType.StartsWith("image"))
         {
-            RecognitionData.Id = null;
-            RecognitionData.Name = null;
-            RecognitionData.Sex = null;
-            RecognitionData.Dob = null;
-            RecognitionData.Home = null;
-            RecognitionData.Nationality = null;
-            RecognitionData.Doe = null;
+            try
+            {
+                faceFile = file;
+                PreviewImageFace = await GetImagePreviewUrl(file);
+            }
+            catch (Exception ex)
+            {
+                Error = "Có lỗi xảy ra khi tải ảnh khuôn mặt.";
+            }
         }
-        Error = null;
+        else
+        {
+            Error = "Vui lòng chọn một tệp ảnh hợp lệ cho khuôn mặt.";
+        }
     }
 
     private async Task<string> GetImagePreviewUrl(IBrowserFile file)
     {
         var buffer = new byte[file.Size];
         await file.OpenReadStream().ReadAsync(buffer);
-
-        // Tạo URL sử dụng base64 để hiển thị ảnh
         return $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
     }
+
+
     private async Task VerifyFile()
     {
         if (UploadedFile == null)
@@ -304,17 +387,22 @@
 
     private async Task UploadImageAsync()
     {
+
         try
         {
+            bool isMatched = await VerifyFaceMatchAsync();
+            if (!isMatched)
+            {
+
+                return;
+            }
             using var content = new MultipartFormDataContent();
-            using var stream = UploadedFile.OpenReadStream();
-            var fileContent = new StreamContent(stream);
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(UploadedFile.ContentType);
-
-            content.Add(fileContent, "image", UploadedFile.Name);
-
+            var cccdStream = UploadedFile.OpenReadStream();
+            var cccdContent = new StreamContent(cccdStream);
+            cccdContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(UploadedFile.ContentType);
+            content.Add(cccdContent, "image", UploadedFile.Name);
             using var client = new HttpClient();
-            client.DefaultRequestHeaders.Add("api-key", "cpVj6Y2cOw4gV0n3MCkSnHOHxVP5oA3k");
+            client.DefaultRequestHeaders.Add("api-key", "OEwn9iQDewvnjxeCbvPnNyyyzGVoLe4s");
 
             var response = await client.PostAsync("https://api.fpt.ai/vision/idr/vnm", content);
 
@@ -326,25 +414,21 @@
                 if (recognitionData != null)
                 {
                     RecognitionData = recognitionData;
+
                 }
                 else
                 {
-                    Error = "Không thể đọc thông tin từ ảnh hoặc dữ liệu không hợp lệ.";
+                    Error = "Không tìm thấy dữ liệu trong ảnh CCCD.";
                 }
             }
             else
             {
-                Error = $"Lỗi từ API: {response.ReasonPhrase}";
+                Error = $"Lỗi từ API nhận diện ảnh CCCD: {response.ReasonPhrase}";
             }
         }
-        catch (HttpRequestException httpEx)
-        {
-            Error = "Lỗi kết nối với API: " + httpEx.Message;
-        }
-
         catch (Exception ex)
         {
-            Error = "Lỗi không xác định: " + ex.Message;
+            Error = "Lỗi trong quá trình xử lý ảnh CCCD: " + ex.Message;
         }
     }
 
@@ -357,7 +441,7 @@
 
             if (root.TryGetProperty("data", out var dataElement) && dataElement.ValueKind == JsonValueKind.Array && dataElement.GetArrayLength() > 0)
             {
-                var firstData = dataElement[0]; 
+                var firstData = dataElement[0];
                 var id = firstData.GetProperty("id").GetString();
                 var name = firstData.GetProperty("name").GetString();
                 var dob = firstData.GetProperty("dob").GetString();
@@ -366,16 +450,16 @@
                 var home = firstData.GetProperty("home").GetString();
                 var doe = firstData.GetProperty("doe").GetString();
                 return new RecognitionDto
-                        {
-                            UserName = accountInfo.UserName,
-                            Id = id,
-                            Name = name,
-                            Sex = gender,
-                            Dob = dob.ToString(),
-                            Nationality = nationality,
-                            Home = home,
-                            Doe = doe.ToString()
-                        };
+                    {
+                        UserName = accountInfo.UserName,
+                        Id = id,
+                        Name = name,
+                        Sex = gender,
+                        Dob = dob.ToString(),
+                        Nationality = nationality,
+                        Home = home,
+                        Doe = doe.ToString()
+                    };
 
             }
 
@@ -387,6 +471,74 @@
             return null;
         }
     }
+    private async Task<bool> VerifyFaceMatchAsync()
+    {
+        try
+        {
+            using var content = new MultipartFormDataContent();
+
+            var cccdStream = UploadedFile.OpenReadStream();
+            var cccdContent = new StreamContent(cccdStream);
+            cccdContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(UploadedFile.ContentType);
+            content.Add(cccdContent, "file[]", UploadedFile.Name);
+
+            var faceStream = faceFile.OpenReadStream();
+            var faceContent = new StreamContent(faceStream);
+            faceContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(faceFile.ContentType);
+            content.Add(faceContent, "file[]", faceFile.Name);
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("api-key", "OEwn9iQDewvnjxeCbvPnNyyyzGVoLe4s");
+
+            var response = await client.PostAsync("https://api.fpt.ai/dmp/checkface/v1", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var jsonDoc = JsonDocument.Parse(jsonResponse);
+
+                if (jsonDoc.RootElement.TryGetProperty("code", out var codeProperty) && codeProperty.GetString() == "200")
+                {
+                    var data = jsonDoc.RootElement.GetProperty("data");
+                    bool isMatch = data.GetProperty("isMatch").GetBoolean();
+                    double similarity = data.GetProperty("similarity").GetDouble();
+                    bool isBothImgIDCard = data.GetProperty("isBothImgIDCard").GetBoolean();
+
+                    // Trường hợp cả hai ảnh đều là ảnh căn cước
+                    if (isBothImgIDCard)
+                    {
+                        Result = $"Cả hai ảnh đều là ảnh căn cước. Không thể xác thực.";
+                        return false;
+                    }
+
+                    if (isMatch)
+                    {
+                        Result = $"Ảnh khuôn mặt và ảnh căn cước KHỚP. Độ tương đồng: {similarity}%";
+                    }
+                    else
+                    {
+                        Result = $"Ảnh khuôn mặt và ảnh căn cước KHÔNG KHỚP. Độ tương đồng: {similarity}%";
+                    }
+
+                    return isMatch; // Trả về true nếu khớp
+                }
+                else
+                {
+                    Error = "Lỗi từ API xác thực ảnh khuôn mặt.";
+                }
+            }
+            else
+            {
+                Error = "Lỗi kết nối với API xác thực ảnh khuôn mặt.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Error = "Lỗi trong quá trình xử lý xác thực ảnh khuôn mặt: " + ex.Message;
+        }
+
+        return false; // Trả về false nếu có lỗi
+    }
 
 
     private async Task SubmitForm()
@@ -396,7 +548,7 @@
             var response = await HttpClient.PostAsJsonAsync("api/User/AcceptIDCard", RecognitionData);
             if (response.IsSuccessStatusCode)
             {
-                NavigationManager.NavigateTo("/success");
+                showModal = true;
             }
             else
             {
@@ -425,7 +577,7 @@
         public string? Dob { get; set; }
         public string? Home { get; set; }
         public string? Nationality { get; set; }
-        public string?  Doe { get; set; }
+        public string? Doe { get; set; }
     }
 
     public class AddressEntities
