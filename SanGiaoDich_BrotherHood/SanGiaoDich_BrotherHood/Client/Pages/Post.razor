@@ -452,6 +452,24 @@
         </div>
     </div>
 </div>
+<div class="modal" tabindex="-1" role="dialog" id="successModal" style="display:@(isModalVisible ? "block" : "none")">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thông báo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="CloseModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>@modalMessage</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseModal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
 @code {
     private async Task CopyContent()
     {
@@ -475,6 +493,13 @@
     private string ProductDescriptionError { get; set; }
     private string ProductQuantityError { get; set; }
     private string ProrityLevelError { get; set; }
+
+    private bool isModalVisible = false;
+    private string modalMessage = string.Empty;
+    private void CloseModal()
+    {
+        isModalVisible = false;
+    }
     private void SelectPriority(string selectedPriority)
     {
         if (ProrityLevel == selectedPriority)
@@ -726,18 +751,20 @@
 
             if (uploadResponse.IsSuccessStatusCode)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Sản phẩm đã được thêm thành công!");
-                NavigationManager.NavigateTo("/", forceLoad: true);
+                modalMessage = "Sản phẩm đã được thêm thành công!";
+                isModalVisible = true;
             }
             else
             {
                 var errorMessage = await uploadResponse.Content.ReadAsStringAsync();
-                await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra khi tải ảnh: {errorMessage}");
+                modalMessage = $"Có lỗi xảy ra khi tải ảnh: {errorMessage}";
+                isModalVisible = true;
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra khi tải ảnh: {ex.Message}");
+            modalMessage = $"Có lỗi xảy ra khi tải ảnh: {ex.Message}";
+            isModalVisible = true;
         }
     }
     private string ResponseText { get; set; } = "";

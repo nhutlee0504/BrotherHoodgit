@@ -261,7 +261,7 @@ else if (userAccount != null)
 										<i class="fas fa-lock"></i> Đổi mật khẩu
 									</button>
 								</a>
-								<a href="post">
+								<a @onclick="NavigatePost">
 									<button class="btn btn-success">
 										<i class="fas fa-plus-circle"></i> Đăng bài
 									</button>
@@ -493,6 +493,22 @@ else if (userAccount != null)
 		</div>
 
 	</div>
+	<div class="modal" tabindex="-1" role="dialog" id="infoModal" style="display:@(isModalVisible ? "block" : "none")">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">Thông báo</h5>
+				</div>
+				<div class="modal-body">
+					<p>Cần xác nhận đầy đủ thông tin người dùng trước khi đăng bài.</p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-primary" @onclick="CloseModal">Đóng</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 }
 <style>
 	.checked {

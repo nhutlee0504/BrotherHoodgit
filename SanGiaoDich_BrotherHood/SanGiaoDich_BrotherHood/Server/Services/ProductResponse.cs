@@ -82,7 +82,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 Price = product.Price,
                 Description = product.Description,
                 IDCategory = product.CategoryId,
-                Status = "Đang chờ duyệt",
+                Status = "Đã duyệt",
                 ProrityLevel = product.ProrityLevel,
                 CreatedDate = DateTime.Now,
                 UpdatedDate = DateTime.Now,
