@@ -134,15 +134,25 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             {
                 throw new UnauthorizedAccessException("Không tìm thấy người dùng.");
             }
-            //user.FullName = infoAccountDto.FullName;
             user.Email = email;
-            //user.PhoneNumber = infoAccountDto.Phone;
-            //user.Gender = infoAccountDto.Gender;
-            //user.Birthday = infoAccountDto.Birthday;
-            //user.Introduce = infoAccountDto.Introduce;
 
             await _context.SaveChangesAsync();
             return user; 
+        }
+        public async Task<Account> UpdateAccountInfo2(string phone, string description)
+        {
+            var userClaims = GetUserInfoFromClaims();
+            var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userClaims.UserName);
+
+            if (user == null)
+            {
+                throw new UnauthorizedAccessException("Không tìm thấy người dùng.");
+            }
+            user.PhoneNumber = phone;
+            user.Introduce = description;
+
+            await _context.SaveChangesAsync();
+            return user;
         }
         public async Task<Account> UpdateProfileImage(IFormFile imageFile)
         {

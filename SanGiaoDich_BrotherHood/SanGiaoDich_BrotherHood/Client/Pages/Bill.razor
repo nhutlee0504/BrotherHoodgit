@@ -42,15 +42,17 @@
     .nav-pills .nav-link {
         background-color: white;
         color: #28a745;
-        border: 1px solid #28a745; 
+        border: 1px solid #28a745;
     }
+
         .nav-pills .nav-link.active {
-            background-color: #28a745; 
-            color: white; 
-            border: 1px solid #218838; 
+            background-color: #28a745;
+            color: white;
+            border: 1px solid #218838;
         }
+
         .nav-pills .nav-link:hover {
-            background-color: #e2f4e0; 
+            background-color: #e2f4e0;
             color: #218838;
         }
 
@@ -66,13 +68,13 @@
             border-color: #218838; /* Darker green on focus */
         }
 
-        button.btn:hover {
-            background-color: #218838; /* Darker green on hover */
-        }
+    button.btn:hover {
+        background-color: #218838; /* Darker green on hover */
+    }
 
-        button.btn:focus {
-            outline: none;
-        }
+    button.btn:focus {
+        outline: none;
+    }
 
     .table {
         border-collapse: collapse;
@@ -156,7 +158,6 @@
         .table .btn-danger:hover {
             background-color: #c82333;
         }
-
 
 </style>
 <div class="modal fade" id="billDetailsModal" tabindex="-1" aria-labelledby="billDetailsModalLabel" aria-hidden="true">
@@ -371,7 +372,7 @@
     private bool isLoading = true;
     private string errorMessage;
     private AccountInfoDto accountInfo;
-    private bool IsLoggedIn { get; set; } = false; // Biến để theo dõi trạng thái đăng nhập
+    private bool IsLoggedIn { get; set; } = false;
     private string searchQuery;
     private List<BillModel> bills;
     private List<BillModel> allBills;
@@ -379,10 +380,12 @@
     private int? searchIDBill;
     private List<BillDetailModel> allBillDetails = new List<BillDetailModel>();
     private List<BillModel> saleBills = new List<BillModel>();
-
+    private int totalBuyCompletedBills = 0;
+    private int totalSellCompletedBills = 0;
     protected override async Task OnInitializedAsync()
     {
         await LoadBill();
+        CountCompletedBills();
     }
     private string GetStatusBadge(string status) => status switch
     {
@@ -393,17 +396,14 @@
     };
 
 
-    // Phương thức tìm kiếm hóa đơn
     private async Task SearchBills()
     {
         try
         {
-            // Tìm kiếm theo họ và tên
             if (!string.IsNullOrWhiteSpace(searchFullName))
             {
                 bills = await httpClient.GetFromJsonAsync<List<BillModel>>($"api/Bill/GetBillsByUserName/{searchFullName}");
             }
-            // Tìm kiếm theo ID Hóa đơn
             else if (searchIDBill.HasValue)
             {
                 var bill = await httpClient.GetFromJsonAsync<BillModel>($"api/Bill/GetBillsByIDBill/{searchIDBill.Value}");
@@ -411,7 +411,6 @@
             }
             else
             {
-                // Nếu không có điều kiện tìm kiếm, hiển thị tất cả hóa đơn
                 bills = new List<BillModel>(allBills);
             }
         }
@@ -428,32 +427,28 @@
         {
             await CheckTokenAndLoadAccountInfo();
 
-            // Lấy tất cả hóa đơn
             allBills = await httpClient.GetFromJsonAsync<List<BillModel>>("api/Bill/GetBill");
             bills = new List<BillModel>(allBills);
 
-            // Lấy tất cả chi tiết hóa đơn và phân loại hóa đơn do người dùng bán
             foreach (var bill in allBills)
             {
                 var billDetails = await httpClient.GetFromJsonAsync<List<BillDetailModel>>($"api/BillDetail/GetBillDetailsByIDBill/{bill.IDBill}");
                 bill.BillDetails = billDetails ?? new List<BillDetailModel>();
 
-                // Kiểm tra từng sản phẩm trong BillDetails
                 foreach (var detail in bill.BillDetails)
                 {
-                    // Lấy thông tin sản phẩm từ API dựa trên IDProduct
                     var product = await httpClient.GetFromJsonAsync<ProductModel>($"api/Product/GetProductById/{detail.IDProduct}");
 
-                    // Kiểm tra nếu sản phẩm được bán bởi người đang đăng nhập
-                    if (product != null && product.UserName == userName)
+                    if (product != null)
                     {
-                        // Nếu có ít nhất một sản phẩm do người dùng bán, thêm hóa đơn vào saleBills
-                        saleBills.Add(bill);
-                        break; // Không cần kiểm tra tiếp các sản phẩm khác của hóa đơn này
+                        if (product.UserName == userName)
+                        {
+                            saleBills.Add(bill); // Đây là đơn hàng bán của người dùng
+                            break;
+                        }
                     }
                 }
 
-                // Thêm chi tiết vào danh sách chung
                 allBillDetails.AddRange(billDetails);
             }
         }
@@ -466,31 +461,50 @@
         }
     }
 
+    // Đếm số lượng đơn hàng hoàn thành cho mua và bán
+    private void CountCompletedBills()
+    {
+        totalBuyCompletedBills = 0;
+        totalSellCompletedBills = 0;
+
+        foreach (var bill in bills)
+        {
+            if (bill.Status == "Hoàn thành")
+            {
+                // Kiểm tra đơn hàng mua
+                if (bill.UserName == userName)
+                {
+                    totalBuyCompletedBills++;
+                }
+
+                // Kiểm tra đơn hàng bán
+                if (bill.SellerUserName == userName)
+                {
+                    totalSellCompletedBills++;
+                }
+            }
+        }
+    }
+
     private async Task AcceptBill(int idBill)
     {
         try
         {
-            // Gọi API để xác nhận đơn hàng
             var response = await httpClient.PostAsync($"api/Bill/AcceptBill/{idBill}", null);
 
-            // Kiểm tra mã trạng thái HTTP
             if (response.IsSuccessStatusCode)
             {
-                // Sau khi xác nhận thành công, lấy danh sách chi tiết hóa đơn
                 var billDetails = await httpClient.GetFromJsonAsync<List<BillDetailModel>>($"api/BillDetail/GetBillDetailsByIDBill/{idBill}");
 
                 if (billDetails != null && billDetails.Any())
                 {
-                    // Duyệt qua các BillDetails và lấy idProduct
                     foreach (var detail in billDetails)
                     {
                         var idProduct = detail.IDProduct;
 
-                        // Gọi API xử lý với idProduct
                         var result = await httpClient.PostAsync($"api/CartItem/afterAccep/{idProduct}", null);
                         if (result.IsSuccessStatusCode)
                         {
-                            // Xử lý logic sau khi gọi API xử lý sản phẩm thành công (nếu cần)
                             Console.WriteLine($"Sản phẩm với ID {idProduct} đã được xử lý thành công.");
                         }
                         else
@@ -500,48 +514,38 @@
                     }
                 }
 
-                // Thông báo cho người dùng sau khi xác nhận hóa đơn
                 await jsrunetime.InvokeVoidAsync("alert", "Đơn hàng đã được xác nhận!");
                 NavigationManager.NavigateTo("/bill", forceLoad: true);
             }
             else
             {
-                // Kiểm tra nếu phản hồi không thành công
                 var errorContent = await response.Content.ReadAsStringAsync();
                 if (errorContent.Contains("<html"))
                 {
-                    // Nếu phản hồi chứa HTML (lỗi máy chủ hoặc trang đăng nhập), xử lý thích hợp
                     await jsrunetime.InvokeVoidAsync("alert", "Đã xảy ra lỗi với API hoặc bạn chưa đăng nhập.");
                     NavigationManager.NavigateTo("/login");
                 }
                 else
                 {
-                    // Thông báo lỗi nếu có lỗi khi xác nhận
                     await jsrunetime.InvokeVoidAsync("alert", errorContent);
                 }
             }
         }
         catch (Exception ex)
         {
-            // Thông báo lỗi nếu có lỗi khi gọi API
             await jsrunetime.InvokeVoidAsync("alert", $"Lỗi: {ex.Message}");
         }
     }
-
     private async Task CancelBill(int idBill)
     {
         try
         {
-            // Gọi API để hủy xác nhận đơn hàng
             var response = await httpClient.PostAsync($"api/Bill/CancelBill/{idBill}", null);
 
-            // Kiểm tra mã trạng thái HTTP
             if (response.IsSuccessStatusCode)
             {
-                // Thông báo cho người dùng sau khi hủy xác nhận hóa đơn
                 await jsrunetime.InvokeVoidAsync("alert", "Đơn hàng đã được hủy xác nhận!");
 
-                // Tải lại danh sách hóa đơn
                 await LoadBill();
             }
             else
@@ -549,33 +553,24 @@
                 var errorContent = await response.Content.ReadAsStringAsync();
                 if (errorContent.Contains("<html"))
                 {
-                    // Xử lý lỗi nếu có HTML trong phản hồi
                     await jsrunetime.InvokeVoidAsync("alert", "Đã xảy ra lỗi với API hoặc bạn chưa đăng nhập.");
                     NavigationManager.NavigateTo("/login");
                 }
                 else
                 {
-                    // Thông báo lỗi nếu không thành công
                     await jsrunetime.InvokeVoidAsync("alert", errorContent);
                 }
             }
         }
         catch (Exception ex)
         {
-            // Thông báo lỗi nếu có lỗi khi gọi API
             await jsrunetime.InvokeVoidAsync("alert", $"Lỗi: {ex.Message}");
         }
     }
-
-
-
-    // Điều hướng tới trang chi tiết hóa đơn
     private void NavigateToBillDetails(int IDBill)
     {
         NavigationManager.NavigateTo($"/BillDetail/{IDBill}");
     }
-
-    // Class Bill mô tả thông tin hóa đơn
     public class BillDetailModel
     {
         public int IDDetail { get; set; }
@@ -583,10 +578,8 @@
         public string ProductName { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
-        public int IDProduct { get; set; } // Thêm thuộc tính này
+        public int IDProduct { get; set; }
     }
-
-
     public class BillModel
     {
         public int IDBill { get; set; }
@@ -597,22 +590,18 @@
         public string PaymentType { get; set; }
         public decimal Total { get; set; }
         public string Status { get; set; }
-        public string UserName { get; set; } // Người mua
-        public string SellerUserName { get; set; } // Người bán
+        public string UserName { get; set; }
+        public string SellerUserName { get; set; }
         public List<BillDetailModel> BillDetails { get; set; } = new List<BillDetailModel>();
     }
-
     public class ProductModel
     {
         public int IDProduct { get; set; }
         public string ProductName { get; set; }
-        public string UserName { get; set; } // Người bán sản phẩm
+        public string UserName { get; set; }
         public decimal Price { get; set; }
         public string Description { get; set; }
     }
-
-
-
     private async Task CheckTokenAndLoadAccountInfo()
     {
         var token = await jsrunetime.InvokeAsync<string>("localStorage.getItem", "token");
@@ -627,7 +616,6 @@
             NavigationManager.NavigateTo("/login");
         }
     }
-
     private class AccountInfoDto
     {
         public string UserName { get; set; }
@@ -675,25 +663,21 @@
     {
         try
         {
-            // Call the DoneBill API to mark the bill as "Completed"
             var response = await httpClient.PostAsync($"api/Bill/done/{idBill}?status=Hoàn thành", null);
 
             if (response.IsSuccessStatusCode)
             {
-                // Notify the user that the bill has been marked as completed
                 await jsrunetime.InvokeVoidAsync("alert", "Hóa đơn đã được hoàn thành!");
                 NavigationManager.NavigateTo("/bill", forceLoad: true);
             }
             else
             {
-                // If the response is not successful, show an error
                 var errorContent = await response.Content.ReadAsStringAsync();
                 await jsrunetime.InvokeVoidAsync("alert", $"Lỗi: {errorContent}");
             }
         }
         catch (Exception ex)
         {
-            // Handle any exception that might occur during the API call
             await jsrunetime.InvokeVoidAsync("alert", $"Lỗi: {ex.Message}");
         }
     }
@@ -702,25 +686,21 @@
     {
         try
         {
-            // Call the DoneBill API to mark the bill as "Received"
-            var response = await httpClient.PostAsync($"api/Bill/done/{idBill}?status=Đã nhận", null);
+            var response = await httpClient.PostAsync($"api/Bill/done/{idBill}?status=Hoàn thành", null);
 
             if (response.IsSuccessStatusCode)
             {
-                // Notify the user that the bill has been marked as received
                 await jsrunetime.InvokeVoidAsync("alert", "Hóa đơn đã được xác nhận là đã nhận!");
                 NavigationManager.NavigateTo("/bill", forceLoad: true);
             }
             else
             {
-                // If the response is not successful, show an error
                 var errorContent = await response.Content.ReadAsStringAsync();
                 await jsrunetime.InvokeVoidAsync("alert", $"Lỗi: {errorContent}");
             }
         }
         catch (Exception ex)
         {
-            // Handle any exception that might occur during the API call
             await jsrunetime.InvokeVoidAsync("alert", $"Lỗi: {ex.Message}");
         }
     }
