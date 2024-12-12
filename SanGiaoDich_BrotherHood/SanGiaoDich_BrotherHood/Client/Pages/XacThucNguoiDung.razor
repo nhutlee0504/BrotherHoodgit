@@ -1,7 +1,4 @@
 ﻿@page "/gemini"
-@using Microsoft.Extensions.Configuration
-@inject HttpClient HttpClient
-@inject IConfiguration Configuration
 
 <div class="container mt-4">
     <h3>Tạo Mô Tả Sản Phẩm</h3>
@@ -23,10 +20,15 @@
     </button>
 
     <div class="mt-4">
-        @if (!string.IsNullOrWhiteSpace(ResponseText))
+        @if (FormattedResponse.Any())
         {
             <h5>Kết Quả:</h5>
-            <p>@ResponseText</p>
+            <ul>
+                @foreach (var item in FormattedResponse)
+                {
+                    <li>@item</li>
+                }
+            </ul>
         }
         @if (!string.IsNullOrWhiteSpace(ErrorMessage))
         {
@@ -37,7 +39,7 @@
 
 @code {
     private string InputText { get; set; } = "";
-    private string ResponseText { get; set; } = "";
+    private List<string> FormattedResponse { get; set; } = new();
     private string ErrorMessage { get; set; } = "";
     private bool IsLoading { get; set; } = false;
 
@@ -51,32 +53,40 @@
 
         IsLoading = true;
         ErrorMessage = "";
-        ResponseText = "";
+        FormattedResponse.Clear();
 
         try
         {
-            var apiKey = "AIzaSyCzfoNKKRut7xcECF_VZxm9tda-u1P8jts";
+            // API Key cho Gemini
+            var apiKey = "AIzaSyC2r1g4eY-rSrBTkqeAhwRltlZJFk8sVzk";
             var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={apiKey}";
 
+            // Payload gửi lên API Gemini
             var requestBody = new
             {
                 contents = new[]
                 {
-                    new
+                new
+                {
+                    parts = new[]
                     {
-                        parts = new[]
-                        {
-                            new { text = $"Describe the product: {InputText}" }
-                        }
+                        new { text = $"Tạo mô tả sản phẩm: {InputText}, dài vừa" }
                     }
                 }
+            }
             };
 
-            var response = await HttpClient.PostAsJsonAsync(url, requestBody);
+            using var httpClient = new HttpClient(); // Tạo HttpClient tạm thời để tránh ảnh hưởng từ cấu hình toàn cục
+            var response = await httpClient.PostAsJsonAsync(url, requestBody);
+
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<GeminiResponse>();
-                ResponseText = result?.candidates?.FirstOrDefault()?.content?.parts?.FirstOrDefault()?.text ?? "Không có nội dung trả về.";
+                var rawText = result?.candidates?.FirstOrDefault()?.content?.parts?.FirstOrDefault()?.text ?? "";
+                FormattedResponse = rawText.Split(new[] { '\n', '*' }, StringSplitOptions.RemoveEmptyEntries)
+                                           .Select(line => line.Trim())
+                                           .Where(line => !string.IsNullOrWhiteSpace(line))
+                                           .ToList();
             }
             else
             {

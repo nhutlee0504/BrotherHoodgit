@@ -1,0 +1,71 @@
+﻿@page "/ruttien"
+@inject HttpClient Http
+@using SanGiaoDich_BrotherHood.Shared.Models
+
+<PageTitle>Yêu Cầu Rút Tiền</PageTitle>
+
+<h3>Rút Tiền</h3>
+
+<EditForm Model="@withdrawalRequest" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="username">Tên người dùng</label>
+        <InputText id="username" class="form-control" @bind-Value="withdrawalRequest.UserName" />
+    </div>
+
+    <div class="form-group">
+        <label for="amount">Số tiền rút</label>
+        <InputNumber id="amount" class="form-control" @bind-Value="withdrawalRequest.Amount" />
+    </div>
+
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Gửi yêu cầu rút tiền</button>
+    </div>
+</EditForm>
+
+@if (message != null)
+{
+    <div class="alert @alertClass">
+        @message
+    </div>
+}
+
+@code {
+    public class WithdrawalRequest
+    {
+        public int Id { get; set; }
+        public string UserName { get; set; }
+        public decimal Amount { get; set; }
+        public DateTime RequestDate { get; set; }
+        public string Status { get; set; }
+    }
+
+    private WithdrawalRequest withdrawalRequest = new WithdrawalRequest();
+    private string message;
+    private string alertClass = "alert-info";
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/withdrawal/request", withdrawalRequest);
+            if (response.IsSuccessStatusCode)
+            {
+                message = "Yêu cầu rút tiền đã được gửi thành công.";
+                alertClass = "alert-success";
+            }
+            else
+            {
+                message = "Có lỗi xảy ra khi gửi yêu cầu.";
+                alertClass = "alert-danger";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Lỗi: {ex.Message}";
+            alertClass = "alert-danger";
+        }
+    }
+}

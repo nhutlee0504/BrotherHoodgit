@@ -80,14 +80,12 @@ namespace SanGiaoDich_BrotherHood.Server
                     IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
             });
-
-			// Cấu hình chung cho các Authentication schemes (Google, Facebook)
 			services.AddAuthentication(options =>
 			{
 				options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 				options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 			})
-			.AddCookie() // Cấu hình Cookie Authentication một lần duy nhất
+			.AddCookie()
 			.AddGoogle(options =>
 			{
 				options.ClientId = Configuration["Authentication:Google:ClientId"];
@@ -104,10 +102,6 @@ namespace SanGiaoDich_BrotherHood.Server
 				options.Fields.Add("name");
 				options.SaveTokens = true;
 			});
-            services.AddHttpClient<HuggingFaceService>(client =>
-            {
-                client.BaseAddress = new Uri("https://api-inference.huggingface.co/models/gpt2");
-            });
             services.AddHttpContextAccessor();
             services.AddScoped<IProduct, ProductResponse>();
             services.AddScoped<IFavorite, FavoriteResponse>();
@@ -130,9 +124,7 @@ namespace SanGiaoDich_BrotherHood.Server
             services.AddSingleton<ProfanityFilterService>();
             services.AddSingleton<HuggingFaceService>();
             services.AddHttpClient();
-           
-
-            // Đăng ký các dịch vụ của bạn (ví dụ: ESMSService)
+          
             services.AddSingleton<ESMSService>();
 
             services.AddCors(options =>

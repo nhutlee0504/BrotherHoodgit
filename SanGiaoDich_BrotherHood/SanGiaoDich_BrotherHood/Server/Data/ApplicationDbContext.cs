@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SanGiaoDich_BrotherHood.Shared.Models;
 using System.Security.Principal;
+using static SanGiaoDich_BrotherHood.Server.Controllers.WithdrawalController;
 
 namespace SanGiaoDich_BrotherHood.Server.Data
 {
@@ -39,5 +40,6 @@ namespace SanGiaoDich_BrotherHood.Server.Data
         public DbSet<ConversationParticipant> ConversationParticipants { get; set; }
         public DbSet<PaymentResponseModel> PaymentResponses { get; set; }
         public DbSet<PaymentRequestModel> PaymentRequests { get; set; }
+        public DbSet<WithdrawalRequest> WithdrawalRequests { get; set; }
     }
 }

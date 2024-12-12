@@ -4,7 +4,25 @@
 @inject HttpClient http
 @inject NavigationManager navigation
 @inject IJSRuntime jsruntime
+<style>
+    .product-info {
+        font-size: 14px;
+        color: #555; 
+        margin-top: 20px; 
+        text-align: center; 
+    }
+    .product-link {
+        color: #28a745; 
+        text-decoration: none;
+        font-weight: bold;
+    }
 
+        .product-link:hover {
+            color: #218838; 
+            text-decoration: underline; 
+        }
+
+</style>
 @code {
     private bool isLoading = true;
     private string errorMessage;
@@ -85,8 +103,6 @@
             if (cartItemsResponse.IsSuccessStatusCode)
             {
                 itemUsers = await cartItemsResponse.Content.ReadFromJsonAsync<List<CartItemUser>>();
-
-                // Tiến hành xử lý chi tiết cho mỗi sản phẩm
                 foreach (var item in itemUsers)
                 {
                     var product = await GetProductById(item.IdProduct);
@@ -213,7 +229,7 @@
         else
         {
             errorMessage = "Không thể tải ảnh từ API: " + response.ReasonPhrase;
-            return new List<ImageProduct>(); // Trả về danh sách rỗng nếu có lỗi
+            return new List<ImageProduct>();
         }
     }
 
@@ -224,14 +240,13 @@
             .Sum(item => item.Price) ?? 0;
     }
 
-    private string selectedShop; // Lưu shop đang được chọn
+    private string selectedShop; 
     private Dictionary<string, bool> shopLockStates = new Dictionary<string, bool>();
 
     private async void OnItemSelectionChanged(bool isSelected, CartItemUser cartItem)
     {
         if (isSelected)
         {
-            // Nếu chưa chọn shop nào, chọn shop của sản phẩm này
             if (string.IsNullOrEmpty(selectedShop))
             {
                 selectedShop = cartItem.UserName;
@@ -242,24 +257,18 @@
                     shopLockStates[shopKey] = shopKey != selectedShop;
                 }
             }
-            // Nếu shop của sản phẩm này khác shop đã chọn, bỏ chọn sản phẩm này
             else if (cartItem.UserName != selectedShop)
             {
                 cartItem.IsSelected = false;
-                return; // Dừng lại nếu chọn sản phẩm của shop khác khi đã có shop được chọn
+                return; 
             }
         }
         else
         {
-            // Khi bỏ chọn một sản phẩm, kiểm tra xem còn sản phẩm nào khác của shop này được chọn không
             var remainingSelected = itemUsers.Where(item => item.IsSelected && item.UserName == cartItem.UserName).ToList();
-
-            // Nếu không còn sản phẩm nào được chọn trong shop này, bỏ khóa các shop khác
             if (!remainingSelected.Any())
             {
                 selectedShop = null;
-
-                // Mở khóa tất cả các shop
                 foreach (var shopKey in itemUsers.Select(i => i.UserName).Distinct())
                 {
                     shopLockStates[shopKey] = false;
@@ -267,12 +276,10 @@
             }
         }
 
-        // Cập nhật trạng thái chọn cho sản phẩm
+     
         cartItem.IsSelected = isSelected;
-
-        // Cập nhật tổng tiền đã chọn
         UpdateSelectedTotal();
-        StateHasChanged();  // Cập nhật lại giao diện
+        StateHasChanged();  
     }
 
     private void ToggleSelectAll(bool isSelected, string shopKey)
@@ -280,14 +287,10 @@
         if (isSelected)
         {
             selectedShop = shopKey;
-
-            // Chọn tất cả sản phẩm của shop này
             foreach (var item in itemUsers.Where(i => i.UserName == shopKey))
             {
                 item.IsSelected = true;
             }
-
-            // Khóa tất cả các shop khác
             foreach (var shop in itemUsers.Select(i => i.UserName).Distinct())
             {
                 shopLockStates[shop] = shop != selectedShop;
@@ -295,39 +298,29 @@
         }
         else
         {
-            // Bỏ chọn tất cả sản phẩm
             foreach (var item in itemUsers)
             {
                 item.IsSelected = false;
             }
             selectedShop = null;
-
-            // Mở khóa tất cả các shop
             foreach (var shopKey1 in itemUsers.Select(i => i.UserName).Distinct())
             {
                 shopLockStates[shopKey1] = false;
             }
         }
-
-        // Cập nhật tổng tiền sau khi thay đổi
         UpdateSelectedTotal();
     }
 
 
     private async Task ProcessPayment()
     {
-        // Lọc chỉ các sản phẩm đã chọn
         var selectedItems = itemUsers.Where(item => item.IsSelected).ToList();
 
         if (selectedItems.Any())
         {
-            // Xóa thông báo lỗi nếu có sản phẩm được chọn
             errorMessage = string.Empty;
 
-            // Lưu các sản phẩm đã chọn vào local storage
             await jsruntime.InvokeVoidAsync("localStorage.setItem", "selectedCartItems", JsonSerializer.Serialize(selectedItems));
-
-            // Điều hướng đến trang thanh toán
             navigation.NavigateTo("/PageThanhToan");
         }
         else
@@ -508,12 +501,17 @@
                     </div>
                 }
             }
+            <div class="product-info">
+                Nếu bạn chưa biết mua sản phẩm, hãy tham khảo <a href="/chitietgiaodich" class="product-link">trang này</a>.
+            </div>
             <div class="text-end mt-3">
                 <button class="btn btn-success" @onclick="ProcessPayment">
                     <i class="bi bi-check-circle-fill"></i> Thanh toán
                 </button>
             </div>
         </div>
+      
+
     </div>
     <div class="col-1 col-md-1"></div>
 </div>

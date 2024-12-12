@@ -21,8 +21,6 @@ namespace SanGiaoDich_BrotherHood.Server
                 .ConfigureAppConfiguration((context, config) =>
                 {
                     var env = context.HostingEnvironment;
-
-                    // Thêm các file cấu hình tương ứng với môi trường
                     config.SetBasePath(AppContext.BaseDirectory)
                         .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                         .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);

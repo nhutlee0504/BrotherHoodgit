@@ -1,0 +1,87 @@
+﻿/* CSS cho nút Sao chép */
+.custom-btn {
+    background-color: transparent; /* Nền trong suốt */
+    color: #28a745; /* Màu chữ xanh lá */
+    border: 1px solid #28a745; /* Viền nút màu xanh lá */
+    padding: 6px 12px; /* Giảm kích thước padding để nút nhỏ lại */
+    font-size: 14px; /* Kích thước chữ nhỏ hơn */
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s;
+    display: inline-flex;
+    align-items: center;
+}
+
+    .custom-btn:hover {
+        background-color: #28a745; /* Nền chuyển sang xanh lá khi hover */
+        color: white; /* Chữ chuyển sang trắng khi hover */
+    }
+
+    .custom-btn:active {
+        transform: scale(0.98); /* Hiệu ứng khi bấm */
+    }
+
+    /* Thêm khoảng cách cho icon */
+    .custom-btn i {
+        margin-right: 5px;
+    }
+
+/* CSS cho phần kết quả */
+.mt-4.custom-content {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    font-family: 'Arial', sans-serif;
+}
+
+    .mt-4.custom-content h5 {
+        font-size: 18px;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .mt-4.custom-content ul {
+        list-style-type: disc;
+        margin-left: 20px;
+        color: #555;
+    }
+
+    .mt-4.custom-content li {
+        font-size: 16px;
+        margin-bottom: 5px;
+    }
+
+/* CSS cho phần thông báo lỗi */
+.alert {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* CSS khi in ra */
+@media print {
+    .custom-btn {
+        display: none; /* Ẩn nút khi in */
+    }
+
+    .custom-content {
+        max-height: none;
+        padding: 15px;
+        background-color: #fff;
+        border: 1px solid #000;
+    }
+
+    .alert {
+        color: #d9534f;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+    }
