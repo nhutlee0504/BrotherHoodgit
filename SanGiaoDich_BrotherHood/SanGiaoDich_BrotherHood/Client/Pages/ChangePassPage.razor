@@ -1,0 +1,53 @@
+﻿@page "/changePass"
+@using SanGiaoDich_BrotherHood.Shared.Models
+@using SanGiaoDich_BrotherHood.Shared.Dto
+@using System.Security.Cryptography
+@using System.Text
+@inject HttpClient http
+@inject IJSRuntime js
+@inject NavigationManager navigation
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-12">
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <div class="alert alert-success fs-3 text-center">@successMessage</div>
+            }
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger fs-5 text-center">@errorMessage</div>
+            }
+            <h2 class="text-center my-4">Đổi mật khẩu</h2>
+            <form @onsubmit="SubmitForm">
+                <div class="form-group mb-4">
+                    <label class="control-label">Mật khẩu cũ</label>
+                    <input type="password" class="form-control" @bind="oldPass" />
+                    @if (!string.IsNullOrEmpty(errorOldPass))
+                    {
+                        <div class="text-danger">@errorOldPass</div>
+                    }
+                </div>
+                <div class="form-group mb-4">
+                    <label class="control-label">Mật khẩu mới</label>
+                    <input type="password" class="form-control" @bind="newPass" />
+                    @if (!string.IsNullOrEmpty(errorNewPass))
+                    {
+                        <div class="text-danger">@errorNewPass</div>
+                    }
+                </div>
+                <div class="form-group mb-4">
+                    <label class="control-label">Nhập lại mật khẩu mới</label>
+                    <input type="password" class="form-control" @bind="newPass2" />
+                    @if (!string.IsNullOrEmpty(errorNewPass2))
+                    {
+                        <div class="text-danger">@errorNewPass2</div>
+                    }
+                </div>
+                <div class="form-group text-center">
+                    <button class="btn btn-dark w-100" style="border-radius: 20px;" type="submit">Xác nhận</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

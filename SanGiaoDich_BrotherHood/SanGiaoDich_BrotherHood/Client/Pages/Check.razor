@@ -1,0 +1,47 @@
+﻿@page "/check-profanity"
+@inject HttpClient HttpClient
+@using System.Threading.Tasks
+
+<h3>Kiểm tra Từ Ngữ Tục Tiểu</h3>
+
+<div class="form-group">
+    <label for="inputText">Nhập văn bản cần kiểm tra:</label>
+    <textarea id="inputText" @bind="inputText" class="form-control" rows="4"></textarea>
+</div>
+
+<button class="btn btn-primary" @onclick="CheckProfanity">Kiểm tra</button>
+
+@if (!string.IsNullOrEmpty(resultMessage))
+{
+    <div class="alert alert-info mt-3">
+        @resultMessage
+    </div>
+}
+
+@code {
+    private string inputText = "";
+    private string resultMessage = "";
+
+    private async Task CheckProfanity()
+    {
+        if (string.IsNullOrEmpty(inputText))
+        {
+            resultMessage = "Vui lòng nhập văn bản để kiểm tra!";
+            return;
+        }
+
+        var content = new StringContent($"\"{inputText}\"", System.Text.Encoding.UTF8, "application/json");
+
+        var response = await HttpClient.PostAsync("api/profanityfilter/check-profanity", content);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadAsStringAsync();
+            resultMessage = result; // Hiển thị kết quả trả về từ API
+        }
+        else
+        {
+            resultMessage = "Đã xảy ra lỗi khi kiểm tra văn bản.";
+        }
+    }
+}

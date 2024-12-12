@@ -1,0 +1,338 @@
+﻿@page "/DanhGiaNguoiDung/{username}"
+@using SanGiaoDich_BrotherHood.Shared.Dto
+@using SanGiaoDich_BrotherHood.Shared.Models
+@inject IJSRuntime JSRuntime
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@using System.Text.Json
+
+<style>
+    .rating-container {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .rate {
+        appearance: none;
+    }
+
+        .rate::before {
+            content: "\2605";
+            color: #ccc;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .rate:checked::before,
+        .rate:checked ~ .rate::before {
+            color: #ffb800;
+        }
+
+    .error-message {
+        color: red;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+</style>
+
+<!-- Modal Đánh giá -->
+<div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ratingModalLabel">Đánh giá sản phẩm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form đánh giá -->
+                <form>
+                    <div class="rating-container">
+                        @for (int i = 5; i >= 1; i--) // Hiển thị số sao từ 5 đến 1
+                        {
+                            int m1i = i;
+                            <input type="radio" id="star-@i" name="rating" class="rate" value="@i" @onclick="() => SetRating(m1i)" />
+                        }
+                    </div>
+                    <img src="@image" alt="Sản phẩm" width="100%" class="rounded mb-3" style="max-width: 200px;" />
+                    <p class="fw-bold">@productname</p>
+                    <textarea name="reviewText" rows="5" class="form-control" placeholder="Nhập đánh giá..." @bind="comment"></textarea>
+                    @if (!string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        <p class="error-message">@errorMessage</p>
+                    }
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-success" @onclick="SubmitRating">Gửi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (infoAccountDto != null)
+{
+    <div class="card p-3 shadow-sm">
+        <div class="d-flex align-items-center">
+            <!-- User Image -->
+            <img src="@infoAccountDto.ImageAccount" alt="Ảnh người dùng" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover;" />
+            <div class="ms-3">
+                <!-- User Name -->
+                <p class="mb-1 fw-bold h5">@infoAccountDto.FullName</p>
+
+                <!-- User Introduction -->
+                @if (string.IsNullOrEmpty(infoAccountDto.Introduce))
+                {
+                    <p class="mb-0 text-muted">Giới thiệu: Người dùng không có lời giới thiệu nào</p>
+                }
+                else
+                {
+                    <p class="mb-0 text-muted">Giới thiệu: @infoAccountDto.Introduce</p>
+                }
+
+                <!-- Average Rating -->
+                @if (averageRating >= 0)
+                {
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-warning text-dark me-2">
+                            @for (int i = 0; i < averageRating; i++)
+                            {
+                                <i class="bi bi-star-fill"></i>
+                            }
+                            @for (double i = averageRating; i < 5; i++)
+                            {
+                                <i class="bi bi-star"></i>
+                            }
+                        </span>
+                        <span class="text-muted">(@averageRating)</span>
+                    </div>
+                }
+                else
+                {
+                    <p class="mb-0 text-muted">Chưa có đánh giá.</p>
+                }
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <p class="text-muted text-center">Đang tải thông tin người dùng...</p>
+}
+
+@if (canShowRatingButton)
+{
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ratingModal">
+        Đánh giá
+    </button>
+}
+
+<div class="user-reviews container mt-4">
+    <h4 class="mb-3">Đánh giá người dùng</h4>
+    <div class="reviews-container">
+        @if (userRatings != null && userRatings.Any())
+        {
+            @foreach (var review in userRatings)
+            {
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="d-flex align-items-center flex-grow-1">
+                            <img src="@review.ImageAccount" alt="Avatar" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;" />
+                            <div>
+                                <h6 class="mb-1">@review.FullName</h6>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-warning text-dark me-2">
+                                        @for (int i = 0; i < review.Star; i++)
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                    </span>
+                                </div>
+                                <p class="mb-0 text-muted">@review.Comment</p>
+                            </div>
+                        </div>
+                        <div class="ms-3 text-center">
+                            <img src="@review.ProductImage" alt="Product Image" class="rounded" style="width: 60px; height: 60px; object-fit: cover;" />
+                            <p class="mb-0 text-muted mt-2" style="font-size: 0.875rem;">@review.ProductName</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="no-reviews text-muted">Không có đánh giá nào.</p>
+        }
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public string Username { get; set; }
+    private bool canShowRatingButton = false;
+    private string StoredUsername;
+    private string comment = "";
+    private int selectedRating = 0;
+    private string errorMessage = "";
+
+    private Account userAccount;
+    private InfoAccountDto infoAccountDto;
+    private List<RatingDto> userRatings = new List<RatingDto>();
+    private string sellerName;
+    private string image;
+    private int idBillDetail;
+    private string productname;
+
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserDataAsync();
+    }
+
+    private async Task LoadUserDataAsync()
+    {
+        try
+        {
+            // Lấy thông tin tài khoản người dùng
+            var userAccount = await HttpClient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{Username}");
+
+            if (userAccount != null)
+            {
+                infoAccountDto = new InfoAccountDto
+                    {
+                        UserName = userAccount.UserName,
+                        Email = userAccount.Email,
+                        FullName = userAccount.FullName,
+                        PhoneNumber = userAccount.PhoneNumber,
+                        Gender = userAccount.Gender,
+                        Birthday = userAccount.Birthday,
+                        ImageAccount = userAccount.ImageAccount,
+                        Introduce = userAccount.Introduce
+                    };
+            }
+
+            // Kiểm tra Review Info trong LocalStorage
+            var reviewInfoJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "reviewInfo");
+            if (!string.IsNullOrEmpty(reviewInfoJson))
+            {
+                canShowRatingButton = true;
+                var reviewInfo = JsonSerializer.Deserialize<ReviewInfo>(reviewInfoJson);
+                if (reviewInfo != null)
+                {
+                    var isRated = await HttpClient.GetFromJsonAsync<bool>($"api/Rating/IsProductRated?billDetailId={reviewInfo.IdBillDetail}");
+                    if (!isRated)
+                    {
+                        canShowRatingButton = true;
+                    }
+                    else
+                    {
+                        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "reviewInfo");
+                    }
+                }
+            }
+
+            // Lấy đánh giá của người dùng
+            try
+            {
+                var response = await HttpClient.GetFromJsonAsync<List<RatingDto>>($"api/Rating/GetRatingsUser{Username}");
+                userRatings = response ?? new List<RatingDto>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi lấy đánh giá người dùng: {ex.Message}");
+                userRatings = new List<RatingDto>(); // Đảm bảo hiển thị không có đánh giá nào khi có lỗi
+            }
+
+            CalculateAverageRating();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Có lỗi xảy ra: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void SetRating(int rating)
+    {
+        selectedRating = rating;
+    }
+
+    private async Task SubmitRating()
+    {
+        errorMessage = "";
+        if (selectedRating == 0)
+        {
+            errorMessage = "Vui lòng chọn số sao.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(comment))
+        {
+            errorMessage = "Vui lòng nhập nội dung đánh giá.";
+            return;
+        }
+
+        try
+        {
+            var url = $"api/Rating/AddRating?billDetailId={idBillDetail}&star={selectedRating}&comment={comment}&image={image}";
+            var response = await HttpClient.PostAsync(url, null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "reviewInfo");
+                NavigationManager.NavigateTo($"DanhGiaNguoiDung/{Username}", forceLoad: true);
+            }
+            else
+            {
+                errorMessage = "Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Có lỗi xảy ra: {ex.Message}";
+        }
+    }
+
+    private double averageRating = 0;
+
+    private void CalculateAverageRating()
+    {
+        if (userRatings != null && userRatings.Any())
+        {
+            // Calculate the average of the ratings
+            averageRating = userRatings.Average(r => r.Star);
+        }
+        else
+        {
+            averageRating = 0;
+        }
+    }
+
+
+    public class ReviewInfo
+    {
+        public int IdBillDetail { get; set; }
+        public string SellerName { get; set; }
+        public string Image { get; set; }
+        public string ProductName { get; set; }
+    }
+
+    public class InfoAccountDto
+    {
+        public string UserName { get; set; }
+        public string FullName { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Gender { get; set; }
+        public DateTime? Birthday { get; set; }
+        public string ImageAccount { get; set; }
+        public string Email { get; set; }
+        public string Introduce { get; set; }
+    }
+}

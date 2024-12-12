@@ -1,0 +1,330 @@
+﻿@page "/login"
+@using System.ComponentModel.DataAnnotations
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<style>
+     .content {
+        background-image: url('/AnhGiaoDien/Rectangle 5 (2).png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        padding: 20px;
+    }
+
+    .input-group-text {
+        background-color:white;
+        color: green;
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+    }
+
+    .form-control {
+        background-color: white;
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+    }
+
+    .validation-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+    }
+
+        .validation-message::before {
+            content: "\f06a";
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            margin-right: 0.5rem;
+            color: #dc3545;
+        }
+
+    .alert {
+        border-radius: 0.5rem;
+        padding: 1rem;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .alert-danger {
+        background-color: #dc3545;
+        color: #ffffff;
+    }
+
+    .alert-success {
+        background-color: #28a745;
+        color: #ffffff;
+    }
+
+    .btn-google, .btn-facebook {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+        .btn-google img, .btn-facebook img {
+            width: 20px;
+            height: 20px;
+        }
+
+    .btn-google {
+        background-color: white;
+        border-color: white;
+    }
+
+    .btn-facebook {
+        background-color: #1877F2;
+        color: white;
+    }
+
+    .btn-success {
+        background-color: #34C759;
+    }
+
+    .form-container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 2rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 0.75rem;
+        background-color: white;
+    }
+
+        .form-container h2, .form-container .mb-3, .form-container .text-center {
+            margin-bottom: 1rem;
+        }
+
+        .form-container button {
+            height: 40px;
+        }
+
+    a {
+        text-decoration: underline;
+        color: #007bff;
+    }
+
+    .form-label {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: green;
+        position: relative;
+        padding-bottom: 5px;
+        transition: all 0.3s ease;
+    }
+
+        .form-label:hover {
+            color: #28a745;
+            cursor: pointer;
+            transform: translateY(-3px);
+        }
+
+        .form-label::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #28a745; 
+            transform: scaleX(0);
+            transform-origin: bottom right;
+            transition: transform 0.3s ease-out;
+        }
+
+        .form-label:hover::after {
+            transform: scaleX(1);
+            transform-origin: bottom left;
+            background-color: #28a745; 
+        }
+
+</style>
+
+<div class="container">
+    <div class="row justify-content-center mt-5 mb-5">
+        <div class="col-md-6">
+            <div class="form-container p-4 rounded bg-white shadow-sm">
+                <h3 class="text-success text-center mb-4" style="font-weight:bolder">Đăng nhập</h3>
+
+                <EditForm Model="@this" OnValidSubmit="HandleLogin">
+                    <DataAnnotationsValidator />
+
+
+                    <div class="mb-3">
+                        <label for="UserName" class="form-label">Tên tài khoản</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            <InputText id="UserName" class="form-control rounded-start" @bind-Value="UserName" placeholder="Nhập tên tài khoản" />
+
+                        </div>
+                        <ValidationMessage For="@(() => UserName)" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="Password" class="form-label">Mật khẩu</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <InputText id="Password" type="password" class="form-control rounded-start" @bind-Value="Password" placeholder="Nhập mật khẩu" />
+                        </div>
+                        <ValidationMessage For="@(() => Password)" />
+                    </div>
+                    <button type="submit" class="btn btn-success btn-block w-100 rounded-start">Đăng nhập</button>
+                    <div class="text-right mt-3">
+                        <a href="forgotPass" class="text-primary">Quên mật khẩu?</a>
+                    </div>
+                    <div class="text-center mt-3">
+                        Bạn chưa có tài khoản? <a class="text-primary" href="Register">Đăng ký tài khoản</a><br />
+                    </div>
+                </EditForm>
+            </div>
+
+
+            <div class="mt-4 text-center">
+                <strong>Hoặc đăng nhập bằng</strong>
+                <div class="mt-3">
+                    <a @onclick="LoginWithGoogle" class="btn btn-google mx-auto rounded-pill" style="max-width: 400px;">
+                        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" class="me-2" style="height: 20px;" />
+                        Đăng nhập với Google
+                    </a>
+                </div>
+                <div class="mt-3">
+                    <a @onclick="LoginWithFacebook" class="btn btn-facebook rounded-pill mx-auto" style="max-width: 400px; color: white;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook logo" class="me-2" style="height: 20px;" />
+                        Đăng nhập với Facebook
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Success Message -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-success" id="successModalLabel">Thành công</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @SuccessMessage
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Error Message -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger" id="errorModalLabel">Lỗi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @ErrorMessage
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Required(ErrorMessage = "Vui lòng nhập tên tài khoản")]
+    public string UserName { get; set; }
+    [Required(ErrorMessage = "Vui lòng nhập mật khẩu")]
+    public string Password { get; set; }
+    private string ErrorMessage { get; set; }
+    private string SuccessMessage { get; set; }
+    private string Token { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = NavigationManager.Uri;
+        if (uri.Contains("token"))
+        {
+            var uriToken = new Uri(uri).Query;
+            Token = Uri.UnescapeDataString(uriToken.Replace("?token=", ""));
+
+
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "token", Token);
+            HttpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            Token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
+            if (!string.IsNullOrEmpty(Token))
+            {
+                HttpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
+                NavigationManager.NavigateTo("/", forceLoad: true);
+            }
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        var loginDto = new { UserName, Password };
+
+        try
+        {
+            var response = await HttpClient.PostAsJsonAsync("api/user/LoginUser", loginDto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Token = await response.Content.ReadAsStringAsync();
+                SuccessMessage = "Đăng nhập thành công!";
+                ErrorMessage = null;
+
+                var modalInstance = await JSRuntime.InvokeAsync<IJSObjectReference>("bootstrap.Modal.getOrCreateInstance", "#successModal");
+                await modalInstance.InvokeVoidAsync("show");
+
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "token", Token);
+                HttpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
+                NavigationManager.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                ErrorMessage = errorMessage;
+
+                var modalInstance = await JSRuntime.InvokeAsync<IJSObjectReference>("bootstrap.Modal.getOrCreateInstance", "#errorModal");
+                await modalInstance.InvokeVoidAsync("show");
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Có lỗi xảy ra: " + ex.Message;
+
+            var modalInstance = await JSRuntime.InvokeAsync<IJSObjectReference>("bootstrap.Modal.getOrCreateInstance", "#errorModal");
+            await modalInstance.InvokeVoidAsync("show");
+        }
+    }
+
+    private async Task LoginWithGoogle()
+    {
+        var googleAuthUrl = "https://brotherhoodtrading.io.vn/api/user/signin-google";
+        NavigationManager.NavigateTo(googleAuthUrl, true);
+    }
+
+    private async Task LoginWithFacebook()
+    {
+        var facebookAuthUrl = "https://localhost:44359/api/user/signin-facebook";
+        NavigationManager.NavigateTo(facebookAuthUrl, true);
+    }
+
+
+    private async Task ClearErrorMessageAfterDelay()
+    {
+        await Task.Delay(3000);
+        ErrorMessage = null;
+        StateHasChanged();
+    }
+}

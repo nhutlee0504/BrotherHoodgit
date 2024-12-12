@@ -1,0 +1,753 @@
+﻿<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<script src="js/quillHelper.js"></script>
+
+@page "/post"
+@using System.ComponentModel.DataAnnotations
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@using Firebase.Storage
+@using SanGiaoDich_BrotherHood.Shared.Dto
+@using SanGiaoDich_BrotherHood.Shared.Models
+@using System.IO
+@using System.Text.Json
+@inject NavigationManager NavigationManager
+<style>
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 2s linear infinite;
+    }
+
+    .text-danger {
+        color: #dc3545;
+        font-size: 0.9rem;
+        text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+
+    .image-preview img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: cover;
+    }
+
+    input[type=file] {
+        width: 350px;
+        max-width: 100%;
+        color: #444;
+        padding: 3px;
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #555;
+    }
+
+        input[type=file]::file-selector-button {
+            margin-right: 15px;
+            border: none;
+            background: #084cdf;
+            padding: 5px 15px;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: background .2s ease-in-out;
+        }
+
+
+            input[type=file]::file-selector-button:hover {
+                background: #0d45a5;
+            }
+
+    .image-preview {
+        position: relative;
+        width: 100%;
+        max-width: 350px;
+        height: auto;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: #f9f9f9;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+            .image-preview img:hover {
+                transform: scale(1.05);
+                box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+            }
+    /* Màu đỏ cho nhấn mạnh */
+    .highlight-red {
+        color: #d9534f;
+        font-weight: bold;
+        background-color: #f8d7da;
+        padding: 2px 4px;
+        border-radius: 3px;
+    }
+
+    /* Màu xanh dương cho tiêu đề */
+    .highlight-blue {
+        color: #0275d8;
+        font-weight: bold;
+        text-decoration: underline;
+    }
+
+
+    .highlight-yellow {
+        background-color: #fff3cd;
+        padding: 2px 4px;
+        border-radius: 3px;
+    }
+
+    .modal-dialog.modal-lg {
+        max-width: 90%;
+    }
+
+    .modal-body {
+        max-height: 500px;
+        overflow-y: auto;
+        padding-right: 15px;
+    }
+
+
+    .modal-header h5 {
+        color: #0275d8;
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    .modal-body {
+        font-size: 16px;
+        line-height: 1.6;
+        color: #333;
+    }
+
+        .modal-body ul {
+            list-style-type: disc;
+            margin-left: 20px;
+        }
+
+
+    .modal-footer button {
+        padding: 10px 20px;
+    }
+
+    .card.priority-option {
+        cursor: pointer;
+        transition: box-shadow 0.3s ease;
+    }
+
+        .card.priority-option:hover {
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card.priority-option.selected {
+            border-color: #28a745;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        }
+
+
+</style>
+<div class="container-fluid">
+    <ul class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="#">Đăng sản phẩm</a></li>
+    </ul>
+</div>
+
+@if (isLoading)
+{
+    <div class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Đang xử lý, vui lòng đợi...</p>
+    </div>
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group mb-3">
+                <div class="row">
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <div class="@(i == 2 ? "col-6 offset-3" : "col-md-6 col-6 ") mb-2">
+                            <div class="image-preview border d-flex align-items-center justify-content-center"
+                                 style="height: 200px;">
+                                @if (selectedFiles.Count > i && selectedFiles[i] != null)
+                                {
+                                    <img src="@selectedFiles[i].DataUrl" class="img-fluid" alt="Hình ảnh sản phẩm" />
+                                }
+                                else
+                                {
+                                    <span class="placeholder-text">Chưa có hình ảnh</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-12">
+                        <span>Xem quy định về <a href="#" data-bs-toggle="modal" data-bs-target="#policyModal"><i class="fas fa-info-circle"></i> Cách chụp ảnh và quay sản phẩm</a></span>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-12 d-flex align-items-center justify-content-center">
+                        <InputFile OnChange="HandleFileSelected" multiple accept="image/*" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="row">
+                <!-- Tên sản phẩm -->
+                <div class="col-md-6 mb-3">
+                    <label for="ProductName"><i class="fas fa-tag"></i> Tên sản phẩm:</label>
+                    <input type="text" @bind="ProductName" class="form-control" placeholder="Nhập tên sản phẩm" id="ProductName" />
+                    @if (!string.IsNullOrWhiteSpace(ProductNameError))
+                    {
+                        <div class="text-danger">@ProductNameError</div>
+                    }
+                </div>
+
+                <!-- Loại sản phẩm -->
+                <div class="col-md-6 mb-3">
+                    <label for="ProductCategory"><i class="fas fa-box"></i> Loại sản phẩm:</label>
+                    <select @bind="ProductCategoryId" class="form-control" id="ProductCategory">
+                        <option value="">Chọn loại sản phẩm</option>
+                        @foreach (var category in categories)
+                        {
+                            <option value="@category.IDCategory">@category.NameCate</option>
+                        }
+                    </select>
+                    @if (!string.IsNullOrWhiteSpace(ProductCategoryError))
+                    {
+                        <div class="text-danger">@ProductCategoryError</div>
+                    }
+                </div>
+
+                <!-- Giá sản phẩm -->
+                <div class="col-md-6 mb-3">
+                    <label for="ProductPrice">
+                        <img src="/AnhGiaoDien/business.png" style="width:16px;" /> Giá sản phẩm:
+                    </label>
+                    <input type="number" @bind="ProductPrice" class="form-control" placeholder="Nhập giá sản phẩm" id="ProductPrice" />
+                    @if (!string.IsNullOrWhiteSpace(ProductPriceError))
+                    {
+                        <div class="text-danger">@ProductPriceError</div>
+                    }
+                </div>
+
+                <!-- Số lượng sản phẩm -->
+                <div class="col-md-6 mb-3">
+                    <label for="ProductQuantity"><i class="fas fa-sort-numeric-up"></i> Số lượng sản phẩm:</label>
+                    <input type="number" @bind="ProductQuantity" class="form-control" placeholder="Nhập số lượng sản phẩm" id="ProductQuantity" />
+                    @if (!string.IsNullOrWhiteSpace(ProductQuantityError))
+                    {
+                        <div class="text-danger">@ProductQuantityError</div>
+                    }
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Chọn mức độ ưu tiên</label>
+                    </div>
+                </div>
+
+                <div class="row g-2">
+                    @foreach (var priority in new[] { "Phổ thông", "Ưu tiên" })
+                    {
+                        <div class="col-md-6">
+                            <div class="card priority-option"
+                                 style="@(ProrityLevel == priority ? "border-color: #28a745; box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);" : "")"
+                                 @onclick="() => SelectPriority(priority)">
+                                <div class="card-body text-center">
+                                    <span class="h5 mb-0">@priority</span>
+                                    <div class="mt-2">
+                                        @if (priority == "Phổ thông")
+                                        {
+                                            <span class="text-muted">Giá: 25,000 VNĐ</span>
+                                        }
+                                        else if (priority == "Ưu tiên")
+                                        {
+                                            <span class="text-muted">Giá: 50,000 VNĐ</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(ProrityLevelError))
+                    {
+                        <div class="text-danger">@ProrityLevelError</div>
+                    }
+                </div>
+            </div>
+
+            <!-- Mô tả sản phẩm -->
+            <div class="form-group">
+                <label for="ProductDescription"><i class="fas fa-info-circle"></i> Mô tả sản phẩm chi tiết:</label>
+                <textarea @bind="Description" class="form-control" id="ProductDescription" rows="4" placeholder="Nhập mô tả chi tiết về sản phẩm..."></textarea>
+                @if (!string.IsNullOrWhiteSpace(ProductDescriptionError))
+                {
+                    <div class="text-danger">@ProductDescriptionError</div>
+                }
+                <small class="form-text text-muted">
+                    <i class="fas fa-lightbulb"></i> Gợi ý:
+                    <ul>
+                        <li>Chất liệu: 100% cotton, mềm mại và thoáng khí.</li>
+                        <li>Thiết kế: Cổ áo đính cúc, tay dài có thể gấp lên dễ dàng.</li>
+                        <li>Màu sắc: Trắng, xanh dương, xám.</li>
+                        <li>Kích thước: S, M, L, XL.</li>
+                        <li>Chất lượng: Dệt chắc chắn, không phai màu sau nhiều lần giặt.</li>
+                    </ul>
+                </small>
+            </div>
+            <button class="btn btn-primary" @onclick="GenerateDescriptionAsync" disabled="@IsLoading">
+                @if (IsLoading)
+                {
+                    <span class="spinner-border spinner-border-sm"></span>
+                }
+                else
+                {
+                    <span>Tạo Mô Tả</span>
+                }
+            </button>
+
+            <div class="mt-4">
+                @if (!string.IsNullOrWhiteSpace(ResponseText))
+                {
+                    <h5>Kết Quả:</h5>
+                    <p>@ResponseText</p>
+                }
+                @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+                {
+                    <div class="alert alert-danger">@ErrorMessage</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 d-flex justify-content-end">
+            <div class="text-right mb-3">
+                <button @onclick="SaveProduct" class="btn btn-success"><i class="fas fa-check"></i> Đăng bán</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal" tabindex="-1" id="successModal" style="display: @(showSuccessModal ? "block" : "none")">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thông báo</h5>
+                <button type="button" class="close" @onclick="CloseModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>@ModalMessage</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" @onclick="CloseModal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool showSuccessModal = false;
+    private string ModalMessage { get; set; }
+    private bool ShowErrorModal  = false;
+
+    private string ProductName { get; set; }
+    private decimal ProductPrice { get; set; }
+    private int ProductQuantity { get; set; }
+    private int ProductCategoryId { get; set; }
+    private string Description { get; set; }
+    private string ProrityLevel { get; set; }
+    private List<Category> categories = new List<Category>();
+    private FirebaseStorage _firebaseStorage;
+    private string ImageError { get; set; }
+    private string ProductNameError { get; set; }
+    private string ProductCategoryError { get; set; }
+    private string ProductPriceError { get; set; }
+    private bool isLoading = false;
+
+    private string ProductDescriptionError  { get; set; }
+    private string ProductQuantityError { get; set; }
+    private string ProrityLevelError { get; set; }
+    private void SelectPriority(string selectedPriority)
+    {
+        if (ProrityLevel == selectedPriority)
+        {
+            ProrityLevel = null;
+        }
+        else
+        {
+            ProrityLevel = selectedPriority;
+        }
+    }
+
+
+    // Hàm đóng modal
+    private void CloseModal()
+    {
+        showSuccessModal = false;
+    }
+
+    private List<ImageFile> selectedFiles = new List<ImageFile>
+    {
+        null, null, null
+    };
+
+    private class ImageFile
+    {
+        public string DataUrl { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _firebaseStorage = new FirebaseStorage("dbbrotherhood-ac2f1.appspot.com");
+        await LoadUserData();
+    }
+
+    private async Task LoadUserData()
+    {
+        categories = await HttpClient.GetFromJsonAsync<List<Category>>("api/Category/GetCategories");
+    }
+    private void CloseImageErrorModal()
+    {
+        ImageError = string.Empty;
+        NavigationManager.NavigateTo("/post", forceLoad: true);
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var files = e.GetMultipleFiles(3);
+
+            if (files.Count < 1 || files.Count > 3)
+            {
+                ImageError = "Bạn phải chọn ít nhất 1 ảnh và tối đa 3 ảnh.";
+                selectedFiles.Clear();
+                return;
+            }
+
+            ImageError = string.Empty;
+
+            foreach (var file in files)
+            {
+                for (int i = 0; i < selectedFiles.Count; i++)
+                {
+                    if (selectedFiles[i] == null)
+                    {
+                        selectedFiles[i] = new ImageFile
+                            {
+                                DataUrl = await GetImageDataUrl(file)
+                            };
+                        break;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ImageError = "Bạn phải chọn ít nhất 1 ảnh và tối đa 3 ảnh.";
+            selectedFiles.Clear();
+            return;
+        }
+    }
+
+    private async Task<string> GetImageDataUrl(IBrowserFile file)
+    {
+        using var stream = file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 3);
+        var buffer = new byte[file.Size];
+        await stream.ReadAsync(buffer);
+        return $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+    }
+    private async Task SaveProduct()
+    {
+        // Bắt đầu loading
+        isLoading = true;
+
+        ProductNameError = string.Empty;
+        ProductCategoryError = string.Empty;
+        ProductPriceError = string.Empty;
+        ProductQuantityError = string.Empty;
+        ProrityLevelError = string.Empty;
+        ProductDescriptionError = string.Empty;
+        ImageError = string.Empty;
+
+        // Kiểm tra lỗi
+        if (string.IsNullOrWhiteSpace(ProductName))
+        {
+            ProductNameError = "Vui lòng nhập tên sản phẩm.";
+        }
+
+        if (ProductCategoryId == 0)
+        {
+            ProductCategoryError = "Vui lòng chọn loại sản phẩm.";
+        }
+
+        if (ProductPrice <= 0)
+        {
+            ProductPriceError = "Giá sản phẩm phải lớn hơn 0.";
+        }
+
+        if (ProductQuantity <= 0)
+        {
+            ProductQuantityError = "Số lượng sản phẩm phải lớn hơn 0.";
+        }
+
+        if (string.IsNullOrWhiteSpace(ProrityLevel))
+        {
+            ProrityLevelError = "Vui lòng chọn mức độ ưu tiên.";
+        }
+
+        var selectedImageCount = selectedFiles.Count(file => file != null);
+        if (selectedImageCount < 1 || selectedImageCount > 3)
+        {
+            ImageError = "Bạn phải chọn ít nhất 1 ảnh và tối đa 3 ảnh.";
+            selectedFiles.Clear();
+        }
+
+        // Nếu có lỗi, dừng xử lý và tắt loading
+        if (!string.IsNullOrWhiteSpace(ProductNameError) ||
+            !string.IsNullOrWhiteSpace(ProductCategoryError) ||
+            !string.IsNullOrWhiteSpace(ProductPriceError) ||
+            !string.IsNullOrWhiteSpace(ProductQuantityError) ||
+            !string.IsNullOrWhiteSpace(ProrityLevelError) ||
+            !string.IsNullOrWhiteSpace(ProductDescriptionError) ||
+            !string.IsNullOrWhiteSpace(ImageError))
+        {
+            isLoading = false;
+            return;
+        }
+
+        try
+        {
+            var productDto = new ProductDto
+                {
+                    Name = ProductName,
+                    Price = ProductPrice,
+                    Quantity = ProductQuantity,
+                    CategoryId = ProductCategoryId,
+                    Description = Description,
+                    ProrityLevel = ProrityLevel,
+                    PriceUp = (ProrityLevel == "Phổ thông") ? 25000 : 50000
+                };
+
+            var response = await HttpClient.PostAsJsonAsync("api/product/AddProduct", productDto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var createdProduct = await response.Content.ReadFromJsonAsync<Product>();
+                var productId = createdProduct?.IDProduct ?? 0;
+
+                if (productId > 0)
+                {
+                    await UploadImages(productId);
+                    ModalMessage = "Sản phẩm đã được thêm thành công!";
+                    showSuccessModal = true;  // Hiển thị modal
+                }
+                else
+                {
+                    ModalMessage = "Không thể lấy thông tin sản phẩm mới tạo.";
+                    showSuccessModal = true;  // Hiển thị modal
+                }
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                ModalMessage = $"Có lỗi xảy ra khi thêm sản phẩm: {errorMessage}";
+                showSuccessModal = true;  // Hiển thị modal
+            }
+        }
+        catch (Exception ex)
+        {
+            ModalMessage = $"Có lỗi xảy ra khi thêm sản phẩm: {ex.Message}";
+            showSuccessModal = true;  // Hiển thị modal
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+
+    private async Task<string> CheckProfanity(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+
+        try
+        {
+            var response = await HttpClient.PostAsJsonAsync("api/profanityfilter/check-profanity", text);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadAsStringAsync();
+                if (result.Contains("Văn bản có từ ngữ tục tiểu."))
+                {
+                    return "Văn bản chứa từ ngữ tục tiểu.";
+                }
+                if (result.Contains("Văn bản có khả năng chứa từ ngữ tục tiểu."))
+                {
+                    return "Văn bản có khả năng chứa từ ngữ không phù hợp.";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            return $"Có lỗi xảy ra khi kiểm tra từ ngữ tục tiểu: {ex.Message}";
+        }
+
+        return null;
+    }
+    private async Task UploadImages(int productId)
+    {
+        try
+        {
+            var content = new MultipartFormDataContent();
+
+            foreach (var file in selectedFiles)
+            {
+                if (file != null)
+                {
+                    var byteArray = Convert.FromBase64String(file.DataUrl.Split(",")[1]);
+                    var fileContent = new ByteArrayContent(byteArray);
+                    fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+
+                    content.Add(fileContent, "files", $"image_{Guid.NewGuid()}.jpg");
+                }
+            }
+
+            var uploadResponse = await HttpClient.PostAsync($"api/ImageProduct/ImageProduct/{productId}/upload", content);
+
+            if (uploadResponse.IsSuccessStatusCode)
+            {
+                ModalMessage = "Sản phẩm đã được thêm thành công!";
+                showSuccessModal = true;
+                NavigationManager.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                var errorMessage = await uploadResponse.Content.ReadAsStringAsync();
+                ModalMessage = $"Có lỗi xảy ra khi tải ảnh: {errorMessage}";
+                showSuccessModal = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            ModalMessage = $"Có lỗi xảy ra khi tải ảnh: {ex.Message}";
+            showSuccessModal = true;
+        }
+    }
+
+    private string ResponseText { get; set; } = "";
+    private string ErrorMessage { get; set; } = "";
+    private bool IsLoading { get; set; } = false;
+
+    private async Task GenerateDescriptionAsync()
+    {
+        if (string.IsNullOrWhiteSpace(ProductName))
+        {
+            ErrorMessage = "Vui lòng nhập tên sản phẩm!";
+            return;
+        }
+
+        IsLoading = true;
+        ErrorMessage = "";
+        ResponseText = "";
+
+        try
+        {
+            var apiKey = "AIzaSyCzfoNKKRut7xcECF_VZxm9tda-u1P8jts";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={apiKey}";
+
+            var requestBody = new
+            {
+                contents = new[]
+                {
+                    new
+                    {
+                        parts = new[]
+                        {
+                            new { text = $"Describe the product: {ProductName}" }
+                        }
+                    }
+                }
+            };
+
+            var response = await HttpClient.PostAsJsonAsync(url, requestBody);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<GeminiResponse>();
+                ResponseText = result?.candidates?.FirstOrDefault()?.content?.parts?.FirstOrDefault()?.text ?? "Không có nội dung trả về.";
+            }
+            else
+            {
+                ErrorMessage = $"Lỗi: {response.ReasonPhrase}";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Đã xảy ra lỗi: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    public class GeminiResponse
+    {
+        public Candidate[] candidates { get; set; }
+
+        public class Candidate
+        {
+            public Content content { get; set; }
+
+            public class Content
+            {
+                public Part[] parts { get; set; }
+
+                public class Part
+                {
+                    public string text { get; set; }
+                }
+            }
+        }
+    }
+    
+}

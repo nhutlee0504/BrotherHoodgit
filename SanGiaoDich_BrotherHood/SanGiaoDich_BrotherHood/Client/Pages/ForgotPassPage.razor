@@ -1,0 +1,396 @@
+﻿@page "/forgotPass"
+@inject HttpClient http
+@inject NavigationManager navigation
+@inject IJSRuntime js
+@using SanGiaoDich_BrotherHood.Shared.Models
+@using System.Security.Cryptography
+@using System.Text
+@using System.Text.RegularExpressions
+@using System.IO
+
+<style>
+    .custom-btn {
+        background-color: black;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: block;
+        width: 100%;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+        .custom-btn:hover {
+            background-color: white;
+            color: black;
+        }
+
+        .custom-btn:active {
+            background-color: #555;
+        }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .card-title {
+        margin-bottom: 20px;
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
+    }
+
+    .form-control {
+        border: 1px solid #ced4da;
+    }
+
+    .custom-breadcrumb {
+        background-color: transparent;
+        padding: 10px 0;
+        margin-bottom: 20px;
+        list-style: none;
+        border-radius: 0;
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+    }
+
+        .custom-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+            content: "/";
+            color: #6c757d;
+            padding: 0 5px;
+        }
+
+    .breadcrumb-link {
+        color: #007bff;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+        .breadcrumb-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+    .breadcrumb-item.active {
+        color: #6c757d;
+    }
+
+    /* Tự tạo alert */
+    .custom-alert-container {
+        margin-bottom: 15px;
+    }
+
+    .custom-alert {
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 15px;
+        font-size: 16px;
+        line-height: 1.5;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        border-left: 5px solid;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        gap: 15px; /* Khoảng cách giữa chấm và nội dung */
+    }
+
+    .custom-alert-success {
+        color: #155724;
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        border-left-color: #28a745;
+    }
+
+    .custom-alert-danger {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        border-left-color: #dc3545;
+    }
+
+    .custom-alert-warning {
+        color: #856404;
+        background-color: #fff3cd;
+        border-color: #ffeeba;
+        border-left-color: #ffc107;
+    }
+
+    /* Hiệu ứng chữ */
+    .custom-alert::before {
+        content: '';
+        width: 20px; /* Kích thước chấm */
+        height: 20px; /* Kích thước chấm */
+        border-radius: 50%;
+        background-color: inherit;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .custom-alert-success::before {
+        background-color: #28a745;
+    }
+
+    .custom-alert-danger::before {
+        background-color: #dc3545;
+    }
+
+    .custom-alert-warning::before {
+        background-color: #ffc107;
+    }
+</style>
+
+<div class="container">
+    <div class="row justify-content-center mt-5" style="margin-bottom: 200px;">
+        <div class="col-md-6">
+            @if (loading)
+            {
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+
+            <!-- alert -->
+            @if (messageSuccess != null || messageError != null || !string.IsNullOrEmpty(errorValid))
+            {
+                <div class="custom-alert-container">
+                    @if (messageSuccess != null)
+                    {
+                        <div class="custom-alert custom-alert-success">
+                            @messageSuccess
+                        </div>
+                    }
+                    @if (messageError != null)
+                    {
+                        <div class="custom-alert custom-alert-danger">
+                            @messageError
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(errorValid))
+                    {
+                        <div class="custom-alert custom-alert-warning">
+                            @errorValid
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="card shadow-lg">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Quên mật khẩu</h5>
+                    <form @onsubmit="SubmitForm">
+                        <div class="form-group">
+                            <label for="email">Nhập Email của bạn</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-envelope"></i>
+                                    </span>
+                                </div>
+                                <input type="email" class="form-control" id="email" placeholder="Nhập email" @bind="Email" />
+                            </div>
+                        </div>
+                        <button type="submit" class="custom-btn mt-3">Gửi</button>
+                        <div class="form-text text-muted mt-3 text-center">
+                            Chúng tôi sẽ gửi một mã xác nhận đến Email của bạn
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(messageCodeDanger) || !string.IsNullOrEmpty(messageCodeWarning))
+            {
+                <div class="custom-alert-container mt-5">
+                    @if (messageCodeDanger != null)
+                    {
+                        <div class="custom-alert custom-alert-danger">
+                            @messageCodeDanger
+                        </div>
+                    }
+                    @if (messageCodeWarning != null)
+                    {
+                        <div class="custom-alert custom-alert-warning">
+                            @messageCodeWarning
+                        </div>
+                    }
+                </div>
+            }
+            <div class="card shadow-lg mt-3">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Mã xác nhận Email</h5>
+                    <form @onsubmit="ConfirmForm">
+                        <div class="form-group">
+                            <label for="email">Nhập mã xác nhận</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-envelope"></i>
+                                    </span>
+                                </div>
+                                <input type="text" class="form-control" id="Code" placeholder="Nhập mã xác nhận" @bind="receiveCode" />
+                            </div>
+                        </div>
+                        <button type="submit" class="custom-btn mt-3">Gửi</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Account> accounts;
+    private string Email;
+    private string messageSuccess = null;
+    private string messageError = null;
+    private string errorValid = null;
+    private bool loading = false;
+    private string code;
+    private string receiveCode;
+    private string messageCodeWarning = null;
+    private string messageCodeDanger = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            accounts = await http.GetFromJsonAsync<List<Account>>("api/User/GetAccounts");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    private async Task ConfirmForm()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(receiveCode))
+            {
+                messageCodeWarning = "Vui lòng nhập mã xác nhận";
+                StateHasChanged();
+                messageCodeDanger = null;
+            }
+            else if (code != receiveCode)
+            {
+                messageCodeDanger = "Mã xác nhận không chính xác";
+                messageCodeWarning = null;
+            }
+            else
+            {
+                messageCodeDanger = null; 
+                messageCodeWarning = null;
+                await js.InvokeVoidAsync("localStorage.setItem", "Email", Email);
+                navigation.NavigateTo($"/ChangeForgottenPass");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private async Task SubmitForm()
+    {
+        try
+        {
+            var emailRegex = new Regex(@"^[^\s@]+@[^\s@]+\.[^\s@]+$");
+            var acc = accounts.FirstOrDefault(x => x.Email != null && x.Email == Email);
+
+            if (string.IsNullOrEmpty(Email))
+            {
+                errorValid = "Vui lòng nhập Email";
+                messageSuccess = null;
+                messageError = null;
+            }
+            else if (!emailRegex.IsMatch(Email))
+            {
+                errorValid = "Email không hợp lệ";
+                messageSuccess = null;
+                messageError = null;
+            }
+            else if (acc != null)
+            {
+                loading = true;
+                var sendCode = RandomCode();
+                var emailMessage = $"Mã xác nhận: {sendCode}";
+                await SendEmailAsync(Email, "[BroderHood] Mã xác nhận", emailMessage);
+                code = sendCode;
+                messageSuccess = "Mã xác nhận đã được gửi đến Email";
+                messageError = null;
+                errorValid = null;
+            }
+            else
+            {
+                loading = false;
+                errorValid = "Email không tồn tại";
+                messageSuccess = null;
+                messageError = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex}");
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task SendEmailAsync(string email, string subject, string message)
+    {
+        var emailRequest = new EmailRequest
+            {
+                To = email,
+                Subject = subject,
+                Body = message
+            };
+
+        var response = await http.PostAsJsonAsync("api/Email/SendEmail", emailRequest);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception("Lỗi gửi Email");
+        }
+    }
+
+    private class EmailRequest
+    {
+        public string To { get; set; }
+        public string Subject { get; set; }
+        public string Body { get; set; }
+    }
+
+    private string RandomCode()
+    {
+        const string chars = "0123456789";
+        var random = new Random();
+        return new string(Enumerable.Repeat(chars, 6).Select(s => s[random.Next(s.Length)]).ToArray());
+    }
+
+    private string GetHash(string input)
+    {
+        using (SHA256 sha256 = SHA256.Create())
+        {
+            byte[] inputBytes = Encoding.UTF8.GetBytes(input);
+            byte[] hashBytes = sha256.ComputeHash(inputBytes);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < hashBytes.Length && i < 16; i++)
+            {
+                sb.Append(hashBytes[i].ToString("x2"));
+            }
+            return sb.ToString();
+        }
+    }
+}
+

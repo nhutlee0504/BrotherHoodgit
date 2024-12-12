@@ -1,0 +1,521 @@
+﻿@page "/XacThucCCCD"
+
+@using Microsoft.AspNetCore.Components.Forms
+@using Newtonsoft.Json
+@using System.Text.Json
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject IJSRuntime jsruntime
+<div class="container-fluid">
+    <ul class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="#">Xác thực thông tin</a></li>
+    </ul>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="upload-section">
+                <h3>Chọn ảnh CCCD</h3>
+                <InputFile OnChange="HandleFileSelected" accept="image/*" class="custom-file-input" />
+
+                @if (UploadedFile != null)
+                {
+                    <div class="mt-2">
+                        <!-- Hiển thị ảnh xem trước -->
+                        <img src="@PreviewImage" alt="Preview" class="img-fluid mb-3" />
+                        <button class="btn btn-success w-100" @onclick="VerifyFile">Xác Thực</button>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Error))
+                {
+                    <div class="alert alert-danger mt-2">@Error</div>
+                }
+            </div>
+
+        </div>
+
+        <div class="col-md-8">
+            <EditForm Model="editContext" OnValidSubmit="SubmitForm">
+                <div class="card">
+                    <h3 class="text-center mb-4">Thông Tin CCCD</h3>
+                    <div class="mb-3">
+                        <label for="Id" class="form-label">Số CCCD:</label>
+                        <InputText id="Id" class="form-control" @bind-Value="RecognitionData.Id" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label for="Name" class="form-label">Họ và Tên:</label>
+                        <InputText id="Name" class="form-control" @bind-Value="RecognitionData.Name" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label for="Gender" class="form-label">Giới Tính:</label>
+                        <InputText id="Gender" class="form-control" @bind-Value="RecognitionData.Sex" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label for="Dob" class="form-label">Ngày Sinh:</label>
+                        <InputText id="Dob" class="form-control" @bind-Value="RecognitionData.Dob" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label for="Home" class="form-label">Địa Chỉ:</label>
+                        <InputText id="Home" class="form-control" @bind-Value="RecognitionData.Home" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label for="Nationality" class="form-label">Quốc Tịch:</label>
+                        <InputText id="Nationality" class="form-control" @bind-Value="RecognitionData.Nationality" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label for="Doe" class="form-label">Ngày Hết Hạn:</label>
+                        <InputText id="Doe" class="form-control" @bind-Value="RecognitionData.Doe" readonly />
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100" >Xác Nhận</button>
+                </div>
+            </EditForm>
+        </div>
+
+    </div>
+</div>
+
+
+
+<style>
+    /* Tùy chỉnh giao diện cho phần chọn ảnh */
+    .upload-section h3 {
+        font-size: 1.5rem;
+        color: #28a745; /* Màu xanh lá cho tiêu đề */
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+
+    /* Label thay thế cho nút file */
+    .upload-section input[type="file"] + label {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #28a745;
+        color: #fff;
+        font-size: 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        margin-top: 10px;
+        width: 100%;
+        text-align: center;
+    }
+
+    /* Hiệu ứng khi hover vào nút chọn ảnh */
+    .upload-section input[type="file"]:hover + label {
+        background-color: #218838;
+    }
+
+    /* Nút xác nhận */
+    .upload-section button {
+        width: 100%;
+        padding: 12px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        margin-top: 15px;
+    }
+
+        .upload-section button:hover {
+            background-color: #218838;
+        }
+
+    /* Cảnh báo lỗi */
+    .alert-danger {
+        font-size: 0.875rem;
+        padding: 10px;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        border-radius: 5px;
+        margin-top: 15px;
+    }
+    /* Container chung */
+    .container {
+        margin-top: 30px;
+        font-family: Arial, sans-serif;
+        color: #333;
+    }
+
+    .form-control[readonly], .form-control[disabled] {
+        background-color: #f5f5f5;
+        cursor: not-allowed;
+    }
+    /* Tiêu đề */
+    h3 {
+        font-size: 1.5rem;
+        color: #28a745;
+        margin-bottom: 20px;
+    }
+
+    /* Phần upload ảnh */
+    .upload-section {
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+    }
+
+        .upload-section img {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .upload-section button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+            .upload-section button:hover {
+                background-color: #218838;
+            }
+
+    /* Form xác thực */
+    .card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #ffffff;
+        padding: 20px;
+    }
+
+        .card h3 {
+            font-size: 1.25rem;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+
+    .form-control {
+        border-radius: 5px;
+        padding: 12px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+    }
+
+        .form-control:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
+        }
+
+    button[type="submit"] {
+        background-color: #28a745;
+        color: #fff;
+        border: none;
+        width: 100%;
+        padding: 12px;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+        button[type="submit"]:hover {
+            background-color: #218838;
+        }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .mt-2 {
+        margin-top: 20px;
+    }
+
+</style>
+@code {
+    private IBrowserFile? UploadedFile;
+    private string? Error;
+    private RecognitionDto RecognitionData = new RecognitionDto();
+    private EditContext editContext;
+    private string PreviewImage { get; set; }
+    protected override void OnInitialized()
+    {
+        RecognitionData = new RecognitionDto();
+        editContext = new EditContext(RecognitionData);
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null && file.ContentType.StartsWith("image"))
+        {
+            try
+            {
+                // Lưu trữ tệp đã chọn vào UploadedFile
+                UploadedFile = file;
+                PreviewImage = await GetImagePreviewUrl(file);
+            }
+            catch (Exception ex)
+            {
+                Error = "Có lỗi xảy ra khi tải ảnh lên.";
+            }
+        }
+        else
+        {
+            Error = "Vui lòng chọn một tệp ảnh.";
+        }
+        if (RecognitionData != null)
+        {
+            RecognitionData.Id = null;
+            RecognitionData.Name = null;
+            RecognitionData.Sex = null;
+            RecognitionData.Dob = null;
+            RecognitionData.Home = null;
+            RecognitionData.Nationality = null;
+            RecognitionData.Doe = null;
+        }
+        Error = null;
+    }
+
+    private async Task<string> GetImagePreviewUrl(IBrowserFile file)
+    {
+        var buffer = new byte[file.Size];
+        await file.OpenReadStream().ReadAsync(buffer);
+
+        // Tạo URL sử dụng base64 để hiển thị ảnh
+        return $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+    }
+    private async Task VerifyFile()
+    {
+        if (UploadedFile == null)
+        {
+            Error = "Vui lòng chọn một file để xác thực.";
+            return;
+        }
+
+        await UploadImageAsync();
+    }
+
+    private async Task UploadImageAsync()
+    {
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            using var stream = UploadedFile.OpenReadStream();
+            var fileContent = new StreamContent(stream);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(UploadedFile.ContentType);
+
+            content.Add(fileContent, "image", UploadedFile.Name);
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("api-key", "cpVj6Y2cOw4gV0n3MCkSnHOHxVP5oA3k");
+
+            var response = await client.PostAsync("https://api.fpt.ai/vision/idr/vnm", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var recognitionData = ParseJsonResponse(jsonResponse);
+
+                if (recognitionData != null)
+                {
+                    RecognitionData = recognitionData;
+                }
+                else
+                {
+                    Error = "Không thể đọc thông tin từ ảnh hoặc dữ liệu không hợp lệ.";
+                }
+            }
+            else
+            {
+                Error = $"Lỗi từ API: {response.ReasonPhrase}";
+            }
+        }
+        catch (HttpRequestException httpEx)
+        {
+            Error = "Lỗi kết nối với API: " + httpEx.Message;
+        }
+
+        catch (Exception ex)
+        {
+            Error = "Lỗi không xác định: " + ex.Message;
+        }
+    }
+
+    private RecognitionDto ParseJsonResponse(string jsonResponse)
+    {
+        try
+        {
+            using var jsonDocument = JsonDocument.Parse(jsonResponse);
+            var root = jsonDocument.RootElement;
+
+            if (root.TryGetProperty("data", out var dataElement) && dataElement.ValueKind == JsonValueKind.Array && dataElement.GetArrayLength() > 0)
+            {
+                var firstData = dataElement[0]; 
+                var id = firstData.GetProperty("id").GetString();
+                var name = firstData.GetProperty("name").GetString();
+                var dob = firstData.GetProperty("dob").GetString();
+                var gender = firstData.GetProperty("sex").GetString();
+                var nationality = firstData.GetProperty("nationality").GetString();
+                var home = firstData.GetProperty("home").GetString();
+                var doe = firstData.GetProperty("doe").GetString();
+                return new RecognitionDto
+                        {
+                            UserName = accountInfo.UserName,
+                            Id = id,
+                            Name = name,
+                            Sex = gender,
+                            Dob = dob.ToString(),
+                            Nationality = nationality,
+                            Home = home,
+                            Doe = doe.ToString()
+                        };
+
+            }
+
+            throw new Exception("Không tìm thấy dữ liệu trong JSON.");
+        }
+        catch (Exception ex)
+        {
+            Error = "Lỗi khi phân tích JSON: " + ex.Message;
+            return null;
+        }
+    }
+
+
+    private async Task SubmitForm()
+    {
+        try
+        {
+            var response = await HttpClient.PostAsJsonAsync("api/User/AcceptIDCard", RecognitionData);
+            if (response.IsSuccessStatusCode)
+            {
+                NavigationManager.NavigateTo("/success");
+            }
+            else
+            {
+                Error = "Lưu thông tin thất bại!";
+            }
+        }
+        catch (Exception ex)
+        {
+            Error = "Lỗi khi lưu thông tin: " + ex.Message;
+        }
+    }
+
+    public class FptApiResponse
+    {
+        public int ErrorCode { get; set; }
+        public string ErrorMessage { get; set; }
+        public List<RecognitionDto> Data { get; set; }
+    }
+
+    public class RecognitionDto
+    {
+        public string UserName { get; set; }
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public string? Sex { get; set; }
+        public string? Dob { get; set; }
+        public string? Home { get; set; }
+        public string? Nationality { get; set; }
+        public string?  Doe { get; set; }
+    }
+
+    public class AddressEntities
+    {
+        public string Province { get; set; }
+        public string District { get; set; }
+        public string Ward { get; set; }
+        public string Street { get; set; }
+    }
+    private bool isLoading = true;
+    private string errorMessage;
+    AccountInfoDto accountInfo;
+    private bool IsLoggedIn { get; set; } = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckTokenAndLoadAccountInfo();
+    }
+
+    private async Task CheckTokenAndLoadAccountInfo()
+    {
+        var token = await jsruntime.InvokeAsync<string>("localStorage.getItem", "token");
+
+        if (!string.IsNullOrEmpty(token))
+        {
+
+            HttpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            await LoadAccountInfo();
+        }
+        else
+        {
+            isLoading = false;
+            IsLoggedIn = false;
+        }
+    }
+
+    private async Task LoadAccountInfo()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var response = await HttpClient.GetAsync("api/User/GetMyInfo");
+
+            if (response.IsSuccessStatusCode)
+            {
+
+                accountInfo = await response.Content.ReadFromJsonAsync<AccountInfoDto>();
+                IsLoggedIn = true;
+            }
+            else
+            {
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Lỗi: {response.StatusCode} - {errorContent}";
+                IsLoggedIn = false;
+                await Logout();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Có lỗi xảy ra khi lấy thông tin tài khoản: " + ex.Message;
+            IsLoggedIn = false;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private class AccountInfoDto
+    {
+        public string UserName { get; set; }
+        public decimal PreSystem { get; set; }
+        public string FullName { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Gender { get; set; }
+        public DateTime? Birthday { get; set; }
+        public string ImageAccount { get; set; }
+    }
+
+
+    private async Task Logout()
+    {
+        await jsruntime.InvokeVoidAsync("localStorage.removeItem", "token");
+        IsLoggedIn = false;
+        accountInfo = null;
+        NavigationManager.NavigateTo("/", forceLoad: true);
+    }
+}
+

@@ -1,0 +1,254 @@
+﻿@page "/admin/nhanvien"
+@layout AdminLayout
+@inject HttpClient httpClient
+@using SanGiaoDich_BrotherHood.Shared.Models
+@inject NavigationManager NavigationManager
+@using SanGiaoDich_BrotherHood.Shared.Dto
+
+<h3>Quản lý nhân viên</h3>
+
+<!-- Thanh tìm kiếm -->
+<div class="mb-3 d-flex">
+    <input @bind="searchKeyword" class="form-control me-2" placeholder="Tìm kiếm nhân viên..." />
+    <button class="btn btn-primary" @onclick="OnSearchKeywordChanged">Tìm kiếm</button>
+    <button class="btn btn-success ms-auto" @onclick="ShowAddEmployeeModal">Thêm nhân viên</button>
+</div>
+
+<!-- Danh sách nhân viên -->
+@if (filteredEmployees == null)
+{
+    <p>Đang tải dữ liệu...</p>
+}
+else if (!filteredEmployees.Any())
+{
+    <p>Không tìm thấy nhân viên nào phù hợp.</p>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr class="text-center">
+                <th>Tên đăng nhập</th>
+                <th>Họ và tên</th>
+                <th>Email</th>
+                <th>Số điện thoại</th>
+               
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var employee in filteredEmployees)
+            {
+                <tr>
+                    <td>@employee.UserName</td>
+                    <td>@employee.FullName</td>
+                    <td>@employee.Email</td>
+                    <td class="text-center">@employee.PhoneNumber</td>
+                    
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<!-- Modal Thêm Nhân Viên -->
+@if (isAddEmployeeModalVisible)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Thêm nhân viên</h5>
+                    <button type="button" class="btn-close" @onclick="CloseAddEmployeeModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tên đăng nhập</label>
+                        <input class="form-control" @bind="newEmployee.UserName" placeholder="Nhập tên đăng nhập" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mật khẩu</label>
+                        <input class="form-control" @bind="newEmployee.Password" type="password" placeholder="Nhập mật khẩu" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Xác nhận mật khẩu</label>
+                        <input class="form-control" @bind="newEmployee.ConformPassword" type="password" placeholder="Nhập lại mật khẩu" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quyền</label>
+                        <select class="form-select" @bind="selectedRole">
+                            <option value="" disabled selected>Chọn quyền</option>
+                            @foreach (var role in roles)
+                            {
+                                <option value="@role">@role</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseAddEmployeeModal">Đóng</button>
+                    <button class="btn btn-primary" @onclick="AddEmployee" disabled="@string.IsNullOrWhiteSpace(selectedRole)">Thêm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal Thông Báo -->
+@if (isModalVisible)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@modalTitle</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>@modalMessage</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Account> employees;
+    private List<Account> filteredEmployees;
+    private string searchKeyword = string.Empty;
+
+    // Biến cho modal thêm nhân viên
+    private bool isAddEmployeeModalVisible = false;
+    private Account newEmployee = new Account();
+    private string selectedRole;
+    private List<string> roles = new() { "Admin", "Nhân viên" };
+
+    // Biến modal thông báo
+    private bool isModalVisible = false;
+    private string modalTitle;
+    private string modalMessage;
+
+    public class Account
+    {
+        public string UserName { get; set; }
+        public string FullName { get; set; }
+        public string Email { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Role { get; set; } // Quyền
+        public string Password { get; set; }
+        public string ConformPassword { get; set; } // Xác nhận mật khẩu
+    }
+    public class RegisterDto
+    {
+        public string UserName { get; set; }
+        public string Password { get; set; }
+        public string ConformPassword { get; set; }
+        public string Role { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEmployees();
+    }
+
+    private async Task LoadEmployees()
+    {
+        try
+        {
+            // Gọi API quản trị viên để lấy tất cả tài khoản
+            employees = await httpClient.GetFromJsonAsync<List<Account>>("api/user/GetAccounts");
+
+            if (employees != null && employees.Any())
+            {
+                filteredEmployees = employees
+                    .Where(e => e.Role.Equals("Nhân viên", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowModal("Lỗi", $"Không thể tải danh sách nhân viên: {ex.Message}");
+        }
+    }
+
+    private void OnSearchKeywordChanged()
+    {
+        if (string.IsNullOrWhiteSpace(searchKeyword))
+        {
+            filteredEmployees = employees
+                .Where(e => e.Role.Equals("Nhân viên", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+        else
+        {
+            filteredEmployees = employees
+                .Where(e => e.Role.Equals("Nhân Viên", StringComparison.OrdinalIgnoreCase) &&
+                           ((e.UserName?.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (e.FullName?.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (e.Email?.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (e.PhoneNumber?.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ?? false)))
+                .ToList();
+        }
+    }
+
+    private void ShowAddEmployeeModal()
+    {
+        isAddEmployeeModalVisible = true;
+        newEmployee = new Account();
+        selectedRole = null;
+    }
+
+    private void CloseAddEmployeeModal()
+    {
+        isAddEmployeeModalVisible = false;
+    }
+
+    private async Task AddEmployee()
+    {
+        try
+        {
+            // Kiểm tra mật khẩu và xác nhận mật khẩu có khớp không
+            if (newEmployee.Password != newEmployee.ConformPassword)
+            {
+                ShowModal("Lỗi", "Mật khẩu và xác nhận mật khẩu không khớp.");
+                return;
+            }
+
+            // Tạo đối tượng RegisterDto
+            var registerDto = new RegisterDto
+                {
+                    UserName = newEmployee.UserName,
+                    Password = newEmployee.Password,
+                    ConformPassword = newEmployee.ConformPassword,
+                    Role = selectedRole
+                };
+
+            // Gửi yêu cầu đăng ký tài khoản mới
+            await httpClient.PostAsJsonAsync("api/admin/RegisterAccount", registerDto);
+
+            ShowModal("Thành công", "Nhân viên mới đã được thêm.");
+            await LoadEmployees();
+            CloseAddEmployeeModal();
+        }
+        catch (Exception ex)
+        {
+            ShowModal("Lỗi", $"Không thể thêm nhân viên: {ex.Message}");
+        }
+    }
+
+
+    private void ShowModal(string title, string message)
+    {
+        modalTitle = title;
+        modalMessage = message;
+        isModalVisible = true;
+        StateHasChanged();
+    }
+
+    private void CloseModal()
+    {
+        isModalVisible = false;
+    }
+}

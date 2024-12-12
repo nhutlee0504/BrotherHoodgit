@@ -1,0 +1,350 @@
+﻿@page "/Admin/Product"
+@using SanGiaoDich_BrotherHood.Shared.Models
+@layout AdminLayout
+@inject HttpClient httpClient
+@inject NavigationManager NavigationManager
+<style>
+   
+    .table-posts {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Arial, sans-serif;
+    }
+
+        .table-posts th, .table-posts td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+     
+        .table-posts th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+
+        .table-posts tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+       
+        .table-posts tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .table-posts .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .table-posts .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .table-posts .btn-view {
+            background-color: #2196F3; 
+        }
+
+        .table-posts .btn-edit {
+            background-color: #FF9800;
+        }
+
+        .table-posts .btn-delete {
+            background-color: #f44336; 
+        }
+
+        .table-posts .btn:hover {
+            opacity: 0.8;
+        }
+    .search-filter-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    .search-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .search-input {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px 0 0 4px;
+        outline: none;
+        font-size: 1em;
+    }
+
+    .btn-search {
+        padding: 8px 12px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 0 4px 4px 0;
+        cursor: pointer;
+    }
+
+        .btn-search:hover {
+            background-color: #45a049;
+        }
+
+    .filter-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .filter-select {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1em;
+        outline: none;
+        cursor: pointer;
+    }
+
+
+</style>
+<div class="search-filter-container">
+    <div class="search-container">
+        <input type="text" @bind="searchQuery" class="search-input" placeholder="Nhâp tên hoặc ID sản phẩm.">
+        <button class="btn btn-search" @onclick="Search">Tìm kiếm</button>
+    </div>
+   @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-danger mt-2">
+            @errorMessage
+        </div>
+    }
+    <div class="filter-container">
+        <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                Chọn trạng thái
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <li><a class="dropdown-item" href="#" value="published"><i class="ti ti-circle-check"></i> Đã duyệt</a></li>
+                <li><a class="dropdown-item" href="#" value="pending"><i class="ti ti-clock"></i> Đang chờ duyệt</a></li>
+                <li><a class="dropdown-item" href="#" value="pending"><i class="ti ti-ban"></i> Hủy duyệt</a></li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+<table class="table table-striped d-none d-sm-table">
+    <thead>
+        <tr class="text-center">
+            <th>Tên sản phẩm</th>
+            <th>Người bán</th>
+            <th>Ngày đăng</th>
+            <th>Mức ưu tiên</th>
+            <th>Trạng thái</th>
+            <th>Người kiểm duyệt</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var product in products)
+        {
+            <tr>
+                <td>@product.Name</td>
+                <td class="text-center">@product.UserName</td>
+                <td class="text-center">@product.StartDate?.ToString("dd/MM/yyyy | HH:mm:ss")</td>
+                <td class="text-center">@product.ProrityLevel</td>
+                <td class="text-center">@product.Status</td>
+                <td class="text-center">@product.AccountAccept</td>
+                <td class="action-buttons text-center">
+                    @if (product.Status == "Đang chờ duyệt")
+                    {
+                        <button class="btn btn-success btn-sm" @onclick="() => HanndleAccept(product.IDProduct)">Duyệt</button>
+                        <button class="btn btn-danger btn-sm me-1"  @onclick="() => HandleCancle(product.IDProduct) ">Không duyệt</button>
+                    }
+                    else
+                    {
+                        <a class="btn btn-info btn-sm" href="@($"/Admin/Product/{product.IDProduct}")">Xem</a>
+
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteProduct(product.IDProduct)">Xóa</button>
+                        
+                        }
+                   
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+@code {
+    private List<Product> products = new List<Product>();
+    private Dictionary<int, List<string>> productImages = new Dictionary<int, List<string>>();
+    private Product product1 = new Product();
+    private string searchQuery = string.Empty;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            products = await httpClient.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
+            productImages = new Dictionary<int, List<string>>();
+
+            foreach (var product in products)
+            {
+                var images = await httpClient.GetFromJsonAsync<List<ImageProduct>>($"api/ImageProduct/GetImageProduct?id={product.IDProduct}");
+                productImages[product.IDProduct] = images?.Select(img => img.Image).ToList() ?? new List<string>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching products or images: {ex.Message}");
+        }
+
+    }
+    private async Task Search()
+    {
+        try
+        {
+            errorMessage = string.Empty;
+
+            // Nếu không có nhập gì, load tất cả sản phẩm
+            if (string.IsNullOrWhiteSpace(searchQuery))
+            {
+                products = await httpClient.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
+                return;
+            }
+
+            // Kiểm tra nếu là số nguyên, tìm kiếm theo ID
+            if (int.TryParse(searchQuery, out int productId))
+            {
+                var response = await httpClient.GetAsync($"api/product/GetProductById/{productId}");
+
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    errorMessage = "Không tìm thấy sản phẩm với ID này.";
+                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                {
+                    errorMessage = "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.";
+                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống
+                }
+                else if (response.IsSuccessStatusCode)
+                {
+                    var product = await response.Content.ReadFromJsonAsync<Product>();
+                    if (product != null)
+                    {
+                        products = new List<Product> { product };
+                    }
+                    else
+                    {
+                        errorMessage = "Không tìm thấy sản phẩm theo ID.";
+                        products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống
+                    }
+                }
+                else
+                {
+                    errorMessage = $"Lỗi API: {response.ReasonPhrase}";
+                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống khi có lỗi khác
+                }
+            }
+            else
+            {
+                // Tìm kiếm theo tên
+                var response = await httpClient.GetAsync($"api/product/GetProductByName/{searchQuery}");
+                if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                {
+                    errorMessage = "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.";
+                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống
+                }
+                else if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<List<Product>>();
+                    if (result != null && result.Any())
+                    {
+                        products = result;
+                    }
+                    else
+                    {
+                        errorMessage = "Không tìm thấy tên sản phẩm này.";
+                        products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống khi không có kết quả
+                    }
+                }
+                else
+                {
+                    errorMessage = $"Lỗi API: {response.ReasonPhrase}";
+                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống khi có lỗi khác
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
+            products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống khi xảy ra lỗi
+        }
+    }
+
+    private async Task HanndleAccept(int productid)
+    {
+        try
+        {
+            var response = await httpClient.PutAsJsonAsync<Product>($"api/Product/Accept/{productid}", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+
+                NavigationManager.NavigateTo("/admin/product", forceLoad: true);
+                Console.WriteLine($"Sản phẩm {productid} đã được duyệt.");
+            }
+            else
+            {
+
+                Console.WriteLine($"Lỗi khi duyệt sản phẩm {productid}: {response.ReasonPhrase}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi khi duyệt sản phẩm: {ex.Message}");
+        }
+    }
+    private async Task HandleCancle(int productid)
+    {
+        try
+        {
+            var response = await httpClient.PutAsJsonAsync<Product>($"api/Product/Cancle/{productid}", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+
+                NavigationManager.NavigateTo("/admin/product", forceLoad: true);
+                Console.WriteLine($"Sản phẩm {productid} đã được duyệt.");
+            }
+            else
+            {
+
+                Console.WriteLine($"Lỗi khi duyệt sản phẩm {productid}: {response.ReasonPhrase}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi khi duyệt sản phẩm: {ex.Message}");
+        }
+    }
+
+
+    private void ViewProduct(int id)
+    {
+        
+        Console.WriteLine($"Xem sản phẩm ID: {id}");
+    }
+    private void EditProduct(int id)
+    {
+        Console.WriteLine($"Chỉnh sửa sản phẩm ID: {id}");
+    }
+
+    private void DeleteProduct(int id)
+    {
+        Console.WriteLine($"Xóa sản phẩm ID: {id}");
+    }
+}

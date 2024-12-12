@@ -1,0 +1,255 @@
+﻿@page "/Admin/Category"
+@using SanGiaoDich_BrotherHood.Shared.Models
+@layout AdminLayout
+@inject HttpClient httpClient
+@inject NavigationManager NavigationManager
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCategoryModal">
+            <i class="bi bi-plus-circle"></i> Thêm danh mục
+        </button>
+        <div class="input-group w-50">
+            <input type="text" class="form-control" placeholder="Nhập ID hoặc Tên danh mục" @bind="searchTerm" @bind:event="oninput" />
+            <button class="btn btn-outline-secondary" type="button" @onclick="SearchCategory">
+                <i class="bi bi-search"></i> Tìm kiếm
+            </button>
+        </div>
+    </div>
+
+    @if (errorMessage != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-circle"></i> @errorMessage
+        </div>
+    }
+    else if (isSearchEmpty)
+    {
+        <div class="alert alert-danger" role="alert">
+            Không tìm thấy kết quả phù hợp với từ khóa: <strong>@searchTerm</strong>.
+        </div>
+    }
+
+    else
+    {
+        <table class="table table-hover table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Tên danh mục</th>
+                    <th class="text-center">Ngày tạo</th>
+                    <th class="text-center">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var category in categories)
+                {
+                    <tr>
+                        <td>@category.IDCategory</td>
+                        <td>@category.NameCate</td>
+                        <td class="text-center">@category.CreatedDate.ToString("dd/MM/yyyy | HH:mm:ss")</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-info" @onclick="() => EditCategory(category)" data-bs-toggle="modal" data-bs-target="#createCategoryModal">
+                                <i class="bi bi-pencil-square"></i> Sửa
+                            </button>
+
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteCategory(category.IDCategory)">
+                                <i class="bi bi-trash"></i> Xóa
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <!-- Modal thêm/sửa danh mục -->
+    <div class="modal fade" id="createCategoryModal" tabindex="-1" aria-labelledby="createCategoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@modalTitle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@editingCategory" OnValidSubmit="HandleValidSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div class="mb-3">
+                            <label for="NameCate" class="form-label">Tên danh mục</label>
+                            <InputText id="NameCate" class="form-control" @bind-Value="editingCategory.NameCate" />
+                            <ValidationMessage For="@(() => editingCategory.NameCate)" />
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-save"></i> Lưu
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private List<Category> categories = new List<Category>();
+    private Category editingCategory = new Category();
+    private string searchTerm = string.Empty;
+    private string modalTitle = "Thêm mới danh mục";
+    private bool isSearchEmpty = false;
+    private string errorMessage = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+    }
+
+    private async Task LoadCategories()
+    {
+        try
+        {
+            categories = await httpClient.GetFromJsonAsync<List<Category>>("api/Category/GetCategories");
+            isSearchEmpty = categories == null || !categories.Any();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Không thể tải dữ liệu: {ex.Message}";
+        }
+    }
+
+    private async Task SearchCategory()
+    {
+        isSearchEmpty = false;
+        errorMessage = null;
+
+        try
+        {
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                if (int.TryParse(searchTerm, out int categoryId))
+                {
+                    var response = await httpClient.GetAsync($"api/Category/GetCategoryByID/{categoryId}");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var result = await response.Content.ReadFromJsonAsync<Category>();
+                        if (result != null)
+                        {
+                            categories = new List<Category> { result };
+                        }
+                    }
+                    else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        categories.Clear();
+                        isSearchEmpty = true;
+                        errorMessage = $"Không tìm thấy danh mục với ID: {categoryId}";
+                    }
+                    else
+                    {
+                        throw new Exception($"Lỗi không xác định: {response.StatusCode}");
+                    }
+                }
+                else
+                {
+                    categories = await httpClient.GetFromJsonAsync<List<Category>>($"api/Category/GetCategoryByName/{searchTerm}");
+                    if (categories == null || !categories.Any())
+                    {
+                        isSearchEmpty = true;
+                    }
+                }
+            }
+            else
+            {
+                await LoadCategories();
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Lỗi HTTP: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
+        }
+    }
+
+
+    private void EditCategory(Category category)
+    {
+        editingCategory = new Category
+            {
+                IDCategory = category.IDCategory,
+                NameCate = category.NameCate,
+                CreatedDate = category.CreatedDate,
+                UpdatedDate = DateTime.Now
+            };
+        modalTitle = "Chỉnh sửa danh mục";
+    }
+
+
+    private async Task HandleValidSubmit()
+    {
+        errorMessage = null;
+
+        try
+        {
+            if (editingCategory.IDCategory == 0) // Thêm mới
+            {
+                var response = await httpClient.PostAsJsonAsync("api/Category/AddCategory", editingCategory);
+                if (response.IsSuccessStatusCode)
+                {
+                    categories.Add(await response.Content.ReadFromJsonAsync<Category>());
+                }
+            }
+            else // Chỉnh sửa
+            {
+                var response = await httpClient.PutAsJsonAsync($"api/Category/UpdateCategory/{editingCategory.IDCategory}", editingCategory);
+                if (response.IsSuccessStatusCode)
+                {
+                    var updatedCategory = await response.Content.ReadFromJsonAsync<Category>();
+                    var index = categories.FindIndex(c => c.IDCategory == updatedCategory.IDCategory);
+                    if (index != -1)
+                    {
+                        categories[index] = updatedCategory;
+                    }
+                }
+            }
+
+            editingCategory = new Category();
+            await LoadCategories();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Không thể lưu thay đổi: {ex.Message}";
+        }
+    }
+
+
+    private async Task DeleteCategory(int categoryId)
+    {
+        errorMessage = null;
+
+        try
+        {
+            var response = await httpClient.DeleteAsync($"api/Category/DeleteCategory/{categoryId}");
+            if (response.IsSuccessStatusCode)
+            {
+                categories.RemoveAll(c => c.IDCategory == categoryId);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Không thể xóa danh mục: {ex.Message}";
+        }
+    }
+
+    public class Category
+    {
+        public int IDCategory { get; set; }
+        public string NameCate { get; set; }
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        public DateTime UpdatedDate { get; set; } = DateTime.Now;
+        public string UserUpdated { get; set; } = "Admin";
+    }
+}
