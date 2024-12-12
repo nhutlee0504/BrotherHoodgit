@@ -283,7 +283,6 @@
                 <i class="fas fa-box-open" style="color: #28a745; margin-right: 10px;"></i> Thông tin sản phẩm
             </h2>
             <div class="product-info">
-                <!-- Product Container -->
                 <div class="product-info">
                     <div class="product-container bg-white p-4 rounded shadow-sm mb-4">
                         @if (selectedCartItems != null && selectedCartItems.Any())
@@ -315,96 +314,43 @@
                     </div>
                 </div>
 
-                <div class="seller-info-total-amount mt-4">
-                    <div class="mb-3">
-                        <h6 class="text-uppercase text-secondary font-weight-bold mb-1" style="font-size: 1rem; letter-spacing: 0.05em;">
-                            <i class="fas fa-store text-primary me-2"></i>Người bán
-                        </h6>
-                        <hr class="mt-1 mb-3" style="border-top: 1px solid #ddd;">
+                <div class="total-amount mt-3 p-3 rounded bg-light shadow-sm" style="border: 1px solid #ddd;">
+                    <h4 class="text-dark font-weight-bold mb-3 text-center">
+                        <i class="fas fa-wallet text-success me-2" style="font-size: 1.5em;"></i> Tổng tiền
+                    </h4>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-dark">Giá sản phẩm:</span>
+                        <span class="font-weight-bold">@($"{totalPrice:N0} VNĐ")</span>
                     </div>
-                    <div class="seller-info position-relative p-2 bg-white border rounded shadow-sm d-flex align-items-center">
-                        <div class="position-relative">
-                            <img src="@sellerInfo?.AvatarUrl" alt="Seller Image" class="rounded-circle me-4" style="width: 45px; height: 45px; object-fit: cover;">
-
-                        </div>
-                        <div>
-                            <p class="mb-2 font-weight-bold text-dark" style="font-size: 1.1em;">
-                                <i class="fas fa-user mr-2 text-primary"></i>@sellerInfo?.FullName<span class="badge bg-success" s>Đối tác</span>
-                            </p>
-                            <p class="mb-2 text-muted">
-                                <i class="fas fa-phone-alt mr-2 text-success"></i>@sellerInfo?.PhoneNumber
-                            </p>
-                            <p class="mb-0 text-muted">
-                                <i class="fas fa-envelope mr-2 text-warning"></i>@sellerInfo?.Email
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="row mt-3">
-                        <div class="col-md-12">
-                            <h6 class="text-uppercase text-secondary font-weight-bold mb-1" style="font-size: 1rem; letter-spacing: 0.05em;">
-                                <i class="fas fa-credit-card mr-2"></i> Hình thức thanh toán
-                            </h6>
-                            <hr class="mt-1 mb-3" style="border-top: 1px solid #ddd;">
-                            <div class="payment-method bg-light p-3 rounded shadow-sm">
-                                <div class="payment-options">
-                                    <label class="d-flex align-items-center mb-2">
-                                        <input type="radio" name="payment" class="form-check-input" checked>
-                                        <span class="ml-2">Thanh toán bằng tiền mặt</span>
-                                    </label>
-                                    <p class="text-muted ml-4" style="font-size: 0.9em;">
-                                        Bạn sẽ thanh toán trực tiếp cho người giao hàng khi nhận hàng.
-                                    </p>
-
-                                    <label class="d-flex align-items-center mb-2">
-                                        <input type="radio" name="payment" class="form-check-input">
-                                        <span class="ml-2">Thanh toán qua chuyển khoản</span>
-                                    </label>
-                                    <p class="text-muted ml-4" style="font-size: 0.9em;">
-                                        Bạn có thể chuyển khoản qua ngân hàng theo thông tin tài khoản mà chúng tôi cung cấp.
-                                    </p>
-
-                                    <label class="d-flex align-items-center mb-2">
-                                        <input type="radio" name="payment" class="form-check-input">
-                                        <span class="ml-2">Thanh toán qua ví VnPay</span>
-                                    </label>
-                                    <p class="text-muted ml-4" style="font-size: 0.9em;">
-                                        Thanh toán nhanh chóng và an toàn qua ví điện tử VnPay. Đảm bảo an toàn thông tin.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Total Amount Section -->
-                    <div class="total-amount mt-3 p-3 rounded bg-light shadow-sm" style="border: 1px solid #ddd;">
-                        <h4 class="text-dark font-weight-bold mb-3 text-center">
-                            <i class="fas fa-wallet text-success me-2" style="font-size: 1.5em;"></i> Tổng tiền
-                        </h4>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-dark">Giá sản phẩm:</span>
-                            <span class="font-weight-bold">@($"{totalPrice:N0} VNĐ")</span>
-                        </div>
-                        @*  <div class="d-flex justify-content-between mb-2">
-                        <span class="text-dark">Thuế (10%):</span>
-                        <span class="font-weight-bold">@($"{tax:N0} VNĐ")</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                        <span class="text-dark">Vận chuyển:</span>
-                        <span class="font-weight-bold">@($"{shippingFee:N0} VNĐ")</span>
-                        </div> *@
-                        <hr class="bg-success mt-2" style="height: 2px; border-radius: 5px;">
-                        <div class="d-flex justify-content-between">
-                            <span class="text-danger font-weight-bold" style="font-size: 1.5em;">Tổng cộng:</span>
-                            <span class="text-danger font-weight-bold" style="font-size: 1.5em;">@($"{totalPrice:N0} VNĐ")</span>
-                        </div>
+                    <hr class="bg-success mt-2" style="height: 2px; border-radius: 5px;">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-danger font-weight-bold" style="font-size: 1.5em;">Tổng cộng:</span>
+                        <span class="text-danger font-weight-bold" style="font-size: 1.5em;">@($"{totalPrice:N0} VNĐ")</span>
                     </div>
                 </div>
 
                 <!-- Submit Button -->
                 <div class="text-center mt-4">
-                    <button class="btn btn-success btn-lg" @onclick="PlaceOrder">Đặt hàng</button>
+                    <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#orderModal">Đặt hàng</button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal thông báo đặt hàng -->
+<div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderModalLabel">Thông báo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Đơn hàng của bạn đã được đặt thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất có thể.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
             </div>
         </div>
     </div>

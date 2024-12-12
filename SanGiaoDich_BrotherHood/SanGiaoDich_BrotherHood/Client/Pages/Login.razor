@@ -149,22 +149,9 @@
             <div class="form-container p-4 rounded bg-white shadow-sm">
                 <h3 class="text-success text-center mb-4" style="font-weight:bolder">Đăng nhập</h3>
 
-                @if (!string.IsNullOrEmpty(SuccessMessage))
-                {
-                    <div class="alert alert-success" role="alert">
-                        @SuccessMessage
-                    </div>
-                }
-                @if (!string.IsNullOrEmpty(ErrorMessage))
-                {
-                    <div class="alert alert-danger" role="alert">
-                        @ErrorMessage
-                    </div>
-                }
-
                 <EditForm Model="@this" OnValidSubmit="HandleLogin">
                     <DataAnnotationsValidator />
-        
+
 
                     <div class="mb-3">
                         <label for="UserName" class="form-label">Tên tài khoản</label>
@@ -214,6 +201,42 @@
     </div>
 </div>
 
+<!-- Modal for Success Message -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-success" id="successModalLabel">Thành công</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @SuccessMessage
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Error Message -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger" id="errorModalLabel">Lỗi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @ErrorMessage
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @code {
     [Required(ErrorMessage = "Vui lòng nhập tên tài khoản")]
     public string UserName { get; set; }
@@ -230,7 +253,7 @@
             var uriToken = new Uri(uri).Query;
             Token = Uri.UnescapeDataString(uriToken.Replace("?token=", ""));
 
-           
+
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", "token", Token);
             HttpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
             NavigationManager.NavigateTo("/", forceLoad: true);
@@ -259,6 +282,10 @@
                 Token = await response.Content.ReadAsStringAsync();
                 SuccessMessage = "Đăng nhập thành công!";
                 ErrorMessage = null;
+
+                var modalInstance = await JSRuntime.InvokeAsync<IJSObjectReference>("bootstrap.Modal.getOrCreateInstance", "#successModal");
+                await modalInstance.InvokeVoidAsync("show");
+
                 await JSRuntime.InvokeVoidAsync("localStorage.setItem", "token", Token);
                 HttpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
                 NavigationManager.NavigateTo("/", forceLoad: true);
@@ -267,11 +294,17 @@
             {
                 var errorMessage = await response.Content.ReadAsStringAsync();
                 ErrorMessage = errorMessage;
+
+                var modalInstance = await JSRuntime.InvokeAsync<IJSObjectReference>("bootstrap.Modal.getOrCreateInstance", "#errorModal");
+                await modalInstance.InvokeVoidAsync("show");
             }
         }
         catch (Exception ex)
         {
             ErrorMessage = "Có lỗi xảy ra: " + ex.Message;
+
+            var modalInstance = await JSRuntime.InvokeAsync<IJSObjectReference>("bootstrap.Modal.getOrCreateInstance", "#errorModal");
+            await modalInstance.InvokeVoidAsync("show");
         }
     }
 
@@ -283,8 +316,8 @@
 
     private async Task LoginWithFacebook()
     {
-    var facebookAuthUrl = "https://localhost:44359/api/user/signin-facebook";
-    NavigationManager.NavigateTo(facebookAuthUrl, true); 
+        var facebookAuthUrl = "https://localhost:44359/api/user/signin-facebook";
+        NavigationManager.NavigateTo(facebookAuthUrl, true);
     }
 
 

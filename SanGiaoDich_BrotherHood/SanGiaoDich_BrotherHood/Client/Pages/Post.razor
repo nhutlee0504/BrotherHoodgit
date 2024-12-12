@@ -173,6 +173,7 @@
             box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
         }
 
+
 </style>
 <div class="container-fluid">
     <ul class="breadcrumb">
@@ -180,10 +181,6 @@
         <li class="breadcrumb-item"><a href="#">Đăng sản phẩm</a></li>
     </ul>
 </div>
-<style>
-   
-
-</style>
 
 @if (isLoading)
 {
@@ -192,36 +189,30 @@
         <p>Đang xử lý, vui lòng đợi...</p>
     </div>
 }
-    
+
 <div class="container">
     <div class="row">
         <div class="col-md-6">
             <div class="form-group mb-3">
                 <div class="row">
-                    <div class="row">
-                        @for (int i = 0; i < 3; i++)
-                        {
-                            <div class="@(i == 2 ? "col-6 offset-3" : "col-md-6 col-6 ") mb-2">
-                                <div class="image-preview border d-flex align-items-center justify-content-center"
-                                     style="height: 200px;">
-                                    @if (selectedFiles.Count > i && selectedFiles[i] != null)
-                                    {
-                                        <img src="@selectedFiles[i].DataUrl" class="img-fluid" alt="Hình ảnh sản phẩm" />
-                                    }
-                                    else
-                                    {
-                                        <span class="placeholder-text">Chưa có hình ảnh</span>
-                                    }
-                                </div>
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <div class="@(i == 2 ? "col-6 offset-3" : "col-md-6 col-6 ") mb-2">
+                            <div class="image-preview border d-flex align-items-center justify-content-center"
+                                 style="height: 200px;">
+                                @if (selectedFiles.Count > i && selectedFiles[i] != null)
+                                {
+                                    <img src="@selectedFiles[i].DataUrl" class="img-fluid" alt="Hình ảnh sản phẩm" />
+                                }
+                                else
+                                {
+                                    <span class="placeholder-text">Chưa có hình ảnh</span>
+                                }
                             </div>
-                        }
-                    </div>
-
-
-
+                        </div>
+                    }
                 </div>
                 <div class="row mt-2">
-
                     <div class="col-md-12">
                         <span>Xem quy định về <a href="#" data-bs-toggle="modal" data-bs-target="#policyModal"><i class="fas fa-info-circle"></i> Cách chụp ảnh và quay sản phẩm</a></span>
                     </div>
@@ -230,7 +221,6 @@
                     <div class="col-md-12 d-flex align-items-center justify-content-center">
                         <InputFile OnChange="HandleFileSelected" multiple accept="image/*" />
                     </div>
-
                 </div>
             </div>
         </div>
@@ -255,7 +245,6 @@
                         {
                             <option value="@category.IDCategory">@category.NameCate</option>
                         }
-
                     </select>
                     @if (!string.IsNullOrWhiteSpace(ProductCategoryError))
                     {
@@ -291,8 +280,6 @@
                     <div class="col-md-6">
                         <label class="form-label">Chọn mức độ ưu tiên</label>
                     </div>
-                    <div class="col-md-6">
-                    </div>
                 </div>
 
                 <div class="row g-2">
@@ -324,7 +311,6 @@
                     }
                 </div>
             </div>
-
 
             <!-- Mô tả sản phẩm -->
             <div class="form-group">
@@ -370,54 +356,6 @@
         </div>
     </div>
 
-@* 
-    <div class="modal fade" id="policyModal" tabindex="-1" aria-labelledby="policyModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="policyModalLabel">Chính Sách Đăng Ảnh và Bài Viết</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="modal-content">
-                        <p>
-                            <span class="highlight-red">Chúng tôi hiểu rằng điều quan trọng đối với BrotherHood</span> là phải trở thành nơi mà mọi người có thể cảm thấy tự tin để giao tiếp, nhưng chúng tôi cũng biết rằng cần phải xem trọng vai trò của bản thân trong việc ngăn chặn việc lạm dụng dịch vụ của mình. Đó là lý do <span class="highlight-red">BrotherHood phát triển Tiêu chuẩn cộng đồng</span> để cung cấp cho người dùng những nguyên tắc về nội dung được phép và không được phép trên BrotherHood.
-                        </p>
-                        <h6 class="highlight-blue">Nội dung có khả năng vi phạm Tiêu chuẩn cộng đồng:</h6>
-                        <ul>
-                            <li class="highlight-yellow">Nội dung được tạo và phân phối bằng tài khoản giả.</li>
-                            <li class="highlight-yellow">Nội dung chứa từ/cụm từ đã được xác định là gây thù ghét.</li>
-                            <li class="highlight-yellow">Nội dung có thể khiêu khích hoặc tạo điều kiện cho tình trạng bạo lực nghiêm trọng.</li>
-                            <li>Hành vi bắt nạt và quấy rối.</li>
-                            <li>Spam, hình ảnh phản cảm, hoạt động tình dục và ảnh khỏa thân người lớn.</li>
-                            <li>Bài viết mua bán, giao dịch hoặc quảng cáo hàng hóa hoặc dịch vụ bị hạn chế.</li>
-                        </ul>
-                        <h6 class="highlight-blue">Nội dung trên lằn ranh Tiêu chuẩn cộng đồng:</h6>
-                        <ul>
-                            <li class="highlight-yellow">Ảnh khỏa thân người lớn và hoạt động tình dục trên lằn ranh.</li>
-                            <li>Nội dung bạo lực và phản cảm trên lằn ranh.</li>
-                            <li>Hành vi sắp chạm ngưỡng bắt nạt & quấy rối, ngôn từ gây thù ghét và bạo lực & khích nộ.</li>
-                            <li class="highlight-yellow">Nội dung đăng trong các nhóm liên quan đến hàng hóa thuộc diện kiểm soát.</li>
-                        </ul>
-                        <h6 class="highlight-blue">Nguyên tắc đối với bài viết có mức độ lan truyền đáng ngờ:</h6>
-                        <p>
-                            <span class="highlight-red">Chúng tôi muốn đảm bảo rằng nội dung mọi người thấy trên BrotherHood</span> đến từ nguồn xác thực và không vi phạm chính sách của chúng tôi. Chúng tôi có thể tạm thời hạn chế phân phối bài viết có mức độ phân phối cao đột biến cho đến khi người đăng xác minh danh tính.
-                        </p>
-                        <h6 class="highlight-blue">Nguyên tắc đối với người nhiều lần vi phạm chính sách:</h6>
-                        <p>
-                            <span class="highlight-red">Những người nhiều lần vi phạm</span> việc đăng nội dung lên trang cá nhân, Trang hoặc Nhóm sẽ bị xử lý, đặc biệt là các tài khoản được tạo để né tránh chính sách.
-                        </p>
-                    </div>
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đồng ý và Tiếp tục</button>
-                </div>
-            </div>
-        </div>
-    </div> *@
-
     <div class="row">
         <div class="col-md-12 d-flex justify-content-end">
             <div class="text-right mb-3">
@@ -426,23 +364,32 @@
         </div>
     </div>
 </div>
-<div class="modal fade show" style="@(!string.IsNullOrEmpty(ImageError) ? "display: block;" : "display: none;")" tabindex="-1" aria-labelledby="imageErrorModalLabel" aria-hidden="true">
+
+<!-- Modal -->
+<div class="modal" tabindex="-1" id="successModal" style="display: @(showSuccessModal ? "block" : "none")">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="imageErrorModalLabel">Lỗi hình ảnh</h5>
-                <button type="button" class="btn-close" @onclick="CloseImageErrorModal" aria-label="Close"></button>
+                <h5 class="modal-title">Thông báo</h5>
+                <button type="button" class="close" @onclick="CloseModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
-                <p class="text-danger">@ImageError</p>
+                <p>@ModalMessage</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" @onclick="CloseImageErrorModal">Đóng</button>
+                <button type="button" class="btn btn-primary" @onclick="CloseModal">Đóng</button>
             </div>
         </div>
     </div>
 </div>
+
 @code {
+    private bool showSuccessModal = false;
+    private string ModalMessage { get; set; }
+    private bool ShowErrorModal  = false;
+
     private string ProductName { get; set; }
     private decimal ProductPrice { get; set; }
     private int ProductQuantity { get; set; }
@@ -471,6 +418,14 @@
             ProrityLevel = selectedPriority;
         }
     }
+
+
+    // Hàm đóng modal
+    private void CloseModal()
+    {
+        showSuccessModal = false;
+    }
+
     private List<ImageFile> selectedFiles = new List<ImageFile>
     {
         null, null, null
@@ -603,22 +558,6 @@
 
         try
         {
-            var productNameCheckResult = await CheckProfanity(ProductName);
-            if (!string.IsNullOrEmpty(productNameCheckResult))
-            {
-                ProductNameError = productNameCheckResult;
-                isLoading = false;
-                return;
-            }
-
-            var productDescriptionCheckResult = await CheckProfanity(Description);
-            if (!string.IsNullOrEmpty(productDescriptionCheckResult))
-            {
-                ProductDescriptionError = productDescriptionCheckResult;
-                isLoading = false;
-                return;
-            }
-
             var productDto = new ProductDto
                 {
                     Name = ProductName,
@@ -628,7 +567,7 @@
                     Description = Description,
                     ProrityLevel = ProrityLevel,
                     PriceUp = (ProrityLevel == "Phổ thông") ? 25000 : 50000
-        };
+                };
 
             var response = await HttpClient.PostAsJsonAsync("api/product/AddProduct", productDto);
 
@@ -640,27 +579,33 @@
                 if (productId > 0)
                 {
                     await UploadImages(productId);
+                    ModalMessage = "Sản phẩm đã được thêm thành công!";
+                    showSuccessModal = true;  // Hiển thị modal
                 }
                 else
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "Không thể lấy thông tin sản phẩm mới tạo.");
+                    ModalMessage = "Không thể lấy thông tin sản phẩm mới tạo.";
+                    showSuccessModal = true;  // Hiển thị modal
                 }
             }
             else
             {
                 var errorMessage = await response.Content.ReadAsStringAsync();
-                await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra khi thêm sản phẩm: {errorMessage}");
+                ModalMessage = $"Có lỗi xảy ra khi thêm sản phẩm: {errorMessage}";
+                showSuccessModal = true;  // Hiển thị modal
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra khi thêm sản phẩm: {ex.Message}");
+            ModalMessage = $"Có lỗi xảy ra khi thêm sản phẩm: {ex.Message}";
+            showSuccessModal = true;  // Hiển thị modal
         }
         finally
         {
             isLoading = false;
         }
     }
+
 
     private async Task<string> CheckProfanity(string text)
     {
@@ -711,20 +656,24 @@
 
             if (uploadResponse.IsSuccessStatusCode)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Sản phẩm đã được thêm thành công!");
+                ModalMessage = "Sản phẩm đã được thêm thành công!";
+                showSuccessModal = true;
                 NavigationManager.NavigateTo("/", forceLoad: true);
             }
             else
             {
                 var errorMessage = await uploadResponse.Content.ReadAsStringAsync();
-                await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra khi tải ảnh: {errorMessage}");
+                ModalMessage = $"Có lỗi xảy ra khi tải ảnh: {errorMessage}";
+                showSuccessModal = true;
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra khi tải ảnh: {ex.Message}");
+            ModalMessage = $"Có lỗi xảy ra khi tải ảnh: {ex.Message}";
+            showSuccessModal = true;
         }
     }
+
     private string ResponseText { get; set; } = "";
     private string ErrorMessage { get; set; } = "";
     private bool IsLoading { get; set; } = false;
@@ -800,4 +749,5 @@
             }
         }
     }
+    
 }
