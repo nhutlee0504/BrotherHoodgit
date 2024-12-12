@@ -294,6 +294,11 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 return StatusCode(500, $"Lỗi khi tính doanh thu theo tháng: {ex.Message}");
             }
         }
-
+        [HttpGet("export-products")]
+        public async Task<IActionResult> ExportProducts()
+        {
+            var excelFile = await prod.ExportProductsToExcelAsync();
+            return File(excelFile, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Products.xlsx");
+        }
     }
 }

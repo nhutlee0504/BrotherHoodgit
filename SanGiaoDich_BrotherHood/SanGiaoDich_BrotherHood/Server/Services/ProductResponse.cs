@@ -15,6 +15,7 @@ using System.Security.Principal;
 using System.Text.Json;
 using System.Text;
 using System.Threading.Tasks;
+using OfficeOpenXml;
 
 namespace SanGiaoDich_BrotherHood.Server.Services
 {
@@ -24,6 +25,8 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration; // Thêm IConfiguration
         private readonly HttpClient _httpClient;
+        private object package;
+
         public ProductResponse(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, HttpClient httpClient)
         {
             _context = context;
@@ -410,6 +413,52 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
             return revenue;
         }
+
+        public async Task<byte[]> ExportProductsToExcelAsync()
+        {
+            // Lấy danh sách sản phẩm từ database
+            var products = await GetAllProductsAsync();
+
+            // Sử dụng EPPlus để tạo file Excel
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Products");
+
+                // Tiêu đề cột
+                worksheet.Cells[1, 1].Value = "Tên sản phẩm";
+                worksheet.Cells[1, 2].Value = "Giá";
+                worksheet.Cells[1, 3].Value = "Số lượng";
+                worksheet.Cells[1, 4].Value = "Ngày tạo";
+
+                // Thêm dữ liệu sản phẩm
+                int row = 2;
+                foreach (var product in products)
+                {
+                    worksheet.Cells[row, 1].Value = product.Name;
+                    worksheet.Cells[row, 2].Value = product.Price;
+                    worksheet.Cells[row, 3].Value = product.Quantity;
+
+                    // Đảm bảo định dạng ngày tháng cho Excel
+                    worksheet.Cells[row, 4].Value = product.CreatedDate.HasValue
+                        ? product.CreatedDate.Value.ToString("yyyy-MM-dd HH:mm:ss")
+                        : string.Empty; // Hoặc giá trị mặc định nào đó
+
+                    row++;
+                }
+
+                // Tự động điều chỉnh kích thước cột
+                worksheet.Cells.AutoFitColumns();
+
+                // Lưu dữ liệu vào bộ nhớ và chuyển thành mảng byte
+                using (var stream = new MemoryStream())
+                {
+                    package.SaveAs(stream);
+                    return stream.ToArray(); // Trả về mảng byte từ MemoryStream
+                }
+            }
+        }
+
+
 
     }
 

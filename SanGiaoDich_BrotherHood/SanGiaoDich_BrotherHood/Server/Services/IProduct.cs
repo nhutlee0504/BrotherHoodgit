@@ -27,6 +27,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         Task<decimal> GetRevenueByDateAsync(DateTime date);
         Task<decimal> GetRevenueByWeekAsync(DateTime startDate);
         Task<decimal> GetRevenueByMonthAsync(int month, int year);
-
+        Task<byte[]> ExportProductsToExcelAsync();
     }
 }

@@ -1,26 +1,26 @@
 ﻿@page "/Admin/ThongKeDoanhThu"
 @layout AdminLayout
 @inject HttpClient Http
-
-<style>
-    /* Hiệu ứng hover cho card */
-    .card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-        .card:hover {
-            transform: scale(1.05); /* Tăng kích thước khi hover */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Thêm bóng mờ để tạo cảm giác nổi */
-        }
-</style>
+@inject IJSRuntime JSRuntime
 
 <h3 class="text-center my-4">Thống Kê Doanh Thu</h3>
 
-@if (totalRevenue == null)
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (isLoading)
 {
     <div class="text-center">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-3">Đang tải dữ liệu...</p>
+        <p class="mt-3">Đang xử lý...</p>
+    </div>
+}
+else if (totalRevenue == null)
+{
+    <div class="text-center">
+        <p class="mt-3">Không có dữ liệu doanh thu.</p>
     </div>
 }
 else
@@ -29,10 +29,10 @@ else
         <!-- Doanh thu tổng -->
         <div class="row my-4">
             <div class="col-md-12">
-                <div class="card text-white bg-success mb-3">
+                <div class="card text-white bg-success mb-3 shadow-lg">
                     <div class="card-body text-center">
                         <h5 class="card-title">Tổng Doanh Thu</h5>
-                        <p class="card-text fs-4">@totalRevenue.Value.ToString("C")</p>
+                        <p class="card-text fs-4 fw-bold">@totalRevenue.Value.ToString("C")</p>
                     </div>
                 </div>
             </div>
@@ -43,28 +43,28 @@ else
             <div class="col-md-12">
                 <h4>Chọn Thống Kê</h4>
 
-                <!-- Chọn Ngày -->
                 <div class="form-group">
                     <label for="datePicker">Ngày</label>
                     <input type="date" class="form-control" id="datePicker" @bind="selectedDate" />
                     <button class="btn btn-primary mt-2" @onclick="GetRevenueByDate">Xem Doanh Thu Theo Ngày</button>
                 </div>
 
-                <!-- Chọn Tuần -->
-                <div class="form-group">
+                <div class="form-group mt-4">
                     <label for="weekPicker">Tuần</label>
                     <input type="week" class="form-control" id="weekPicker" @bind="selectedWeek" />
                     <button class="btn btn-primary mt-2" @onclick="GetRevenueByWeek">Xem Doanh Thu Theo Tuần</button>
                 </div>
 
-                <!-- Chọn Tháng -->
-                <div class="form-group">
+                <div class="form-group mt-4">
                     <label for="monthPicker">Tháng</label>
                     <input type="month" class="form-control" id="monthPicker" @bind="selectedMonth" />
                     <button class="btn btn-primary mt-2" @onclick="GetRevenueByMonth">Xem Doanh Thu Theo Tháng</button>
                 </div>
             </div>
         </div>
+
+        <!-- Nút Xuất Excel -->
+        <button class="btn btn-success mb-3" @onclick="ExportToExcel">Xuất Excel</button>
 
         <!-- Danh sách sản phẩm -->
         <div class="row my-4">
@@ -80,8 +80,8 @@ else
                 }
                 else
                 {
-                    <table class="table table-bordered table-striped">
-                        <thead>
+                    <table class="table table-hover table-bordered">
+                        <thead class="table-light">
                             <tr class="text-center">
                                 <th>ID</th>
                                 <th>Tên Sản Phẩm</th>
@@ -93,11 +93,11 @@ else
                         <tbody>
                             @foreach (var product in products.Where(x => x.Status == "Đã duyệt"))
                             {
-                                <tr>
+                                <tr class="align-middle">
                                     <td class="text-center">@product.IDProduct</td>
                                     <td>@product.Name</td>
                                     <td class="text-center">@product.Quantity</td>
-                                    <td class="text-right">@product.Price.ToString("C")</td>
+                                    <td class="text-end">@product.Price.ToString("C")</td>
                                     <td class="text-center">@product.Status</td>
                                 </tr>
                             }
@@ -109,45 +109,57 @@ else
     </div>
 }
 
+<script>
+    function downloadFile(fileName, contentType, content) {
+        const blob = new Blob([content], { type: contentType });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
 @code {
     private decimal? totalRevenue;
     private List<Product> products;
     private DateTime selectedDate;
     private string selectedWeek;
     private DateTime selectedMonth;
+    private bool isLoading = false;
+    private string errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        errorMessage = null;
         try
         {
-            // Gọi API để lấy tổng doanh thu
             totalRevenue = await Http.GetFromJsonAsync<decimal?>("api/product/GetTotalRevenue");
-
-            // Gọi API để lấy danh sách sản phẩm
             products = await Http.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
         }
         catch (Exception ex)
         {
-            // Xử lý lỗi
-            totalRevenue = null;
-            products = null;
+            errorMessage = "Không thể tải dữ liệu. Vui lòng thử lại sau.";
             Console.WriteLine($"Lỗi khi gọi API: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
     private async Task GetRevenueByDate()
     {
-        if (selectedDate != null)
+        if (selectedDate != default(DateTime))
         {
-            try
-            {
-                // Gọi API thống kê theo ngày
-                totalRevenue = await Http.GetFromJsonAsync<decimal?>($"api/product/GetRevenueByDate/{selectedDate:yyyy-MM-dd}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Lỗi khi gọi API thống kê theo ngày: {ex.Message}");
-            }
+            await GetRevenueByPeriod("Date", selectedDate.ToString("yyyy-MM-dd"));
         }
     }
 
@@ -155,45 +167,85 @@ else
     {
         if (!string.IsNullOrEmpty(selectedWeek))
         {
-            try
-            {
-                // Tính toán ngày bắt đầu của tuần từ chuỗi tuần
-                var weekParts = selectedWeek.Split('-');
-                var year = int.Parse(weekParts[0]);
-                var weekNumber = int.Parse(weekParts[1]);
-                var jan1 = new DateTime(year, 1, 1);
-                var daysOffset = DayOfWeek.Monday - jan1.DayOfWeek;
-                var startOfWeek = jan1.AddDays(daysOffset + (weekNumber - 1) * 7);
+            var weekParts = selectedWeek.Split('-');
+            var year = int.Parse(weekParts[0]);
+            var weekNumber = int.Parse(weekParts[1]);
 
-                // Gọi API với ngày bắt đầu của tuần
-                totalRevenue = await Http.GetFromJsonAsync<decimal?>($"api/product/GetRevenueByWeek/{startOfWeek:yyyy-MM-dd}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Lỗi khi gọi API thống kê theo tuần: {ex.Message}");
-            }
+            var startOfWeek = FirstDateOfWeekISO8601(year, weekNumber);
+            await GetRevenueByPeriod("Week", startOfWeek.ToString("yyyy-MM-dd"));
         }
     }
 
     private async Task GetRevenueByMonth()
     {
-        if (!string.IsNullOrEmpty(selectedMonth.ToString()))
+        if (selectedMonth != default(DateTime))
         {
-            try
-            {
-                // Tách tháng và năm từ chuỗi selectedMonth (yyyy-MM)
-                var monthYear = selectedMonth.ToString().Split("-");
-                var month = int.Parse(monthYear[1]);
-                var year = int.Parse(monthYear[0]);
+            var monthYear = selectedMonth.ToString().Split("-");
+            var month = int.Parse(monthYear[1]);
+            var year = int.Parse(monthYear[0]);
 
-                // Gọi API thống kê theo tháng
-                totalRevenue = await Http.GetFromJsonAsync<decimal?>($"api/product/GetRevenueByMonth/{month}/{year}");
-            }
-            catch (Exception ex)
+            await GetRevenueByPeriod("Month", $"{month}-{year}");
+        }
+    }
+
+    private async Task GetRevenueByPeriod(string periodType, string periodValue)
+    {
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            totalRevenue = await Http.GetFromJsonAsync<decimal?>($"api/product/GetRevenueBy{periodType}/{periodValue}");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi khi lấy dữ liệu doanh thu theo {periodType.ToLower()}.";
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            var response = await Http.GetAsync("api/product/ExportProductsToExcel");
+            if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"Lỗi khi gọi API thống kê theo tháng: {ex.Message}");
+                var content = await response.Content.ReadAsByteArrayAsync();
+                var fileName = "Products.xlsx";
+
+                // Gọi JavaScript để tải file xuống
+                await JSRuntime.InvokeVoidAsync("downloadFile", fileName, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", content);
+            }
+            else
+            {
+                errorMessage = "Không thể xuất file Excel.";
             }
         }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi khi xuất file Excel: {ex.Message}";
+            Console.WriteLine($"Lỗi khi xuất file Excel: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+
+    private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
+    {
+        var jan1 = new DateTime(year, 1, 1);
+        var daysOffset = (int)DayOfWeek.Monday - (int)jan1.DayOfWeek;
+        if (daysOffset < 0) daysOffset += 7;
+        var firstMonday = jan1.AddDays(daysOffset);
+        return firstMonday.AddDays((weekOfYear - 1) * 7);
     }
 
     public class Product

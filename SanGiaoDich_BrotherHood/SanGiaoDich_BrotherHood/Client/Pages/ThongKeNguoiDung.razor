@@ -2,18 +2,6 @@
 @layout AdminLayout
 @inject HttpClient Http
 
-<style>
-    /* Hiệu ứng hover cho card */
-    .card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-        .card:hover {
-            transform: scale(1.05); /* Tăng kích thước khi hover */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Thêm bóng mờ để tạo cảm giác nổi */
-        }
-</style>
-
 <h3 class="text-center my-4">Thống Kê Người Dùng</h3>
 
 @if (userStatistics == null)
@@ -27,34 +15,43 @@ else
 {
     <div class="container">
         <!-- Thống kê tổng quan -->
-        <div class="row my-4">
+        <div class="row g-4 my-4">
             <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                <div class="card text-white bg-primary mb-3 fade-in">
-                    <div class="card-body text-center">
+                <div class="card bg-primary text-white text-center shadow-sm h-100 hover-shadow">
+                    <div class="card-body">
                         <h5 class="card-title">Tổng Số Người Dùng</h5>
-                        <p class="card-text fs-4">@userStatistics["TotalUsers"]</p>
+                        <p class="card-text fs-4 fw-bold">@userStatistics["TotalUsers"]</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                <div class="card text-white bg-success mb-3 fade-in">
-                    <div class="card-body text-center">
+                <div class="card bg-success text-white text-center shadow-sm h-100 hover-shadow">
+                    <div class="card-body">
                         <h5 class="card-title">Người Dùng Hoạt Động</h5>
-                        <p class="card-text fs-4">@userStatistics["ActiveUsers"]</p>
+                        <p class="card-text fs-4 fw-bold">@userStatistics["ActiveUsers"]</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
-                <div class="card text-white bg-danger mb-3 fade-in">
-                    <div class="card-body text-center">
+                <div class="card bg-danger text-white text-center shadow-sm h-100 hover-shadow">
+                    <div class="card-body">
                         <h5 class="card-title">Người Dùng Đã Bị Xóa</h5>
-                        <p class="card-text fs-4">@userStatistics["DeletedUsers"]</p>
+                        <p class="card-text fs-4 fw-bold">@userStatistics["DeletedUsers"]</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 }
+
+<style>
+    /* Hiệu ứng hover cho card */
+    .hover-shadow:hover {
+        transform: scale(1.05);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+</style>
 
 @code {
     private Dictionary<string, int> userStatistics;
