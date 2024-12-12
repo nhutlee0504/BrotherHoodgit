@@ -707,6 +707,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         {
             try
             {
+
                 allBills = await HttpClient.GetFromJsonAsync<List<BillModel>>("api/Bill/GetBill");
                 bills = new List<BillModel>(allBills);
 
@@ -719,10 +720,13 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                     {
                         var product = await HttpClient.GetFromJsonAsync<ProductModel>($"api/Product/GetProductById/{detail.IDProduct}");
 
-                        if (product != null && product.UserName == username)
+                        if (product != null)
                         {
-                            saleBills.Add(bill);
-                            break;
+                            if (product.UserName == username)
+                            {
+                                saleBills.Add(bill); // Đây là đơn hàng bán của người dùng
+                                break;
+                            }
                         }
                     }
 
@@ -737,6 +741,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                 allBillDetails = new List<BillDetailModel>();
             }
         }
+
+        // Đếm số lượng đơn hàng hoàn thành cho mua và bán
         private void CountCompletedBills()
         {
             totalBuyCompletedBills = 0;

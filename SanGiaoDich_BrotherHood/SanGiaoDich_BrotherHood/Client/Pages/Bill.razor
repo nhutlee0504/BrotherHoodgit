@@ -42,15 +42,17 @@
     .nav-pills .nav-link {
         background-color: white;
         color: #28a745;
-        border: 1px solid #28a745; 
+        border: 1px solid #28a745;
     }
+
         .nav-pills .nav-link.active {
-            background-color: #28a745; 
-            color: white; 
-            border: 1px solid #218838; 
+            background-color: #28a745;
+            color: white;
+            border: 1px solid #218838;
         }
+
         .nav-pills .nav-link:hover {
-            background-color: #e2f4e0; 
+            background-color: #e2f4e0;
             color: #218838;
         }
 
@@ -66,13 +68,13 @@
             border-color: #218838; /* Darker green on focus */
         }
 
-        button.btn:hover {
-            background-color: #218838; /* Darker green on hover */
-        }
+    button.btn:hover {
+        background-color: #218838; /* Darker green on hover */
+    }
 
-        button.btn:focus {
-            outline: none;
-        }
+    button.btn:focus {
+        outline: none;
+    }
 
     .table {
         border-collapse: collapse;
@@ -156,7 +158,6 @@
         .table .btn-danger:hover {
             background-color: #c82333;
         }
-
 
 </style>
 <div class="modal fade" id="billDetailsModal" tabindex="-1" aria-labelledby="billDetailsModalLabel" aria-hidden="true">
@@ -379,10 +380,12 @@
     private int? searchIDBill;
     private List<BillDetailModel> allBillDetails = new List<BillDetailModel>();
     private List<BillModel> saleBills = new List<BillModel>();
-
+    private int totalBuyCompletedBills = 0;
+    private int totalSellCompletedBills = 0;
     protected override async Task OnInitializedAsync()
     {
         await LoadBill();
+        CountCompletedBills();
     }
     private string GetStatusBadge(string status) => status switch
     {
@@ -436,10 +439,13 @@
                 {
                     var product = await httpClient.GetFromJsonAsync<ProductModel>($"api/Product/GetProductById/{detail.IDProduct}");
 
-                    if (product != null && product.UserName == userName)
+                    if (product != null)
                     {
-                        saleBills.Add(bill);
-                        break;
+                        if (product.UserName == userName)
+                        {
+                            saleBills.Add(bill); // Đây là đơn hàng bán của người dùng
+                            break;
+                        }
                     }
                 }
 
@@ -452,6 +458,31 @@
             bills = new List<BillModel>();
             saleBills = new List<BillModel>();
             allBillDetails = new List<BillDetailModel>();
+        }
+    }
+
+    // Đếm số lượng đơn hàng hoàn thành cho mua và bán
+    private void CountCompletedBills()
+    {
+        totalBuyCompletedBills = 0;
+        totalSellCompletedBills = 0;
+
+        foreach (var bill in bills)
+        {
+            if (bill.Status == "Hoàn thành")
+            {
+                // Kiểm tra đơn hàng mua
+                if (bill.UserName == userName)
+                {
+                    totalBuyCompletedBills++;
+                }
+
+                // Kiểm tra đơn hàng bán
+                if (bill.SellerUserName == userName)
+                {
+                    totalSellCompletedBills++;
+                }
+            }
         }
     }
 
