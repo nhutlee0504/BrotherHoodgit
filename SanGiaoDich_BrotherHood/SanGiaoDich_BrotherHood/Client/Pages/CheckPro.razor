@@ -1,0 +1,58 @@
+﻿@page "/language-analysis"
+@inject IJSRuntime JSRuntime
+
+<h3>Kiểm tra Ngôn từ</h3>
+
+<textarea @bind="inputText" placeholder="Nhập văn bản"></textarea>
+<button @onclick="AnalyzeText">Phân tích</button>
+
+@if (!string.IsNullOrEmpty(resultMessage))
+{
+    <p>@resultMessage</p>
+}
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <p style="color: red;">@errorMessage</p>
+}
+
+@code {
+    private string inputText;
+    private string resultMessage;
+    private string errorMessage;
+
+    private async Task AnalyzeText()
+    {
+        if (string.IsNullOrEmpty(inputText))
+        {
+            resultMessage = string.Empty;
+            errorMessage = "Vui lòng nhập văn bản.";
+            return;
+        }
+
+        try
+        {
+            var result = await JSRuntime.InvokeAsync<Dictionary<string, string>>("analyzeText", inputText);
+
+            if (result.ContainsKey("error"))
+            {
+                errorMessage = result["error"];
+                resultMessage = string.Empty;
+            }
+            else
+            {
+                resultMessage = result["message"];
+                errorMessage = string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi: {ex.Message}";
+            resultMessage = string.Empty;
+        }
+    }
+}
+
+
+<script src="/js/Check.js"></script>
+
