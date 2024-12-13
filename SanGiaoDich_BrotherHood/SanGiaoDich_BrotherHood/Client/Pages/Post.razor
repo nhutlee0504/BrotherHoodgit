@@ -595,7 +595,7 @@
         ProductDescriptionError = string.Empty;
         ImageError = string.Empty;
 
-        // Kiểm tra lỗi
+        // Kiểm tra lỗi đầu vào
         if (string.IsNullOrWhiteSpace(ProductName))
         {
             ProductNameError = "Vui lòng nhập tên sản phẩm.";
@@ -641,24 +641,26 @@
             return;
         }
 
+        // Kiểm tra tục tĩu trong tên sản phẩm
+        var productNameCheckResult = await AnalyzeText(ProductName);
+        if (!string.IsNullOrEmpty(productNameCheckResult))
+        {
+            ProductNameError = productNameCheckResult;
+            isLoading = false;
+            return;
+        }
+
+        // Kiểm tra tục tĩu trong mô tả sản phẩm
+        var productDescriptionCheckResult = await AnalyzeText(Description);
+        if (!string.IsNullOrEmpty(productDescriptionCheckResult))
+        {
+            ProductDescriptionError = productDescriptionCheckResult;
+            isLoading = false;
+            return;
+        }
+
         try
         {
-            var productNameCheckResult = await CheckProfanity(ProductName);
-            if (!string.IsNullOrEmpty(productNameCheckResult))
-            {
-                ProductNameError = productNameCheckResult;
-                isLoading = false;
-                return;
-            }
-
-            var productDescriptionCheckResult = await CheckProfanity(Description);
-            if (!string.IsNullOrEmpty(productDescriptionCheckResult))
-            {
-                ProductDescriptionError = productDescriptionCheckResult;
-                isLoading = false;
-                return;
-            }
-
             var productDto = new ProductDto
                 {
                     Name = ProductName,
@@ -700,6 +702,36 @@
         {
             isLoading = false;
         }
+    }
+
+    private async Task<string> AnalyzeText(string inputText)
+    {
+        if (string.IsNullOrEmpty(inputText))
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            // Gọi hàm JavaScript để phân tích văn bản
+            var result = await JSRuntime.InvokeAsync<Dictionary<string, string>>("analyzeText", inputText);
+
+            // Kiểm tra nếu có lỗi trong kết quả trả về
+            if (result.ContainsKey("error"))
+            {
+                return result["error"];
+            }
+            else if (result.ContainsKey("message"))
+            {
+                return result["message"];
+            }
+        }
+        catch (Exception ex)
+        {
+            return $"Lỗi: {ex.Message}";
+        }
+
+        return string.Empty;
     }
 
     private async Task<string> CheckProfanity(string text)
@@ -851,3 +883,4 @@
         }
     }
 }
+<script src="/js/Check.js"></script>
