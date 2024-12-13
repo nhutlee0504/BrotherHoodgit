@@ -45,8 +45,6 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         private string productname;
 
 
-        private Dictionary<int, List<string>> productImageLists = new Dictionary<int, List<string>>();
-
         private int currentPage = 1;
         private int itemsPerPage = 4;
         private int totalPosts = 0;
@@ -356,7 +354,6 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 
                 if (response == null || response.Count == 0)
                 {
-                    Console.WriteLine("API không trả về sản phẩm.");
                     productErrorMessage = "Chưa có bài đăng nào được tạo";
                     allProduct = new List<Product>();
                     return;

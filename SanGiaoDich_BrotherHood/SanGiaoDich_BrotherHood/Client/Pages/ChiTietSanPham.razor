@@ -213,12 +213,11 @@
                             <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                                 <div class="card product-card h-100 shadow-sm">
                                     <a @onclick="() => NavigateToProductDetail(relatedProduct.IDProduct)">
-                                        <img src="@relatedProduct.imageProducts" class="card-img-top" alt="@relatedProduct.Name" style="height: 150px; object-fit: cover; border-radius: 10px 10px 0 0;">
+                                        <img src="@GetImage(relatedProduct.IDProduct)" class="card-img-top" alt="@relatedProduct.Name" style="height: 150px; object-fit: cover; border-radius: 10px 10px 0 0;">
                                     </a>
                                     <div class="card-body">
                                         <h5 class="card-title text-truncate" title="@relatedProduct.Name">@relatedProduct.Name</h5>
                                         <p class="card-text text-success fw-bold">@relatedProduct.Price.ToString("N0") VND</p>
-                                        <a href="/ChiTietSanPham/@relatedProduct.IDProduct" class="btn btn-sm btn-primary w-100">Xem chi tiết</a>
                                     </div>
                                 </div>
                             </div>
