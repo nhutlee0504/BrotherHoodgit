@@ -4,7 +4,7 @@
 @inject HttpClient httpClient
 @inject NavigationManager NavigationManager
 <style>
-   
+
     .table-posts {
         width: 100%;
         border-collapse: collapse;
@@ -17,7 +17,7 @@
             border-bottom: 1px solid #ddd;
         }
 
-     
+
         .table-posts th {
             background-color: #4CAF50;
             color: white;
@@ -28,7 +28,7 @@
             background-color: #f9f9f9;
         }
 
-       
+
         .table-posts tr:hover {
             background-color: #f1f1f1;
         }
@@ -48,7 +48,7 @@
         }
 
         .table-posts .btn-view {
-            background-color: #2196F3; 
+            background-color: #2196F3;
         }
 
         .table-posts .btn-edit {
@@ -56,18 +56,20 @@
         }
 
         .table-posts .btn-delete {
-            background-color: #f44336; 
+            background-color: #f44336;
         }
 
         .table-posts .btn:hover {
             opacity: 0.8;
         }
+
     .search-filter-container {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 16px;
     }
+
     .search-container {
         display: flex;
         align-items: center;
@@ -108,19 +110,20 @@
         cursor: pointer;
     }
 
-
 </style>
 <div class="search-filter-container">
     <div class="search-container">
-        <input type="text" @bind="searchQuery" class="search-input" placeholder="Nhâp tên hoặc ID sản phẩm.">
+        <input type="text" @bind="searchQuery" class="search-input" placeholder="Tìm kiếm theo tên hoặc ID sản phẩm...">
         <button class="btn btn-search" @onclick="Search">Tìm kiếm</button>
     </div>
-   @if (!string.IsNullOrWhiteSpace(errorMessage))
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
     {
-        <div class="alert alert-danger mt-2">
+        <div class="alert alert-danger">
             @errorMessage
         </div>
     }
+
+
     <div class="filter-container">
         <div class="dropdown">
             <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
@@ -148,12 +151,12 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var product in products)
+        @foreach (var product in products.Skip((currentPage - 1) * pageSize).Take(pageSize))
         {
             <tr>
                 <td>@product.Name</td>
                 <td class="text-center">@product.UserName</td>
-                <td class="text-center">@product.StartDate?.ToString("dd/MM/yyyy | HH:mm:ss")</td>
+                <td class="text-center">@product.StartDate?.ToString("dd/MM/yyyy HH:mm:ss")</td>
                 <td class="text-center">@product.ProrityLevel</td>
                 <td class="text-center">@product.Status</td>
                 <td class="text-center">@product.AccountAccept</td>
@@ -161,27 +164,35 @@
                     @if (product.Status == "Đang chờ duyệt")
                     {
                         <button class="btn btn-success btn-sm" @onclick="() => HanndleAccept(product.IDProduct)">Duyệt</button>
-                        <button class="btn btn-danger btn-sm me-1"  @onclick="() => HandleCancle(product.IDProduct) ">Không duyệt</button>
+                        <button class="btn btn-danger btn-sm me-1" @onclick="() => HandleCancle(product.IDProduct)">Không duyệt</button>
                     }
                     else
                     {
                         <a class="btn btn-info btn-sm" href="@($"/Admin/Product/{product.IDProduct}")">Xem</a>
-
                         <button class="btn btn-danger btn-sm" @onclick="() => DeleteProduct(product.IDProduct)">Xóa</button>
-                        
-                        }
-                   
+                    }
                 </td>
             </tr>
         }
     </tbody>
 </table>
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <button class="btn btn-secondary" @onclick="PreviousPage" disabled="@IsFirstPage">Trang trước</button>
+    <span>Trang @currentPage / @totalPages</span>
+    <button class="btn btn-secondary" @onclick="NextPage" disabled="@IsLastPage">Trang sau</button>
+</div>
+
 @code {
     private List<Product> products = new List<Product>();
     private Dictionary<int, List<string>> productImages = new Dictionary<int, List<string>>();
     private Product product1 = new Product();
     private string searchQuery = string.Empty;
     private string errorMessage = string.Empty;
+
+    private int currentPage = 1;
+    private int pageSize = 10; // Số sản phẩm trên mỗi trang
+    private int totalPages => (int)Math.Ceiling((double)(products.Count) / pageSize);
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -208,82 +219,46 @@
         {
             errorMessage = string.Empty;
 
-            // Nếu không có nhập gì, load tất cả sản phẩm
             if (string.IsNullOrWhiteSpace(searchQuery))
             {
                 products = await httpClient.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
-                return;
             }
-
-            // Kiểm tra nếu là số nguyên, tìm kiếm theo ID
-            if (int.TryParse(searchQuery, out int productId))
+            else if (int.TryParse(searchQuery, out int productId))
             {
                 var response = await httpClient.GetAsync($"api/product/GetProductById/{productId}");
-
-                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    errorMessage = "Không tìm thấy sản phẩm với ID này.";
-                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống
-                }
-                else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
-                {
-                    errorMessage = "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.";
-                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống
-                }
-                else if (response.IsSuccessStatusCode)
+                if (response.IsSuccessStatusCode)
                 {
                     var product = await response.Content.ReadFromJsonAsync<Product>();
-                    if (product != null)
-                    {
-                        products = new List<Product> { product };
-                    }
-                    else
-                    {
-                        errorMessage = "Không tìm thấy sản phẩm theo ID.";
-                        products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống
-                    }
+                    products = product != null ? new List<Product> { product } : new List<Product>();
                 }
                 else
                 {
                     errorMessage = $"Lỗi API: {response.ReasonPhrase}";
-                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống khi có lỗi khác
+                    products = new List<Product>();
                 }
             }
             else
             {
-                // Tìm kiếm theo tên
                 var response = await httpClient.GetAsync($"api/product/GetProductByName/{searchQuery}");
-                if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
-                {
-                    errorMessage = "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.";
-                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống
-                }
-                else if (response.IsSuccessStatusCode)
+                if (response.IsSuccessStatusCode)
                 {
                     var result = await response.Content.ReadFromJsonAsync<List<Product>>();
-                    if (result != null && result.Any())
-                    {
-                        products = result;
-                    }
-                    else
-                    {
-                        errorMessage = "Không tìm thấy tên sản phẩm này.";
-                        products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống khi không có kết quả
-                    }
+                    products = result ?? new List<Product>();
                 }
                 else
                 {
                     errorMessage = $"Lỗi API: {response.ReasonPhrase}";
-                    products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống khi có lỗi khác
                 }
             }
+
+            currentPage = 1; // Reset về trang đầu tiên sau khi tìm kiếm
         }
         catch (Exception ex)
         {
             errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
-            products = new List<Product>();  // Đảm bảo danh sách sản phẩm trống khi xảy ra lỗi
         }
     }
+
 
     private async Task HanndleAccept(int productid)
     {
@@ -335,7 +310,7 @@
 
     private void ViewProduct(int id)
     {
-        
+
         Console.WriteLine($"Xem sản phẩm ID: {id}");
     }
     private void EditProduct(int id)
@@ -347,4 +322,23 @@
     {
         Console.WriteLine($"Xóa sản phẩm ID: {id}");
     }
+    private bool IsFirstPage => currentPage == 1;
+    private bool IsLastPage => currentPage == totalPages;
+
+    private void PreviousPage()
+    {
+        if (!IsFirstPage)
+        {
+            currentPage--;
+        }
+    }
+
+    private void NextPage()
+    {
+        if (!IsLastPage)
+        {
+            currentPage++;
+        }
+    }
+
 }

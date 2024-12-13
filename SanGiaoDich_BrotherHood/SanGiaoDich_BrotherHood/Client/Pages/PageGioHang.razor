@@ -4,7 +4,26 @@
 @inject HttpClient http
 @inject NavigationManager navigation
 @inject IJSRuntime jsruntime
+<style>
+    .product-info {
+        font-size: 14px;
+        color: #555;
+        margin-top: 20px;
+        text-align: center;
+    }
 
+    .product-link {
+        color: #28a745;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+        .product-link:hover {
+            color: #218838;
+            text-decoration: underline;
+        }
+
+</style>
 @code {
     private bool isLoading = true;
     private string errorMessage;
@@ -513,7 +532,9 @@
                     </tr>
                 </tfoot>
             </table>
-
+            <div class="product-info">
+                Nếu bạn chưa biết mua sản phẩm, hãy tham khảo <a href="/chitietgiaodich" class="product-link">trang này</a>.
+            </div>
             <!-- Nút thanh toán -->
             @if (!string.IsNullOrEmpty(errorMessage))
             {

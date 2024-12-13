@@ -16,27 +16,55 @@ else
     <div class="container">
         <!-- Thống kê tổng quan -->
         <div class="row g-4 my-4">
-            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                <div class="card bg-primary text-white text-center shadow-sm h-100 hover-shadow">
-                    <div class="card-body">
+            <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
+                <div class="card shadow-lg rounded h-100 stats-card">
+                    <div class="card-body text-center">
                         <h5 class="card-title">Tổng Số Người Dùng</h5>
-                        <p class="card-text fs-4 fw-bold">@userStatistics["TotalUsers"]</p>
+                        <p class="card-text fs-3 fw-bold text-primary">@userStatistics["TotalUsers"]</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                <div class="card bg-success text-white text-center shadow-sm h-100 hover-shadow">
-                    <div class="card-body">
+            <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
+                <div class="card shadow-lg rounded h-100 stats-card">
+                    <div class="card-body text-center">
                         <h5 class="card-title">Người Dùng Hoạt Động</h5>
-                        <p class="card-text fs-4 fw-bold">@userStatistics["ActiveUsers"]</p>
+                        <p class="card-text fs-3 fw-bold text-success">@userStatistics["ActiveUsers"]</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
-                <div class="card bg-danger text-white text-center shadow-sm h-100 hover-shadow">
-                    <div class="card-body">
+            <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
+                <div class="card shadow-lg rounded h-100 stats-card">
+                    <div class="card-body text-center">
                         <h5 class="card-title">Người Dùng Đã Bị Xóa</h5>
-                        <p class="card-text fs-4 fw-bold">@userStatistics["DeletedUsers"]</p>
+                        <p class="card-text fs-3 fw-bold text-danger">@userStatistics["DeletedUsers"]</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3" data-aos="fade-up" data-aos-delay="400">
+                <div class="card shadow-lg rounded h-100 stats-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Người Dùng Mới</h5>
+                      
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thống kê bài viết -->
+        <div class="row g-4 my-4">
+            <div class="col-md-6" data-aos="fade-up" data-aos-delay="500">
+                <div class="card shadow-lg rounded h-100 stats-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Bài Viết Tổng</h5>
+                     
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6" data-aos="fade-up" data-aos-delay="600">
+                <div class="card shadow-lg rounded h-100 stats-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Người Dùng Đang Chờ Kích Hoạt</h5>
+                       
                     </div>
                 </div>
             </div>
@@ -45,11 +73,51 @@ else
 }
 
 <style>
-    /* Hiệu ứng hover cho card */
-    .hover-shadow:hover {
-        transform: scale(1.05);
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    /* Cấu hình nền cho card */
+    .stats-card {
+        border: none;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Hiệu ứng cho card */
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .card-text {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+
+    /* Các màu sắc riêng cho từng thông số */
+    .text-primary {
+        color: #007bff !important;
+    }
+
+    .text-success {
+        color: #28a745 !important;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .text-warning {
+        color: #ffc107 !important;
+    }
+
+    .text-info {
+        color: #17a2b8 !important;
+    }
+
+    .text-secondary {
+        color: #6c757d !important;
     }
 </style>
 
@@ -70,7 +138,8 @@ else
             {
                 { "TotalUsers", 0 },
                 { "ActiveUsers", 0 },
-                { "DeletedUsers", 0 }
+                { "DeletedUsers", 0 },
+
             };
             Console.WriteLine($"Lỗi khi gọi API: {ex.Message}");
         }

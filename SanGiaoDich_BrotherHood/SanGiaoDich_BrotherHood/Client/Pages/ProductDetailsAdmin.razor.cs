@@ -1,16 +1,16 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
-using SanGiaoDich_BrotherHood.Shared.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
 using static System.Net.WebRequestMethods;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
+using SanGiaoDich_BrotherHood.Shared.Models;
+using System.Net.Http.Json;
+using System.Linq;
+using Microsoft.JSInterop;
 
 namespace SanGiaoDich_BrotherHood.Client.Pages
 {
-    public partial class ChiTietSanPham
+    public partial class ProductDetailsAdmin
     {
         [Parameter] public int ProductId { get; set; }
         private Product product;
@@ -23,16 +23,10 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         AccountInfoDto accountInfo;
         private bool IsLoggedIn { get; set; } = false;
         private string name = string.Empty;
-		private IEnumerable<Product> allProduct;
-		private List<Product> aProduct = new List<Product>();
-		private Dictionary<int, string> productImages = new Dictionary<int, string>();
-
-		protected override async Task OnInitializedAsync()
+        protected override async Task OnInitializedAsync()
         {
-           
+
             await LoadProductDetails();
-            await LoadAllProduct();
-            await LoadProductImages();
         }
 
         private async Task CheckTokenAndLoadAccountInfo()
@@ -95,66 +89,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             public string ImageAccount { get; set; }
         }
 
-		private async Task LoadAllProduct()
-		{
-			try
-			{
-				var response = await httpclient.GetFromJsonAsync<List<Product>>($"api/product/GetAllProduct");
-
-				if (response == null || response.Count == 0)
-				{
-					allProduct = new List<Product>();
-					return;
-				}
-
-				aProduct = response;
-			}
-			catch (Exception ex)
-			{
-
-			}
-		}
-
-
-		private async Task LoadProductImages()
-		{
-			try
-			{
-				foreach (var product in aProduct)
-				{
-					try
-					{
-						var images = await httpclient.GetFromJsonAsync<List<ImageProduct>>($"api/ImageProduct/GetImageProduct/{product.IDProduct}");
-						if (images != null && images.Count > 0)
-						{
-							productImages[product.IDProduct] = images.First().Image;
-						}
-						else
-						{
-							// Không có ảnh => gán ảnh mặc định
-							productImages[product.IDProduct] = "/defaultImg.png";
-						}
-					}
-					catch (Exception ex)
-					{
-						Console.WriteLine($"Lỗi khi tải ảnh cho sản phẩm ID: {product.IDProduct}, {ex.Message}");
-						// Lỗi trong quá trình gọi API => gán ảnh mặc định
-						productImages[product.IDProduct] = "/defaultImg.png";
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"Lỗi khi tải ảnh sản phẩm: {ex.Message}");
-			}
-		}
-
-		private string GetImage(int id)
-		{
-			return productImages.ContainsKey(id) ? productImages[id] : "/images/defaultImg.png";
-		}
-
-		private async Task Logout()
+        private async Task Logout()
         {
             await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "token");
             IsLoggedIn = false;
@@ -216,13 +151,13 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             {
                 return null;
             }
-			var account = await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
-			if (account != null)
-			{
-				name = account.UserName; // Gán tên người dùng vào biến name
-			}
-			return account;
-		}
+            var account = await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
+            if (account != null)
+            {
+                name = account.UserName; // Gán tên người dùng vào biến name
+            }
+            return account;
+        }
 
         private async Task<List<ImageProduct>> GetImagesByProductId(int id)
         {
@@ -254,7 +189,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 
         private async Task ToggleFavorite()
         {
-            isFavorite = !isFavorite; 
+            isFavorite = !isFavorite;
 
             var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
             if (!string.IsNullOrEmpty(token))
@@ -294,19 +229,21 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 
         private async Task GoToMessagingPage()
         {
-			await CheckTokenAndLoadAccountInfo();
-			if (IsLoggedIn)
-			{
-			}
-			else
-			{
-				Navigation.NavigateTo("/login");
-			}
-			if (product != null && accountInfo != null)
+            await CheckTokenAndLoadAccountInfo();
+            if (IsLoggedIn)
+            {
+            }
+            else
+            {
+                Navigation.NavigateTo("/login");
+            }
+            if (product != null && accountInfo != null)
             {
                 try
                 {
                     var conversation = await GetConversation(product.UserName);
+
+                    // Nếu không có cuộc hội thoại, tạo mới một cuộc hội thoại
                     if (conversation == null)
                     {
                         conversation = await CreateConversation(product.UserName);
@@ -315,8 +252,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                     // Tạo tin nhắn và gửi đi
                     var message = new Messages
                     {
-                        UserSend = accountInfo.UserName,
-                        Content = $"Chào bạn, tôi quan tâm đến sản phẩm {product.Name}. Mã sản phẩm là {product.IDProduct}",
+                        UserSend = accountInfo.UserName, // Lấy UserName từ accountInfo của người dùng hiện tại
+                        Content = $"Chào bạn, tôi quan tâm đến sản phẩm {product.Name}.",
                         TypeContent = "Text",
                         CreatedDate = DateTime.Now,
                         IsDeleted = false,
