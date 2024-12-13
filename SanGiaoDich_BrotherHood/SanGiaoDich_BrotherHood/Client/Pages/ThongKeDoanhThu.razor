@@ -167,14 +167,27 @@ else
     {
         if (!string.IsNullOrEmpty(selectedWeek))
         {
-            var weekParts = selectedWeek.Split('-');
-            var year = int.Parse(weekParts[0]);
-            var weekNumber = int.Parse(weekParts[1]);
-
-            var startOfWeek = FirstDateOfWeekISO8601(year, weekNumber);
-            await GetRevenueByPeriod("Week", startOfWeek.ToString("yyyy-MM-dd"));
+            try
+            {
+                var weekParts = selectedWeek.Split('-');
+                if (weekParts.Length == 2 && int.TryParse(weekParts[0], out var year) && int.TryParse(weekParts[1], out var weekNumber))
+                {
+                    var startOfWeek = FirstDateOfWeekISO8601(year, weekNumber);
+                    await GetRevenueByPeriod("Week", startOfWeek.ToString("yyyy-MM-dd"));
+                }
+                else
+                {
+                    errorMessage = "Định dạng tuần không hợp lệ.";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Lỗi khi xử lý tuần.";
+                Console.WriteLine($"Lỗi khi xử lý tuần: {ex.Message}");
+            }
         }
     }
+
 
     private async Task GetRevenueByMonth()
     {
@@ -240,12 +253,17 @@ else
 
     private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
     {
+        if (weekOfYear < 1 || weekOfYear > 53) // Kiểm tra số tuần hợp lệ
+        {
+            throw new ArgumentOutOfRangeException("weekOfYear", "Số tuần không hợp lệ");
+        }
         var jan1 = new DateTime(year, 1, 1);
         var daysOffset = (int)DayOfWeek.Monday - (int)jan1.DayOfWeek;
         if (daysOffset < 0) daysOffset += 7;
         var firstMonday = jan1.AddDays(daysOffset);
         return firstMonday.AddDays((weekOfYear - 1) * 7);
     }
+
 
     public class Product
     {

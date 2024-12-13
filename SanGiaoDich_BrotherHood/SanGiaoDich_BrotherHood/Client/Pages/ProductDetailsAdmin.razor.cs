@@ -1,16 +1,16 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
-using SanGiaoDich_BrotherHood.Shared.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
 using static System.Net.WebRequestMethods;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
+using SanGiaoDich_BrotherHood.Shared.Models;
+using System.Net.Http.Json;
+using System.Linq;
+using Microsoft.JSInterop;
 
 namespace SanGiaoDich_BrotherHood.Client.Pages
 {
-    public partial class ChiTietSanPham
+    public partial class ProductDetailsAdmin
     {
         [Parameter] public int ProductId { get; set; }
         private Product product;
@@ -25,7 +25,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         private string name = string.Empty;
         protected override async Task OnInitializedAsync()
         {
-           
+
             await LoadProductDetails();
         }
 
@@ -151,13 +151,13 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             {
                 return null;
             }
-			var account = await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
-			if (account != null)
-			{
-				name = account.UserName; // Gán tên người dùng vào biến name
-			}
-			return account;
-		}
+            var account = await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
+            if (account != null)
+            {
+                name = account.UserName; // Gán tên người dùng vào biến name
+            }
+            return account;
+        }
 
         private async Task<List<ImageProduct>> GetImagesByProductId(int id)
         {
@@ -189,7 +189,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 
         private async Task ToggleFavorite()
         {
-            isFavorite = !isFavorite; 
+            isFavorite = !isFavorite;
 
             var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
             if (!string.IsNullOrEmpty(token))
@@ -229,19 +229,21 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 
         private async Task GoToMessagingPage()
         {
-			await CheckTokenAndLoadAccountInfo();
-			if (IsLoggedIn)
-			{
-			}
-			else
-			{
-				Navigation.NavigateTo("/login");
-			}
-			if (product != null && accountInfo != null)
+            await CheckTokenAndLoadAccountInfo();
+            if (IsLoggedIn)
+            {
+            }
+            else
+            {
+                Navigation.NavigateTo("/login");
+            }
+            if (product != null && accountInfo != null)
             {
                 try
                 {
                     var conversation = await GetConversation(product.UserName);
+
+                    // Nếu không có cuộc hội thoại, tạo mới một cuộc hội thoại
                     if (conversation == null)
                     {
                         conversation = await CreateConversation(product.UserName);
@@ -250,8 +252,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                     // Tạo tin nhắn và gửi đi
                     var message = new Messages
                     {
-                        UserSend = accountInfo.UserName,
-                        Content = $"Chào bạn, tôi quan tâm đến sản phẩm {product.Name}. Mã sản phẩm là {product.IDProduct}",
+                        UserSend = accountInfo.UserName, // Lấy UserName từ accountInfo của người dùng hiện tại
+                        Content = $"Chào bạn, tôi quan tâm đến sản phẩm {product.Name}.",
                         TypeContent = "Text",
                         CreatedDate = DateTime.Now,
                         IsDeleted = false,

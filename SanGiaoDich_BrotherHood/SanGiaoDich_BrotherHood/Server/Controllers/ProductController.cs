@@ -227,12 +227,13 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             try
             {
-                // Lấy tổng doanh thu từ service
+                // Lấy tổng doanh thu
                 var totalRevenue = await prod.GetTotalRevenueAsync();
-                return Ok(totalRevenue);
+                return Ok(totalRevenue); // Trả về kết quả dưới dạng HTTP 200 với dữ liệu
             }
             catch (Exception ex)
             {
+                // Nếu có lỗi, trả về HTTP 500 (Internal Server Error)
                 return StatusCode(500, $"Lỗi khi tính toán doanh thu: {ex.Message}");
             }
         }
@@ -242,8 +243,9 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             try
             {
+                // Lấy doanh thu theo ngày
                 var revenue = await prod.GetRevenueByDateAsync(date);
-                return Ok(revenue);
+                return Ok(revenue); // Trả về doanh thu theo ngày
             }
             catch (Exception ex)
             {
@@ -256,8 +258,9 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             try
             {
+                // Lấy doanh thu theo tuần, với ngày bắt đầu tuần
                 var revenue = await prod.GetRevenueByWeekAsync(startDate);
-                return Ok(revenue);
+                return Ok(revenue); // Trả về doanh thu theo tuần
             }
             catch (Exception ex)
             {
@@ -270,14 +273,16 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             try
             {
+                // Lấy doanh thu theo tháng và năm
                 var revenue = await prod.GetRevenueByMonthAsync(month, year);
-                return Ok(revenue);
+                return Ok(revenue); // Trả về doanh thu theo tháng
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Lỗi khi tính doanh thu theo tháng: {ex.Message}");
             }
         }
+
         [HttpGet("export-revenue")]
         public async Task<IActionResult> ExportRevenue()
         {
