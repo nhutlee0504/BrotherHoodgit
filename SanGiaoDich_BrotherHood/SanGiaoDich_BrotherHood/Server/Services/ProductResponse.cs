@@ -82,7 +82,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 Price = product.Price,
                 Description = product.Description,
                 IDCategory = product.CategoryId,
-                Status = "Đang chờ duyệt",
+                Status = "Đã duyệt",
                 ProrityLevel = product.ProrityLevel,
                 CreatedDate = DateTime.Now,
                 UpdatedDate = DateTime.Now,
@@ -128,6 +128,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
             return products.Select(p => new Product
             {
+                IDProduct = p.IDProduct,
                 Name = p.Name,
                 Price = p.Price,
                 UserName = p.UserName,

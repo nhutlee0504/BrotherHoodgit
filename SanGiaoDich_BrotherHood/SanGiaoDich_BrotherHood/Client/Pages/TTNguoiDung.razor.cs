@@ -808,5 +808,26 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                 averageRating = 0;
             }
         }
-    }
+
+		private bool isModalVisible = false;
+
+		private void NavigatePost()
+		{
+			if (infoAccountDto.Email == null || infoAccountDto.IdCard == null)
+			{
+				// Hiển thị modal nếu thông tin không đầy đủ
+				isModalVisible = true;
+			}
+			else
+			{
+				// Điều hướng đến trang đăng bài nếu thông tin đầy đủ
+				NavigationManager.NavigateTo("/post", forceLoad: true);
+			}
+		}
+
+		private void CloseModal()
+		{
+			isModalVisible = false;
+		}
+	}
 }
