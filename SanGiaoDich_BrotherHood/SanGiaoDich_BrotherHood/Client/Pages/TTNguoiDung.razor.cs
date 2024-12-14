@@ -810,7 +810,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 
 		private void NavigatePost()
 		{
-			if (infoAccountDto.Email == null || infoAccountDto.IdCard == null)
+			if (userAccount.Email == null || userAccount.ID == null)
 			{
 				// Hiển thị modal nếu thông tin không đầy đủ
 				isModalVisible = true;

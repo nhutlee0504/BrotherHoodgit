@@ -3,7 +3,7 @@
 @layout AdminLayout
 @inject HttpClient Http
 
-@if (isLoading)
+@* @if (isLoading)
 {
     <p>Đang tải dữ liệu...</p>
 }
@@ -198,3 +198,4 @@ else
     private bool CanGoToPreviousPage => currentPage > 1;
     private bool CanGoToNextPage => currentPage < totalPages;
 }
+ *@
