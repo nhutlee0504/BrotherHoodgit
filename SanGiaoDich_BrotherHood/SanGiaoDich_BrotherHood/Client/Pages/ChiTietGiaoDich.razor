@@ -1,0 +1,130 @@
+﻿@page "/chitietgiaodich"
+
+<div class="container-fluid">
+    <ul class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="#">Quy trình giao dịch</a></li>
+    </ul>
+</div>
+
+<div class="container mt-4">
+    <div class="card shadow-lg">
+        <div class="card-header text-center bg-gradient-primary text-white py-4">
+            <h5 class="card-title mb-0">Quy trình giao dịch</h5>
+        </div>
+        <div class="card-body  px-4 py-5">
+            <div class="row justify-content-center text-center">
+                <div class="col-md-2 col-6">
+                    <div class="step-circle bg-success text-white mx-auto">
+                        <i class="bi bi-cart"></i>
+                    </div>
+                    <p class="mt-2">Bước 1: Đặt hàng</p>
+                </div>
+                <div class="col-md-2 col-6">
+                    <div class="step-circle bg-primary text-white mx-auto">
+                        <i class="bi bi-telephone"></i>
+                    </div>
+                    <p class="mt-2">Bước 2: Xác nhận đơn hàng</p>
+                </div>
+                <div class="col-md-2 col-6">
+                    <div class="step-circle bg-warning text-white mx-auto">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <p class="mt-2">Bước 3: Thanh toán</p>
+                </div>
+                <div class="col-md-2 col-6">
+                    <div class="step-circle bg-info text-white mx-auto">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                    <p class="mt-2">Bước 4: Giao hàng</p>
+                </div>
+                <div class="col-md-2 col-6">
+                    <div class="step-circle bg-dark text-white mx-auto">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <p class="mt-2">Bước 5: Xác nhận hoàn tất</p>
+                </div>
+            </div>
+            <div class="row mt-5">
+                <div class="col-md-12">
+                    <div class="details">
+                        <h6 class="text-success">Chi tiết các bước:</h6>
+                        <ol>
+                            <li><strong>Bước 1: Đặt hàng</strong><br>Người mua lựa chọn sản phẩm mong muốn và thực hiện đặt hàng trên hệ thống. Đảm bảo thông tin đặt hàng chính xác (tên, địa chỉ giao hàng, số điện thoại).</li>
+                            <li><strong>Bước 2: Xác nhận đơn hàng</strong><br>Người bán nhận được thông tin đơn hàng và liên hệ với người mua để xác nhận các chi tiết. Sau khi xác nhận, người bán chuẩn bị hàng.</li>
+                            <li>
+                                <strong>Bước 3: Thanh toán</strong><br>Người mua thanh toán qua các phương thức hỗ trợ:
+                                <div class="d-flex justify-content-start mt-2">
+                                    <div class="me-4 text-center">
+                                        <i class="bi bi-wallet2 fs-3 text-success"></i>
+                                        <p>Thanh toán qua ví hệ thống</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <i class="bi bi-cash fs-3 text-primary"></i>
+                                        <p>Thanh toán khi nhận hàng (COD)</p>
+                                    </div>
+                                </div>
+                            </li>
+
+
+                            <li><strong>Bước 4: Giao hàng</strong><br>Người bán gửi hàng qua đơn vị vận chuyển hoặc giao hàng trực tiếp. Người mua có thể theo dõi trạng thái giao hàng thông qua mã vận đơn.</li>
+                            <li><strong>Bước 5: Xác nhận hoàn tất</strong><br>Sau khi nhận hàng, người mua xác nhận giao dịch hoàn tất trên hệ thống để hoàn thành quy trình.</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert mt-5 p-4 position-relative" style="background-color: #ffe8e8; border-left: 5px solid #ff6b6b;">
+        <div class="d-flex align-items-start">
+            <i class="bi bi-exclamation-circle-fill text-danger me-3 fs-3"></i>
+            <div>
+                <h6 class="text-danger"><strong>Lưu ý:</strong></h6>
+                <ul>
+                    <li>Người mua cần kiểm tra kỹ sản phẩm trước khi xác nhận hoàn tất.</li>
+                    <li>Người bán chỉ nhận giao dịch với các đơn hàng đã được xác nhận và thanh toán hợp lệ.</li>
+                    <li>Liên hệ hỗ trợ nếu có bất kỳ vấn đề nào xảy ra trong quá trình giao dịch.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .step-circle {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+        background: linear-gradient(to right, #4e73df, #1cc88a);
+        color: white;
+        font-size: 1.25rem;
+        text-transform: uppercase;
+    }
+
+    .details ol {
+        padding-left: 20px;
+    }
+
+    .details li {
+        margin-bottom: 10px;
+    }
+
+    .alert ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+</style>
+
+@code {
+    // Bạn có thể bổ sung các biến và phương thức để xử lý logic hoặc dữ liệu nếu cần
+}

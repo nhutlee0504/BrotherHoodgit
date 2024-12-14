@@ -18,5 +18,6 @@ namespace API.Services
         public Task<Account> DeleteAccountLow(string username);
         public Task<Product> CensorProduct(int idProd, string sensor);
         public Task<Rating> CensorRating(int idRating);
+        public Task<Account> RegisterAccount(RegisterDto registerDto);
     }
 }

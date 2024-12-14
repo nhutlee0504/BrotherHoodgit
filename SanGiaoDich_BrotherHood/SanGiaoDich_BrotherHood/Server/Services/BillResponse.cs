@@ -37,6 +37,13 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         {
             var user = GetUserInfoFromClaims();
             var userFind = await _context.Accounts.FindAsync(user.UserName);
+
+            // Kiểm tra nếu phương thức thanh toán là "Thanh toán qua ví" và số dư ví của người dùng không đủ
+            if (bill.PaymentType == "Thanh toán qua ví" && userFind.PreSystem < bill.Total)
+            {
+                throw new InvalidOperationException("Số dư ví không đủ để thanh toán.");
+            }
+
             var newBill = new Bill
             {
                 FullName = bill.FullName,
@@ -49,8 +56,15 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 Status = bill.Status,
                 UserName = user.UserName
             };
+
             await _context.Bills.AddAsync(newBill);
-            userFind.PreSystem = (userFind.PreSystem - newBill.Total);
+
+            // Kiểm tra nếu phương thức thanh toán là "Thanh toán qua ví"
+            if (bill.PaymentType == "Thanh toán qua ví")
+            {
+                userFind.PreSystem -= newBill.Total; // Trừ tiền từ ví người dùng
+            }
+
             await _context.SaveChangesAsync();
             return newBill;
         }
@@ -59,14 +73,22 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         {
             var BillFind = await _context.Bills.FindAsync(IdBill);
             var user = await _context.Accounts.FirstOrDefaultAsync(x => x.UserName == BillFind.UserName);
+
             if (BillFind != null)
             {
                 BillFind.Status = "Đã hủy";
+
+                // Kiểm tra nếu phương thức thanh toán là "Thanh toán qua ví"
+                if (BillFind.PaymentType == "Thanh toán qua ví")
+                {
+                    user.PreSystem += BillFind.Total; // Cộng tiền vào ví người dùng khi hủy đơn
+                }
             }
-            user.PreSystem = (user.PreSystem + BillFind.Total);
+
             await _context.SaveChangesAsync();
             return BillFind;
         }
+
 
         public async Task<Bill> DoneBill(int IdBill, string status)
         {
@@ -74,6 +96,13 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             if (BillFind != null)
             {
                 BillFind.Status = status;
+            }
+            var billdetail = await _context.BillDetails.Where(x => x.IDBill == BillFind.IDBill).ToListAsync();
+            foreach(var item in billdetail)
+            {
+                var prodFind = await _context.Products.FindAsync(item.IDProduct);
+                prodFind.Status = "Đã bán";
+                await _context.SaveChangesAsync();
             }
             await _context.SaveChangesAsync();
             return BillFind;

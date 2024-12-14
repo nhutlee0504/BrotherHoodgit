@@ -22,7 +22,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             this.address = address;
         }
 
-        [HttpGet]
+        [HttpGet("GetAddresses")]
         public async Task<ActionResult> GetAddressDetails()
         {
             return Ok(await address.GetAddressDetails());
@@ -30,7 +30,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 
 
         [HttpGet]
-        [Route("GetAddressDetailsByUserName/{username}")]
+        [Route("{userName}")]
         public async Task<ActionResult> GetAddressDetailsByUserName(string userName)
         {
             return Ok(await address.GetAddressDetailsByUserName(userName));

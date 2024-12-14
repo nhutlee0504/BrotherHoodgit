@@ -28,7 +28,7 @@ namespace API.Controllers
         }
 
 
-        [HttpGet("userName")]
+        [HttpGet("{userName}")]
         public async Task<ActionResult> GetAddressDetailsByUserName(string userName)
         {
             return Ok(await address.GetAddressDetailsByUserName(userName));
