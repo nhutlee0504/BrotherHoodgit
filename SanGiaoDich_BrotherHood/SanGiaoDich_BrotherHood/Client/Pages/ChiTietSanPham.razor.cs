@@ -33,6 +33,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             await LoadProductDetails();
             await LoadAllProduct();
             await LoadProductImages();
+            await LoadAccountInfo();
         }
 
         private async Task CheckTokenAndLoadAccountInfo()

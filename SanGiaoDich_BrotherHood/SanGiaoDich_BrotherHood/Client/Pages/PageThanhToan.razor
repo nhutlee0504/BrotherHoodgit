@@ -20,7 +20,7 @@
             if (!string.IsNullOrEmpty(selectedItemsJson))
             {
                 selectedCartItems = JsonSerializer.Deserialize<List<CartItemUser>>(selectedItemsJson) ?? new List<CartItemUser>();
-                totalPrice = selectedCartItems.Sum(item => item.Price * item.Quantity);
+                totalPrice = selectedCartItems.Sum(item => item.Price);
             }
 
             // Lấy thông tin người dùng
