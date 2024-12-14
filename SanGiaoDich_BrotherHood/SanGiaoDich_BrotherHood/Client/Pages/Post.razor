@@ -784,7 +784,7 @@
             if (uploadResponse.IsSuccessStatusCode)
             {
                 modalMessage = "Sản phẩm đã được thêm thành công!";
-                isModalVisible = true;
+                NavigationManager.NavigateTo("/");
             }
             else
             {

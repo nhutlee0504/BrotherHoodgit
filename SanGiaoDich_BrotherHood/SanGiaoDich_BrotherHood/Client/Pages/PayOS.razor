@@ -1,0 +1,144 @@
+﻿@page "/receive-qr"
+@inject HttpClient Http
+
+<style>
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Arial', sans-serif;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+    }
+
+    .card {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border: none;
+        border-radius: 8px;
+    }
+
+    .card-body {
+        padding: 30px;
+    }
+
+    h3 {
+        text-align: center;
+        color: #343a40;
+        margin-bottom: 20px;
+    }
+
+    label {
+        font-weight: bold;
+        color: #495057;
+    }
+
+    .form-control {
+        border-radius: 8px;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+
+    .mt-4 {
+        margin-top: 1.5rem !important;
+    }
+
+    .alert {
+        border-radius: 8px;
+    }
+
+    img {
+        display: block;
+        margin: 0 auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    a {
+        color: #007bff;
+        text-decoration: none;
+    }
+
+        a:hover {
+            text-decoration: underline;
+        }
+</style>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-body">
+            <h3>Tạo QR Nhận Tiền</h3>
+            <form @onsubmit="GenerateQr">
+                <div class="mb-3">
+                    <label for="Amount" class="form-label">Số tiền (VND)</label>
+                    <input type="number" class="form-control" id="Amount" @bind="Amount" placeholder="Nhập số tiền muốn nhận" />
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Tạo QR</button>
+            </form>
+
+            @if (!string.IsNullOrEmpty(QrUrl))
+            {
+                <div class="mt-4 text-center">
+                    <h5>QR Code</h5>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=@QrUrl" alt="QR Code" />
+                    <p class="mt-3"><a href="@QrUrl" target="_blank">Link đến QR</a></p>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger mt-4">@ErrorMessage</div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private decimal Amount;
+    private string? QrUrl;
+    private string? ErrorMessage;
+
+    private async Task GenerateQr()
+    {
+        try
+        {
+            var requestData = new { Amount = Amount };
+
+            var response = await Http.PostAsJsonAsync("/api/payment/create-receive-qr", requestData);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ReceiveQrResponse>();
+                QrUrl = result?.QrUrl;
+                ErrorMessage = null;
+            }
+            else
+            {
+                ErrorMessage = "Không thể tạo QR. Vui lòng thử lại.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Đã xảy ra lỗi: {ex.Message}";
+        }
+    }
+
+    private class ReceiveQrResponse
+    {
+        public string? QrUrl { get; set; }
+    }
+}

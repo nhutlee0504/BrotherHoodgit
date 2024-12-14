@@ -35,15 +35,11 @@
                 return { error: `Văn bản chứa ngôn từ không phù hợp: ${word}` };
             }
         }
-
-        // Trả về kết quả nếu không có từ tục tiểu và phân tích cảm xúc
         const sentimentScore = result.documentSentiment.score;
-
-        if (sentimentScore < -0.5) {
-            return { error: "Văn bản có khả năng chứa ngôn từ không phù hợp (Cảm xúc tiêu cực)." };
+        if (sentimentScore < -0.5) { // Có thể điều chỉnh mức độ tiêu cực này theo yêu cầu
+            return { error: "Văn bản có cảm xúc tiêu cực." };
         }
-
-        return { message: "Văn bản không chứa ngôn từ không phù hợp." };
+        return { message: "" };
 
     } catch (error) {
         return { error: `Có lỗi xảy ra khi phân tích văn bản: ${error.message}` };

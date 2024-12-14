@@ -23,13 +23,13 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         AccountInfoDto accountInfo;
         private bool IsLoggedIn { get; set; } = false;
         private string name = string.Empty;
-		private IEnumerable<Product> allProduct;
-		private List<Product> aProduct = new List<Product>();
-		private Dictionary<int, string> productImages = new Dictionary<int, string>();
+        private IEnumerable<Product> allProduct;
+        private List<Product> aProduct = new List<Product>();
+        private Dictionary<int, string> productImages = new Dictionary<int, string>();
 
-		protected override async Task OnInitializedAsync()
+        protected override async Task OnInitializedAsync()
         {
-           
+
             await LoadProductDetails();
             await LoadAllProduct();
             await LoadProductImages();
@@ -96,66 +96,66 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             public string ImageAccount { get; set; }
         }
 
-		private async Task LoadAllProduct()
-		{
-			try
-			{
-				var response = await httpclient.GetFromJsonAsync<List<Product>>($"api/product/GetAllProduct");
+        private async Task LoadAllProduct()
+        {
+            try
+            {
+                var response = await httpclient.GetFromJsonAsync<List<Product>>($"api/product/GetAllProduct");
 
-				if (response == null || response.Count == 0)
-				{
-					allProduct = new List<Product>();
-					return;
-				}
+                if (response == null || response.Count == 0)
+                {
+                    allProduct = new List<Product>();
+                    return;
+                }
 
-				aProduct = response;
-			}
-			catch (Exception ex)
-			{
+                aProduct = response;
+            }
+            catch (Exception ex)
+            {
 
-			}
-		}
+            }
+        }
 
 
-		private async Task LoadProductImages()
-		{
-			try
-			{
-				foreach (var product in aProduct)
-				{
-					try
-					{
-						var images = await httpclient.GetFromJsonAsync<List<ImageProduct>>($"api/ImageProduct/GetImageProduct/{product.IDProduct}");
-						if (images != null && images.Count > 0)
-						{
-							productImages[product.IDProduct] = images.First().Image;
-						}
-						else
-						{
-							// Không có ảnh => gán ảnh mặc định
-							productImages[product.IDProduct] = "/defaultImg.png";
-						}
-					}
-					catch (Exception ex)
-					{
-						Console.WriteLine($"Lỗi khi tải ảnh cho sản phẩm ID: {product.IDProduct}, {ex.Message}");
-						// Lỗi trong quá trình gọi API => gán ảnh mặc định
-						productImages[product.IDProduct] = "/defaultImg.png";
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"Lỗi khi tải ảnh sản phẩm: {ex.Message}");
-			}
-		}
+        private async Task LoadProductImages()
+        {
+            try
+            {
+                foreach (var product in aProduct)
+                {
+                    try
+                    {
+                        var images = await httpclient.GetFromJsonAsync<List<ImageProduct>>($"api/ImageProduct/GetImageProduct/{product.IDProduct}");
+                        if (images != null && images.Count > 0)
+                        {
+                            productImages[product.IDProduct] = images.First().Image;
+                        }
+                        else
+                        {
+                            // Không có ảnh => gán ảnh mặc định
+                            productImages[product.IDProduct] = "/defaultImg.png";
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Lỗi khi tải ảnh cho sản phẩm ID: {product.IDProduct}, {ex.Message}");
+                        // Lỗi trong quá trình gọi API => gán ảnh mặc định
+                        productImages[product.IDProduct] = "/defaultImg.png";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi tải ảnh sản phẩm: {ex.Message}");
+            }
+        }
 
-		private string GetImage(int id)
-		{
-			return productImages.ContainsKey(id) ? productImages[id] : "/images/defaultImg.png";
-		}
+        private string GetImage(int id)
+        {
+            return productImages.ContainsKey(id) ? productImages[id] : "/images/defaultImg.png";
+        }
 
-		private async Task Logout()
+        private async Task Logout()
         {
             await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "token");
             IsLoggedIn = false;
@@ -217,13 +217,13 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             {
                 return null;
             }
-			var account = await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
-			if (account != null)
-			{
-				name = account.UserName; // Gán tên người dùng vào biến name
-			}
-			return account;
-		}
+            var account = await httpclient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
+            if (account != null)
+            {
+                name = account.UserName; // Gán tên người dùng vào biến name
+            }
+            return account;
+        }
 
         private async Task<List<ImageProduct>> GetImagesByProductId(int id)
         {
@@ -255,7 +255,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 
         private async Task ToggleFavorite()
         {
-            isFavorite = !isFavorite; 
+            isFavorite = !isFavorite;
 
             var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "token");
             if (!string.IsNullOrEmpty(token))
@@ -295,15 +295,15 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 
         private async Task GoToMessagingPage()
         {
-			await CheckTokenAndLoadAccountInfo();
-			if (IsLoggedIn)
-			{
-			}
-			else
-			{
-				Navigation.NavigateTo("/login");
-			}
-			if (product != null && accountInfo != null)
+            await CheckTokenAndLoadAccountInfo();
+            if (IsLoggedIn)
+            {
+            }
+            else
+            {
+                Navigation.NavigateTo("/login");
+            }
+            if (product != null && accountInfo != null)
             {
                 try
                 {
