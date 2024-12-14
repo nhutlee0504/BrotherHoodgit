@@ -147,6 +147,17 @@
             transform-origin: bottom left;
             background-color: #28a745; 
         }
+    /* Giảm margin-top của card */
+    .card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Giảm margin-top trong card-body */
+    .card-body {
+        padding: 30px;
+        margin-top: 10px; /* Giảm margin-top */
+    }
 
 </style>
 <div class="container-fluid">
@@ -155,75 +166,87 @@
         <li class="breadcrumb-item"><a href="#">Đăng nhập</a></li>
     </ul>
 </div>
-<div class="container">
-    <div class="row justify-content-center mt-2 mb-5">
-        <div class="col-md-6">
-            <div class="form-container p-4 rounded bg-white shadow-md">
-                <h3 class="text-success text-center mb-4" style="font-weight:bolder">Đăng nhập</h3>
+<div class="container-fluid row justify-content-center align-items-center min-vh-100">
+    <div class="col-md-1"></div>
+    <div class="col-md-9">
+        <div class="row">
 
-                @if (!string.IsNullOrEmpty(SuccessMessage))
-                {
-                    <div class="alert alert-success" role="alert">
-                        @SuccessMessage
+            <div class="card mb-3 mx-auto" style="max-width: 900px;">
+                <div class="row g-0">
+                    <!-- Phần hình ảnh chiếm 100% bên trái -->
+                    <div class="col-md-6 p-0">
+                        <img src="/AnhGiaoDien/z5820586883713_6606cb514fbc06e7ea06515f9003b130.jpg" class="img-fluid w-100 h-100" alt="Logo">
                     </div>
-                }
-                @if (!string.IsNullOrEmpty(ErrorMessage))
-                {
-                    <div class="alert alert-danger" role="alert">
-                        @ErrorMessage
-                    </div>
-                }
 
-                <EditForm Model="@this" OnValidSubmit="HandleLogin">
-                    <DataAnnotationsValidator />
-        
+                    <!-- Phần form bên phải -->
+                    <div class="col-md-6 ">
+                     
+                        <div class="card-body">
+                            @if (!string.IsNullOrEmpty(SuccessMessage))
+                            {
+                                <div class="alert alert-success" role="alert">
+                                    @SuccessMessage
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(ErrorMessage))
+                            {
+                                <div class="alert alert-danger" role="alert">
+                                    @ErrorMessage
+                                </div>
+                            }
+                            <h3 class="text-success text-center mb-4" style="font-weight:bolder">Đăng nhập</h3>
+                            <EditForm Model="@this" OnValidSubmit="HandleLogin">
+                                <DataAnnotationsValidator />
 
-                    <div class="mb-3">
-                        <label for="UserName" class="form-label">Tên tài khoản</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-user"></i></span>
-                            <InputText id="UserName" class="form-control rounded-start" @bind-Value="UserName" placeholder="Nhập tên tài khoản" />
 
+                                <div class="mb-3">
+                                    <label for="UserName" class="form-label">Tên tài khoản</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <InputText id="UserName" class="form-control rounded-start" @bind-Value="UserName" placeholder="Nhập tên tài khoản" />
+
+                                    </div>
+                                    <ValidationMessage For="@(() => UserName)" />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="Password" class="form-label">Mật khẩu</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <InputText id="Password" type="password" class="form-control rounded-start" @bind-Value="Password" placeholder="Nhập mật khẩu" />
+                                    </div>
+                                    <ValidationMessage For="@(() => Password)" />
+                                </div>
+                                <button type="submit" class="btn btn-success btn-block w-100 rounded-start">Đăng nhập</button>
+                                <div class="text-right mt-3">
+                                    <a href="forgotPass" class="text-primary">Quên mật khẩu?</a>
+                                </div>
+                                <div class="text-center mt-3">
+                                    Bạn chưa có tài khoản? <a class="text-primary" href="Register">Đăng ký tài khoản</a><br />
+                                </div>
+                            </EditForm>
                         </div>
-                        <ValidationMessage For="@(() => UserName)" />
-                    </div>
-                    <div class="mb-3">
-                        <label for="Password" class="form-label">Mật khẩu</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                            <InputText id="Password" type="password" class="form-control rounded-start" @bind-Value="Password" placeholder="Nhập mật khẩu" />
+                        <div class="mt-1 text-center mb-4">
+                            <strong>Hoặc đăng nhập bằng</strong>
+                            <div class="mt-3">
+                                <a @onclick="LoginWithGoogle" class="btn btn-google mx-auto rounded-pill" style="max-width: 400px;">
+                                    <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" class="me-2" style="height: 20px;" />
+                                    Đăng nhập với Google
+                                </a>
+                            </div>
+                         @*    <div class="mt-3">
+                                <a @onclick="LoginWithFacebook" class="btn btn-facebook rounded-pill mx-auto" style="max-width: 400px; color: white;">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook logo" class="me-2" style="height: 20px;" />
+                                    Đăng nhập với Facebook
+                                </a>
+                            </div> *@
                         </div>
-                        <ValidationMessage For="@(() => Password)" />
                     </div>
-                    <button type="submit" class="btn btn-success btn-block w-100 rounded-start">Đăng nhập</button>
-                    <div class="text-right mt-3">
-                        <a href="forgotPass" class="text-primary">Quên mật khẩu?</a>
-                    </div>
-                    <div class="text-center mt-3">
-                        Bạn chưa có tài khoản? <a class="text-primary" href="Register">Đăng ký tài khoản</a><br />
-                    </div>
-                </EditForm>
-            </div>
-
-
-            <div class="mt-4 text-center">
-                <strong>Hoặc đăng nhập bằng</strong>
-                <div class="mt-3">
-                    <a @onclick="LoginWithGoogle" class="btn btn-google mx-auto rounded-pill" style="max-width: 400px;">
-                        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" class="me-2" style="height: 20px;" />
-                        Đăng nhập với Google
-                    </a>
-                </div>
-                <div class="mt-3">
-                    <a @onclick="LoginWithFacebook" class="btn btn-facebook rounded-pill mx-auto" style="max-width: 400px; color: white;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook logo" class="me-2" style="height: 20px;" />
-                        Đăng nhập với Facebook
-                    </a>
                 </div>
             </div>
-
         </div>
     </div>
+    <div class="col-md-1"></div>
+
 </div>
 
 @code {

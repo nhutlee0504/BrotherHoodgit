@@ -5,6 +5,7 @@
 <script src="/js/firebase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <style>
+
     * {
         margin: 0;
         padding: 0;
@@ -29,14 +30,6 @@
         font-family: Arial, sans-serif;
     }
 
-    .navbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: #fff;
-        border-bottom: 1px solid #ddd;
-
-    }
 
     .logo img {
         width: 50px;
@@ -432,31 +425,31 @@
                                 <ul class="navbar-nav flex-row align-items-center">
                                     <li class="nav-item mx-2">
                                         <a class="nav-link text-center" href="#" >
-                                            <i class="bi bi-house fs-4"></i>
+                                            <i class="bi bi-house fs-5"></i>
                                             <span class="tooltip-text">Trang chủ</span>
                                         </a>
                                     </li>
                                     <li class="nav-item mx-2">
                                         <a class="nav-link text-center" href="sanpham" >
-                                            <i class="bi bi-shop fs-4"></i>
+                                            <i class="bi bi-shop fs-5"></i>
                                             <span class="tooltip-text">Sản phẩm</span>
                                         </a>
                                     </li>
                                     <li class="nav-item mx-2">
                                         <a class="nav-link text-center" href="/PageGioHang" >
-                                            <i class="bi bi-basket fs-4"></i>
+                                            <i class="bi bi-basket fs-5"></i>
                                             <span class="tooltip-text">Giỏ hàng</span>
                                         </a>
                                     </li>
                                     <li class="nav-item mx-2">
                                         <a class="nav-link text-center" href="bill">
-                                            <i class="bi bi-receipt fs-4"></i>
+                                            <i class="bi bi-receipt fs-5"></i>
                                             <span class="tooltip-text">Hóa đơn</span>
                                         </a>
                                     </li>
                                     <li class="nav-item mx-2">
                                         <a class="nav-link text-center" href="nhantin" >
-                                            <i class="bi bi-chat-dots fs-4"></i>
+                                            <i class="bi bi-chat-dots fs-5"></i>
                                             <span class="tooltip-text">Nhắn tin</span>
                                         </a>
                                     </li>
@@ -488,10 +481,38 @@
                                             <i class="fas fa-user-circle"></i>
                                         </a>
                                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                            <!-- Nội dung dropdown -->
                                             <li>
-                                                <button class="btn text-danger ms-2" @onclick="Logout"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+                                                <div class="card user-info-card">
+                                                    <div class="row g-0 align-items-center">
+                                                        <div class="col">
+                                                            <div class="card-body py-2">
+                                                                <h6 class="card-title mb-1">@accountInfo.FullName</h6>
+                                                                <p class="card-text">
+                                                                    <small class="text-muted">
+                                                                        Ví của bạn:
+                                                                        @String.Format("{0:N0} VND", accountInfo.PreSystem)
+                                                                    </small>
+                                                                </p>
+                                                                <div class="d-flex justify-content-between mt-3">
+                                                                    <a href="/vnpay/naptien" class="btn btn-success text-white btn-sm" id="depositButton">
+                                                                        <i class="fas fa-arrow-circle-up"></i> Nạp tiền
+                                                                    </a>
+                                                                    <button class="btn btn-warning text-white btn-sm" id="withdrawButton">
+                                                                        <i class="fas fa-arrow-circle-down"></i> Rút tiền
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" href="/post"><i class="fas fa-plus-circle"></i> Đăng sản phẩm</a></li>
+                                            <li><a class="dropdown-item" href="/ThongTinNguoiDung/@accountInfo.UserName"><i class="fas fa-user"></i> Thông tin tài khoản</a></li>
+                                            <li><a class="dropdown-item" href="/changePass"><i class="fas fa-key"></i> Đổi mật khẩu</a></li>
+                                            <li><a class="dropdown-item" href="/lichsunaptien"><i class="fas fa-history"></i> Lịch sử nạp tiền</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><button class="btn text-danger ms-2" @onclick="Logout"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button></li>
                                         </ul>
                                     </div>
                                 }
