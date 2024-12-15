@@ -11,5 +11,6 @@ namespace API.Services
         public Task<Bill> GetBillByIDBill(int IDBill);
         public Task<Bill> AddBill(Bill bill);
         public Task<Bill> UpdateBill(int IDBill, Bill bill);
+        public Task<object> GetOrderStatisticsAsync();
     }
 }

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+
 namespace API.Services
 {
     public class BillResponse : IBill
@@ -63,5 +64,20 @@ namespace API.Services
             await _context.SaveChangesAsync();
             return billUpdate;
         }
+
+        public async Task<object> GetOrderStatisticsAsync()
+        {
+            var totalOrders = await _context.Bills.CountAsync();
+            var completedOrders = await _context.Bills.CountAsync(b => b.Status == "Hoàn thành");
+            var canceledOrders = await _context.Bills.CountAsync(b => b.Status == "Đã hủy");
+
+            return new
+            {
+                TotalOrders = totalOrders,
+                CompletedOrders = completedOrders,
+                CanceledOrders = canceledOrders
+            };
+        }
+
     }
 }

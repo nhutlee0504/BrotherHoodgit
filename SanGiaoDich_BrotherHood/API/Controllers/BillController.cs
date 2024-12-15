@@ -62,5 +62,12 @@ namespace API.Controllers
         {
             return Ok(await bill.UpdateBill(IDBill, bl));
         }
+        [HttpGet("statistics")]
+        public async Task<IActionResult> GetOrderStatistics()
+        {
+            var statistics = await bill.GetOrderStatisticsAsync();
+            return Ok(statistics);
+        }
+
     }
 }
