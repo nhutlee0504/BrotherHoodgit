@@ -20,7 +20,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         private string errorMessage;
         private bool isFavorite = false;
         private bool isLoading = true;
-        AccountInfoDto accountInfo;
+        AccountInfoDto? accountInfo;
         private bool IsLoggedIn { get; set; } = false;
         private string name = string.Empty;
         private IEnumerable<Product> allProduct;
@@ -33,7 +33,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             await LoadProductDetails();
             await LoadAllProduct();
             await LoadProductImages();
-            await LoadAccountInfo();
+            await CheckTokenAndLoadAccountInfo();
         }
 
         private async Task CheckTokenAndLoadAccountInfo()
@@ -47,6 +47,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             }
             else
             {
+                accountInfo = null;
                 isLoading = false;
                 IsLoggedIn = false;
             }
@@ -71,7 +72,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                     var errorContent = await response.Content.ReadAsStringAsync();
                     errorMessage = $"Lỗi: {response.StatusCode} - {errorContent}";
                     IsLoggedIn = false;
-                    await Logout();
+                    //await Logout();
                 }
             }
             catch (Exception ex)

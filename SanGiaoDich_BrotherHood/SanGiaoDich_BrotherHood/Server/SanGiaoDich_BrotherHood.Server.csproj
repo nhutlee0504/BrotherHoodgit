@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Blazored.TextEditor" Version="1.1.0" />
     <PackageReference Include="Dapper" Version="2.1.35" />
     <PackageReference Include="EPPlus" Version="5.8.14" />
     <PackageReference Include="FirebaseAdmin" Version="3.1.0" />

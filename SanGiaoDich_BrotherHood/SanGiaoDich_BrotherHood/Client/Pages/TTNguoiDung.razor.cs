@@ -96,8 +96,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             await LoadProductImages();
             UpdatePageProducts();
             await LoadBill();
-            CountCompletedBills();
             await LoadUserDataAsync();
+            CountCompletedBills();
 
             try
             {
@@ -154,7 +154,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                     Phone = userAccount.PhoneNumber,
                     Gender = userAccount.Gender,
                     Birthday = userAccount.Birthday,
-                    Introduce = userAccount.Introduce
+                    Introduce = userAccount.Introduce,
+                    Dob = userAccount.Dob,
                 };
                 isLoading = false;
 

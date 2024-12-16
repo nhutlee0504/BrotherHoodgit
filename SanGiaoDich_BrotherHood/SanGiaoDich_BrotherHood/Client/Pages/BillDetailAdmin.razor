@@ -1,18 +1,23 @@
 ﻿@page "/Admin/BillDetails/{IDBill:int}"
-@using SanGiaoDich_BrotherHood.Shared.Models
 @layout AdminLayout
+@using SanGiaoDich_BrotherHood.Shared.Dto
+@using SanGiaoDich_BrotherHood.Shared.Models
+@using System.Text.Json
 @inject HttpClient httpClient
 @inject NavigationManager NavigationManager
-
-<h3>Chi tiết hóa đơn</h3>
+@inject IJSRuntime JSRuntime
 
 @if (billDetails == null)
 {
-    <p>Đang tải dữ liệu...</p>
+    <div class="text-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Đang tải dữ liệu...</span>
+        </div>
+    </div>
 }
 else if (!billDetails.Any())
 {
-    <p>Không có chi tiết hóa đơn nào.</p>
+    <p class="text-center text-danger">Không có chi tiết hóa đơn nào.</p>
 }
 else
 {
@@ -23,74 +28,97 @@ else
         </div>
     }
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Hình ảnh</th>
-                <th>ID Sản phẩm</th>
-                <th>Số lượng</th>
-                <th>Giá</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var detail in billDetails)
-            {
-                <tr>
-                    <td>@detail.IDBillDetail</td>
-                    <td>
-                        <img src="@GetImage(detail.IDProduct)"
-                             alt="Hình ảnh sản phẩm"
-                             style="width: 100px; height: auto; cursor: pointer;"
-                             @onclick="() => OpenImageModal(GetImage(detail.IDProduct))" />
-                    </td>
-                    <td>@detail.IDProduct</td>
-                    <td>@detail.Quantity</td>
-                    <td>@detail.Price.ToString("N0")</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="row">
+        <!-- Card thông tin người bán -->
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <img src="@userAccount.ImageAccount" alt="Avatar người bán" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px;">
+                    <h5 class="card-title">@userAccount.FullName</h5>
+                    <p>Email: @userAccount.Email</p>
+                    <p>Số điện thoại: @userAccount.PhoneNumber</p>
+                    <p>Giới tính: @userAccount.Gender</p>
+                    <p>Ngày sinh: @userAccount.Dob</p>
+                    <p>Giới thiệu: @userAccount.Introduce</p>
+                </div>
+            </div>
+        </div>
 
+        <!-- Card danh sách sản phẩm -->
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5>Danh sách sản phẩm</h5>
+                </div>
+                <div class="card-body">
+                    @foreach (var detail in billDetails)
+                    {
+                        <div class="card mb-3">
+                            <div class="row g-0">
+                                <div class="col-md-4">
+                                    <img src="@GetImage(detail.IDProduct)" alt="Hình ảnh sản phẩm" class="img-fluid rounded-start" style="cursor: pointer;" @onclick="() => OpenImageModal(GetImage(detail.IDProduct))">
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card-body">
+                                        <h5 class="card-title">@GetProductName(detail.IDProduct)</h5>
+                                        <p class="card-text">Số lượng: @GetProductQuantity(detail.IDProduct)</p>
+                                        <p class="card-text">
+                                            Loại sản phẩm: @(categoryNames.TryGetValue(detail.IDProduct, out var categoryName) ? categoryName : "Đang tải...")
+                                        </p>
+
+                                        <p class="card-text">Giá: @detail.Price.ToString("N0") VNĐ</p>
+                                        <p class="card-text">Mô tả: @Desscription(detail.IDProduct)</p>
+                                        @if (GetBillStatus(detail.IDBill).Contains("Hoàn thành"))
+                                        {
+                                            <button class="btn btn-success" @onclick="() => SaveReviewInfo(detail.IDBillDetail, GetImage(detail.IDProduct), GetProductName(detail.IDProduct))">
+                                                Đánh giá
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-3" style="margin-bottom:200px">
+        <button class="btn btn-primary" @onclick="NavigateBack">Quay lại</button>
+    </div>
 }
 
-<button class="btn btn-secondary" @onclick="NavigateBack">Quay lại</button>
 <style>
-    .image-modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.8);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        cursor: pointer;
-    }
-
-        .image-modal img {
-            max-width: 90%;
-            max-height: 90%;
-            border-radius: 5px;
-        }
-
 </style>
+
 @code {
     private bool isModalOpen = false;
     private string modalImageUrl = string.Empty;
+    private Account userAccount;
 
     private void OpenImageModal(string imageUrl)
     {
-        modalImageUrl = imageUrl; // Lưu URL ảnh được phóng to
-        isModalOpen = true;       // Mở modal
+        modalImageUrl = imageUrl;
+        isModalOpen = true;
     }
 
     private void CloseImageModal()
     {
-        isModalOpen = false;      // Đóng modal
+        isModalOpen = false;
     }
+
+    private async Task LoadUserData()
+    {
+        try
+        {
+            userAccount = await httpClient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{sellerName}");
+        }
+        catch (Exception ex)
+        {
+        }
+    }
+
 
     private Dictionary<int, string> productImages = new Dictionary<int, string>();
 
@@ -100,53 +128,52 @@ else
         {
             var images = await httpClient.GetFromJsonAsync<List<ImageProduct>>($"api/imageproduct/GetImageProduct/{id}");
 
-            // Lấy ảnh đầu tiên hoặc ảnh mặc định nếu không có
             if (images != null && images.Count > 0)
             {
-                var imageUrl = images.First().Image; // Lấy ảnh đầu tiên
+                var imageUrl = images.First().Image;
                 productImages[id] = imageUrl;
             }
             else
             {
-                productImages[id] = "defaultImg.png"; // Ảnh mặc định
+                productImages[id] = "defaultImg.png";
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
-            productImages[id] = "defaultImg.png"; // Ảnh mặc định nếu có lỗi
+            productImages[id] = "defaultImg.png";
         }
     }
 
     private string GetImage(int id)
     {
-        if (!productImages.ContainsKey(id))
-        {
-            // Nếu hình ảnh chưa được tải, thực hiện tải ảnh cho sản phẩm
-            LoadImagesByIdProduct(id).Wait();
-        }
         return productImages.ContainsKey(id) ? productImages[id] : "defaultImg.png";
     }
 
     [Parameter]
     public int IDBill { get; set; }
 
-    private List<BillDetail> billDetails;
+    private List<BillDetailModel> billDetails;
+    private string sellerName = "Không rõ người bán"; // Biến lưu tên người bán
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Gọi API để lấy chi tiết hóa đơn
-            billDetails = await httpClient.GetFromJsonAsync<List<BillDetail>>($"api/BillDetail/GetBillDetailsByIDBill/{IDBill}");
+            billDetails = await httpClient.GetFromJsonAsync<List<BillDetailModel>>($"api/BillDetail/GetBillDetailsByIDBill/{IDBill}");
 
-            // Tải hình ảnh cho từng sản phẩm
             if (billDetails != null && billDetails.Any())
             {
+                // Lấy ID sản phẩm đầu tiên để tìm tên người bán
+                var firstProductId = billDetails.First().IDProduct;
+                await LoadSellerName(firstProductId);
+
                 foreach (var detail in billDetails)
                 {
-                    // Tải hình ảnh cho từng sản phẩm
                     await LoadImagesByIdProduct(detail.IDProduct);
+                    await LoadProductName(detail.IDProduct);
+                    await LoadBillStatus(detail.IDBill);
+                    await LoadUserData();
                 }
             }
         }
@@ -156,23 +183,177 @@ else
         }
     }
 
-    private void NavigateBack()
+    private async Task LoadSellerName(int productId)
     {
-        NavigationManager.NavigateTo("/Admin/Bill");
+        try
+        {
+            var product = await httpClient.GetFromJsonAsync<ProductModel>($"api/product/GetProductById/{productId}");
+
+            if (product != null)
+            {
+                sellerName = product.UserName;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
     }
 
-    public class BillDetail
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/Bill");
+    }
+
+    private async Task SaveReviewInfo(int idBillDetail, string image, string productName)
+    {
+        // Lưu thông tin vào localStorage
+        var reviewInfo = new
+        {
+            IdBillDetail = idBillDetail,
+            SellerName = sellerName,
+            Image = image,
+            ProductName = productName,
+            ExpiryTime = DateTime.UtcNow.AddMinutes(30).ToString("o")
+        };
+
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "reviewInfo", JsonSerializer.Serialize(reviewInfo));
+
+        // Điều hướng đến trang thông tin người dùng
+        NavigationManager.NavigateTo($"/DanhGiaNguoiDung/{sellerName}");
+    }
+
+    public class BillDetailModel
     {
         public int IDBillDetail { get; set; }
         public int IDBill { get; set; }
         public int IDProduct { get; set; }
-        public int Quantity { get; set; }
         public decimal Price { get; set; }
         public DateTime CreatedDate { get; set; }
+        public int IDCategory { get; set; }
     }
 
     public class ImageProduct
     {
         public string Image { get; set; }
+    }
+
+    public class ProductModel
+    {
+        public int IDProduct { get; set; }
+        public string Name { get; set; }
+        public string UserName { get; set; }
+        public int Quantity { get; set; }
+        public string Desscription { get; set; }
+        public int IDCategory { get; set; }
+    }
+
+    private Dictionary<int, string> productNames = new Dictionary<int, string>();
+    private Dictionary<int, string> productDesscription = new Dictionary<int, string>();
+    private Dictionary<int, int> productQuantity = new Dictionary<int, int>();
+
+    private async Task LoadProductName(int productId)
+    {
+        try
+        {
+            // Gọi API để lấy thông tin sản phẩm
+            var product = await httpClient.GetFromJsonAsync<ProductModel>($"api/product/GetProductById/{productId}");
+
+            if (product != null)
+            {
+                if (!productNames.ContainsKey(productId))
+                {
+                    productNames[productId] = product.Name;
+                    productQuantity[productId] = product.Quantity;
+                    productDesscription[productId] = product.Desscription;
+
+                    // Gọi API để lấy thông tin danh mục
+                    if (!categoryNames.ContainsKey(product.IDCategory))
+                    {
+                        var categoryResponse = await httpClient.GetStringAsync($"api/category/GetCategoryByID/{product.IDCategory}");
+
+                        // Trích xuất `NameCate` từ JSON trả về
+                        var categoryJson = JsonDocument.Parse(categoryResponse);
+                        if (categoryJson.RootElement.TryGetProperty("nameCate", out var nameCateElement))
+                        {
+                            categoryNames[product.IDCategory] = nameCateElement.GetString();
+                        }
+                        else
+                        {
+                            categoryNames[product.IDCategory] = "Tên danh mục không tồn tại";
+                        }
+                    }
+                }
+            }
+            else
+            {
+                productNames[productId] = "Sản phẩm không tồn tại";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            productNames[productId] = "Sản phẩm không tồn tại";
+        }
+    }
+
+
+    private string GetProductName(int id)
+    {
+        return productNames.ContainsKey(id) ? productNames[id] : "Tên sản phẩm không có";
+    }
+
+    private string Desscription(int id)
+    {
+        return productDesscription.ContainsKey(id) ? productDesscription[id] : "Sản phẩm không có mô tả nào";
+    }
+
+    private string GetProductQuantity(int id)
+    {
+        return productQuantity.ContainsKey(id) ? productQuantity[id].ToString() : "Tên sản phẩm không có";
+    }
+    private Dictionary<int, string> categoryNames = new Dictionary<int, string>();
+
+
+    public class BillModel
+    {
+        public int IDBill { get; set; }
+        public string Status { get; set; }
+    }
+
+    private Dictionary<int, string> billStatuses = new Dictionary<int, string>();
+
+    private async Task LoadBillStatus(int billId)
+    {
+        try
+        {
+            var bill = await httpClient.GetFromJsonAsync<BillModel>($"api/Bill/GetBillsByIDBill/{billId}");
+
+            if (bill != null)
+            {
+                if (!billStatuses.ContainsKey(billId))
+                {
+                    billStatuses[billId] = bill.Status;
+                }
+            }
+            else
+            {
+                billStatuses[billId] = "Không rõ trạng thái";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            billStatuses[billId] = "Không rõ trạng thái";
+        }
+    }
+
+    private string GetBillStatus(int billId)
+    {
+        if (!billStatuses.ContainsKey(billId))
+        {
+            LoadBillStatus(billId).Wait();
+        }
+        return billStatuses.ContainsKey(billId) ? billStatuses[billId] : "Không rõ trạng thái";
     }
 }

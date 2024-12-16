@@ -133,6 +133,8 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 Price = p.Price,
                 UserName = p.UserName,
                 Status = p.Status,
+                ProrityLevel = p.ProrityLevel,
+                Quantity = p.Quantity,
                 StartDate = p.StartDate,
                 imageProducts = p.imageProducts ?? new List<ImageProduct>(), // Đảm bảo không null
                 IDCategory = p.IDCategory // Lấy thông tin danh mục
@@ -163,15 +165,31 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public async Task<Product> GetProductById(int id) // Xem chi tiết sản phẩm
         {
             var product = await _context.Products
-                .FirstOrDefaultAsync(x => x.IDProduct == id);
+                .Include(p => p.imageProducts) // Bao gồm thông tin hình ảnh
+                .Include(p => p.Category) // Bao gồm thông tin danh mục
+                .FirstOrDefaultAsync(p => p.IDProduct == id);
 
             if (product == null)
             {
                 throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
             }
 
-            return product;
+            // Trả về sản phẩm với thông tin đã được bao gồm
+            return new Product
+            {
+                IDProduct = product.IDProduct,
+                Name = product.Name,
+                Price = product.Price,
+                UserName = product.UserName,
+                Status = product.Status,
+                StartDate = product.StartDate,
+                imageProducts = product.imageProducts ?? new List<ImageProduct>(), // Đảm bảo không null
+                IDCategory = product.IDCategory,
+                ProrityLevel = product.ProrityLevel,
+                Quantity = product.Quantity,
+            };
         }
+
 
         public async Task<IEnumerable<Product>> GetProductByName(string name)//Tìm sản phẩm theo tên
         {
