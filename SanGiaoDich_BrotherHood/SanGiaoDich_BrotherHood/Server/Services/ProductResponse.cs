@@ -185,6 +185,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 StartDate = product.StartDate,
                 imageProducts = product.imageProducts ?? new List<ImageProduct>(), // Đảm bảo không null
                 IDCategory = product.IDCategory,
+                Description = product.Description,
                 ProrityLevel = product.ProrityLevel,
                 Quantity = product.Quantity,
             };

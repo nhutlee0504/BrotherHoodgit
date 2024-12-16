@@ -236,8 +236,9 @@
             <h4 class="card-title" style="color:white">Mô tả sản phẩm</h4>
         </div>
         <div class="card-body">
-            <p>@product?.Description</p>
+            <p>@((MarkupString)product?.Description)</p>
         </div>
+
     </div>
 
     <div class="mt-4">

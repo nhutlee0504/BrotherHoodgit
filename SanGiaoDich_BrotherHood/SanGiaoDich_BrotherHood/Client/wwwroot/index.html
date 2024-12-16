@@ -15,8 +15,8 @@
     <link href="css/app.css" rel="stylesheet" />
     <link href="css/Loading.css" rel="stylesheet" />
     <link href="SanGiaoDich_BrotherHood.Client.styles.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
 </head>
 
 <body>
@@ -40,7 +40,32 @@
 
     <!-- Optional: Bootstrap 5 Bundle (for components like modals etc.) -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script> -->
+    <script>
+        // Khởi tạo Quill editor
+        function initializeQuillEditor() {
+            var quill = new Quill('#editor', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        ['bold', 'italic', 'underline'],
+                        ['link'],
+                        [{ 'align': [] }],
+                        ['clean']
+                    ]
+                }
+            });
 
+            // Gán Quill instance vào window để có thể sử dụng ở Blazor
+            window.quill = quill;
+        }
+
+        // Hàm lấy nội dung từ Quill
+        function getQuillContent() {
+            return window.quill.root.innerHTML;
+        }
+    </script>
     <script src="js/site.js"></script>
 </body>
 
