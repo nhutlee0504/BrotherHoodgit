@@ -143,7 +143,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             {
 
                 userAccount = await HttpClient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
-                userAddress = await HttpClient.GetFromJsonAsync<IEnumerable<AddressDetail>>($"api/addressdetail/GetAddressDetailsByUserName/{username}");
+                userAddress = await HttpClient.GetFromJsonAsync<IEnumerable<AddressDetail>>($"api/AddressDetail/{username}");
                 firstAddress = userAddress?.FirstOrDefault();
                 userBill = await HttpClient.GetFromJsonAsync<IEnumerable<Bill>>($"api/bill/GetBillsByUserName/{username}");
                 countBill = userBill.Count();

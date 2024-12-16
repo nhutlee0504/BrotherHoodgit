@@ -1,6 +1,7 @@
 ﻿@page "/PageThanhToan"
 @using System.Text.Json
 @using SanGiaoDich_BrotherHood.Shared.Models
+@using SanGiaoDich_BrotherHood.Shared.Dto
 @inject HttpClient http
 @inject NavigationManager navigation
 @inject IJSRuntime jsruntime
@@ -10,17 +11,19 @@
     private decimal totalPrice = 0;
     private SellerInfo sellerInfo;
     private List<AddressDetail> addresses;
+    private InfoAccountDto account;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            await CheckLogined();
             // Lấy thông tin giỏ hàng từ localStorage
             var selectedItemsJson = await jsruntime.InvokeAsync<string>("localStorage.getItem", "selectedCartItems");
             if (!string.IsNullOrEmpty(selectedItemsJson))
             {
                 selectedCartItems = JsonSerializer.Deserialize<List<CartItemUser>>(selectedItemsJson) ?? new List<CartItemUser>();
-                totalPrice = selectedCartItems.Sum(item => item.Price);
+                totalPrice = selectedCartItems.Sum(item => item.Price * item.Quantity);
             }
 
             // Lấy thông tin người dùng
@@ -36,12 +39,47 @@
                     sellerInfo = response;
                 }
             }
-
-            addresses = await http.GetFromJsonAsync<List<AddressDetail>>($"api/AddressDetail/{bill.UserName}");
+            addresses = await http.GetFromJsonAsync<List<AddressDetail>>($"api/AddressDetail/{account.UserName}");
+            if (addresses != null && addresses.Count > 0)
+            {
+                var firstAddress = addresses.First();
+                bill.DeliveryAddress = $"{firstAddress.AdditionalDetail}, {firstAddress.Wardcommune}, {firstAddress.District}, {firstAddress.ProvinceCity}";
+            }
         }
         catch (Exception ex)
         {
             await jsruntime.InvokeVoidAsync("alert", $"Đã xảy ra lỗi khi tải dữ liệu: {ex.Message}");
+        }
+    }
+    private async Task CheckLogined()
+    {
+        var token = await jsruntime.InvokeAsync<string>("localStorage.getItem", "token");
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            await LoadAccount();
+        }
+    }
+
+    private async Task LoadAccount()
+    {
+        try
+        {
+            var response = await http.GetAsync("api/User/GetMyInfo");
+
+            if (response.IsSuccessStatusCode)
+            {
+                account = await response.Content.ReadFromJsonAsync<InfoAccountDto>();
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Có lỗi xảy ra: " + ex.Message;
         }
     }
 
@@ -156,14 +194,15 @@
         }
     }
     private async void selectAddress(int id)
+    {
+        var address = addresses.Where(x => x.IDAddress == id).FirstOrDefault();
+        if (address != null)
         {
-            var address = addresses.Where(x => x.IDAddress == id).FirstOrDefault();
-            if (address != null)
-            {
-                bill.DeliveryAddress = $"{address.AdditionalDetail}, {address.Wardcommune}, {address.District}, {address.ProvinceCity}";
-                await jsruntime.InvokeVoidAsync("hideModal", "modalAddress");
-            }
+            bill.DeliveryAddress = null;
+            bill.DeliveryAddress = $"{address.AdditionalDetail}, {address.Wardcommune}, {address.District}, {address.ProvinceCity}";
+            await jsruntime.InvokeVoidAsync("hideModal", "modalAddress");
         }
+    }
 
     public class Bill
     {
@@ -277,7 +316,7 @@
                                         <div class="mb-3 col-md-10 offset-1">
                                             <table class="table table-striped table-bordered">
                                                 <tbody>
-                                                    @if (addresses != null)
+                                                    @if (addresses != null && addresses.Count > 0)
                                                     {
                                                         foreach (var x in addresses)
                                                         {
