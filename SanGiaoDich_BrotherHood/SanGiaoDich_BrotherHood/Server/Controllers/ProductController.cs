@@ -368,6 +368,23 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 
             return Ok(products);
         }
+        [HttpPut("SoftDelete/{id}")]
+        public async Task<IActionResult> SoftDeleteProduct(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
+            {
+                return NotFound(new { Message = "Sản phẩm không tồn tại." });
+            }
 
+            // Đánh dấu trạng thái là "Đã xóa"
+            product.Status = "Đã xóa";
+            product.UpdatedDate = DateTime.Now;
+
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Đã xóa mềm sản phẩm thành công." });
+        }
     }
 }
