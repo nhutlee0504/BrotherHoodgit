@@ -1,125 +1,596 @@
-﻿@page "/gemini"
+﻿@page "/xacthuc"
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Net.Http
+@using Newtonsoft.Json
+@using System.Net.Http.Headers;
+@using System.IO
 
-<div class="container mt-4">
-    <h3>Tạo Mô Tả Sản Phẩm</h3>
+@inject IJSRuntime JSRuntime
+@inject HttpClient Http
+<style>
+/* Tổng quan giao diện */
+body {
+    font-family: 'Roboto', Arial, sans-serif;
+    background-color: #f5f5f7;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
 
-    <div class="mb-3">
-        <label for="inputText" class="form-label">Nhập Tên Sản Phẩm</label>
-        <input id="inputText" class="form-control" @bind="InputText" placeholder="Nhập tên sản phẩm..." />
+.header-title {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #4A4A4A;
+}
+
+/* Container chính */
+.form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #fff;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+/* Nhóm input */
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-label {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 500;
+}
+
+.custom-input {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #fafafa;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.custom-input:focus {
+    border-color: #6c63ff;
+    box-shadow: 0 0 8px rgba(108, 99, 255, 0.4);
+    outline: none;
+}
+
+/* Video xem trước */
+.video-container {
+    width: 100%;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #ececec;
+    border-radius: 8px;
+    border: 2px dashed #ddd;
+    padding: 15px;
+    position: relative;
+}
+
+video {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Nút bấm hiện đại */
+.button-group, .submit-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.modern-button {
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modern-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.2);
+}
+
+.start-button {
+    background: linear-gradient(45deg, #6c63ff, #48c6ef);
+}
+
+.stop-button {
+    background: linear-gradient(45deg, #ff5c93, #ff9966);
+}
+
+.submit-button {
+    background: linear-gradient(45deg, #28a745, #85d68a);
+}
+
+.modern-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+    /* Khu vực tiêu đề */
+    .header-title {
+        text-align: center;
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #4A4A4A;
+    }
+
+    /* Container hiển thị kết quả */
+    .result-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #fff;
+        box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        line-height: 1.6;
+    }
+
+    /* Tiêu đề phụ */
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        color: #333;
+        border-bottom: 2px solid #6c63ff;
+        display: inline-block;
+        padding-bottom: 5px;
+    }
+
+    /* Dòng kết quả */
+    .result-item {
+        margin-bottom: 10px;
+        font-size: 1rem;
+        color: #555;
+    }
+
+        /* Font chữ nổi bật cho các kết quả */
+        .result-item strong {
+            color: #000;
+        }
+
+    .video-capture-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    #videoPreview {
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+        border: 2px solid #007bff;
+        border-radius: 8px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .instructions {
+        text-align: center;
+        font-size: 16px;
+        color: #555;
+    }
+
+        .instructions ul {
+            list-style-type: disc;
+            margin: 10px 0;
+            padding: 0 20px;
+            text-align: left;
+        }
+
+    .control-buttons button {
+        padding: 10px 20px;
+        font-size: 16px;
+        margin: 0 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    button#startRecording {
+        background-color: #28a745;
+        color: white;
+        border: none;
+    }
+
+    button#stopRecording {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+    }
+
+</style>
+
+<div class="form-container">
+    <!-- Tải lên CCCD -->
+    <div class="input-group">
+        <label for="cccdFile" class="input-label">Tải lên CCCD:</label>
+        <InputFile OnChange="HandleFileSelected" class="custom-input" />
     </div>
 
-    <button class="btn btn-primary" @onclick="GenerateDescriptionAsync" disabled="@IsLoading">
-        @if (IsLoading)
-        {
-            <span class="spinner-border spinner-border-sm"></span>
-        }
-        else
-        {
-            <span>Tạo Mô Tả</span>
-        }
-    </button>
+    <h3 class="header-title">Quay khuôn mặt</h3>
 
-    <div class="mt-4">
-        @if (FormattedResponse.Any())
-        {
-            <h5>Kết Quả:</h5>
+    <div class="video-capture-container">
+        <!-- Video hiển thị camera -->
+        <video id="videoPreview" autoplay muted></video>
+
+        <!-- Hướng dẫn quay -->
+        <div class="instructions">
+            <p>Vui lòng quay khuôn mặt của bạn:</p>
             <ul>
-                @foreach (var item in FormattedResponse)
-                {
-                    <li>@item</li>
-                }
+                <li>Nhìn thẳng</li>
+                <li>Xoay sang trái</li>
+                <li>Xoay sang phải</li>
             </ul>
-        }
-        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
-        {
-            <div class="alert alert-danger">@ErrorMessage</div>
-        }
+        </div>
+
+        <!-- Nút điều khiển quay video -->
+        <div class="control-buttons">
+            <button id="startRecording" @onclick="StartRecording" disabled="@isRecording">Bắt đầu quay</button>
+            <button id="stopRecording" @onclick="StopRecording" disabled="@(isRecording == false)">Dừng quay</button>
+        </div>
+    </div>
+
+    <div class="video-capture-container">
+        <!-- Video hiển thị video đã quay -->
+        <video id="videoPlayback" controls style="display:none; width: 100%;"></video>
+    </div>
+
+    <div class="input-group">
+        <label for="videoFile" class="input-label">Tải lên video:</label>
+        <InputFile id="videoFileInput" OnChange="HandleVideoFileSelected" Disabled="@isRecording" />
+    </div>
+
+    
+
+    <!-- Gửi -->
+    <div class="submit-container">
+        <button @onclick="SubmitData" class="modern-button submit-button">
+            Gửi
+        </button>
     </div>
 </div>
 
+
+<h3 class="header-title">Kết quả phân tích</h3>
+
+<!-- Kiểm tra apiResponse có giá trị -->
+@if (apiResponse != null)
+{
+    <!-- Khu vực kết quả -->
+    <div class="result-container">
+        <!-- Kết quả tổng quát -->
+        <div class="result-item">
+            <strong>Mã trạng thái:</strong> @apiResponse.Code
+        </div>
+        <div class="result-item">
+            <strong>Thông báo:</strong> @apiResponse.Message
+        </div>
+
+        <!-- Kết quả Liveness -->
+        <h4 class="section-title">Kiểm tra Liveness</h4>
+        <div class="result-item">
+            <strong>Trạng thái:</strong> @(apiResponse.Liveness?.IsLive ?? "N/A")
+        </div>
+        <div class="result-item">
+            <strong>Xác suất Spoof:</strong> @(apiResponse.Liveness?.SpoofProb ?? "N/A")
+        </div>
+        <div class="result-item">
+            <strong>Cần xem xét:</strong> @(apiResponse.Liveness?.NeedToReview ?? "N/A")
+        </div>
+        <div class="result-item">
+            <strong>Cảnh báo:</strong> @(apiResponse.Liveness?.Warning ?? "Không có")
+        </div>
+
+        <!-- Kết quả so khớp khuôn mặt -->
+        <h4 class="section-title">Kết quả so khớp khuôn mặt</h4>
+        <div class="result-item">
+            <strong>Trạng thái:</strong> @(apiResponse.FaceMatch?.IsMatch ?? "N/A")
+        </div>
+        <div class="result-item">
+            <strong>Phần trăm giống:</strong> @(apiResponse.FaceMatch?.Similarity ?? "N/A")
+        </div>
+        <div class="result-item">
+            <strong>Cảnh báo:</strong> @(apiResponse.FaceMatch?.Warning ?? "Không có")
+        </div>
+    </div>
+}
+else
+{
+    <!-- Hiển thị khi không có dữ liệu -->
+    <p>Chưa có kết quả phân tích.</p>
+}
+
 @code {
-    private string InputText { get; set; } = "";
-    private List<string> FormattedResponse { get; set; } = new();
-    private string ErrorMessage { get; set; } = "";
-    private bool IsLoading { get; set; } = false;
+    private ApiResponse? apiResponse;
+    private IBrowserFile cccdFile { get; set; }
+    private IBrowserFile videoFile { get; set; }
+    private string statusMessage { get; set; }
+    private bool isRecording { get; set; } = false;
+    private bool isRendered = false;
+    private bool CanSubmit => cccdFile != null && videoFile != null && statusMessage == string.Empty;
 
-    private async Task GenerateDescriptionAsync()
+    // Xử lý khi người dùng chọn tệp CCCD
+    private void HandleFileSelected(InputFileChangeEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(InputText))
+        cccdFile = e.File;
+        CheckFileSize(cccdFile, "CCCD");
+    }
+
+    // Xử lý khi người dùng chọn tệp Video
+    private void HandleVideoFileSelected(InputFileChangeEventArgs e)
+    {
+        videoFile = e.File;
+        CheckFileSize(videoFile, "Video");
+    }
+
+    // Kiểm tra kích thước tệp
+    private void CheckFileSize(IBrowserFile file, string fileType)
+    {
+        var maxFileSize = 52428800; // 50MB
+        if (file.Size > maxFileSize)
         {
-            ErrorMessage = "Vui lòng nhập tên sản phẩm!";
-            return;
+            statusMessage = $"{fileType} tệp quá lớn. Vui lòng chọn tệp nhỏ hơn 50MB.";
         }
-
-        IsLoading = true;
-        ErrorMessage = "";
-        FormattedResponse.Clear();
-
-        try
+        else
         {
-            // API Key cho Gemini
-            var apiKey = "AIzaSyC2r1g4eY-rSrBTkqeAhwRltlZJFk8sVzk";
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={apiKey}";
+            statusMessage = string.Empty; // Reset thông báo khi kích thước hợp lệ
+        }
+    }
 
-            // Payload gửi lên API Gemini
-            var requestBody = new
+
+    // Phương thức gọi sau khi render hoàn tất
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Gọi JSInterop chỉ khi render hoàn tất lần đầu tiên
+            Console.WriteLine("Render complete, now calling JS...");
+            await JSRuntime.InvokeVoidAsync("initializeRecording");
+            isRendered = true;
+        }
+    }
+
+    private async Task StartRecording()
+    {
+        isRecording = true;
+        await JSRuntime.InvokeVoidAsync("startCameraRecording");
+    }
+
+    private async Task StopRecording()
+    {
+        isRecording = false;
+        await JSRuntime.InvokeVoidAsync("stopCameraRecording");
+    }
+
+    private async Task SubmitData()
+    {
+        var maxFileSize = 10 * 1024 * 1024; // 10MB
+
+        if (videoFile != null && cccdFile != null)
+        {
+            try
             {
-                contents = new[]
-                {
-                new
-                {
-                    parts = new[]
-                    {
-                        new { text = $"Tạo mô tả sản phẩm: {InputText}, dài vừa" }
-                    }
-                }
-            }
+                // Đọc stream của video với giới hạn kích thước mới
+                var videoContent = new StreamContent(videoFile.OpenReadStream(maxFileSize));
+                videoContent.Headers.ContentType = new MediaTypeHeaderValue("video/webm");
+
+                // Đọc stream của CCCD với giới hạn kích thước mới
+                var cccdContent = new StreamContent(cccdFile.OpenReadStream(maxFileSize));
+                cccdContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+
+                var formData = new MultipartFormDataContent
+            {
+                { videoContent, "video", videoFile.Name },
+                { cccdContent, "cmnd", cccdFile.Name }
             };
 
-            using var httpClient = new HttpClient(); // Tạo HttpClient tạm thời để tránh ảnh hưởng từ cấu hình toàn cục
-            var response = await httpClient.PostAsJsonAsync(url, requestBody);
+                // Gửi yêu cầu POST đến API
+                var requestMessage = new HttpRequestMessage(HttpMethod.Post, "https://api.fpt.ai/dmp/liveness/v3")
+                    {
+                        Headers = { { "api-key", "OEwn9iQDewvnjxeCbvPnNyyyzGVoLe4s" } },
+                        Content = formData
+                    };
 
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<GeminiResponse>();
-                var rawText = result?.candidates?.FirstOrDefault()?.content?.parts?.FirstOrDefault()?.text ?? "";
-                FormattedResponse = rawText.Split(new[] { '\n', '*' }, StringSplitOptions.RemoveEmptyEntries)
-                                           .Select(line => line.Trim())
-                                           .Where(line => !string.IsNullOrWhiteSpace(line))
-                                           .ToList();
-            }
-            else
-            {
-                ErrorMessage = $"Lỗi: {response.ReasonPhrase}";
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"Đã xảy ra lỗi: {ex.Message}";
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
-    public class GeminiResponse
-    {
-        public Candidate[] candidates { get; set; }
-
-        public class Candidate
-        {
-            public Content content { get; set; }
-
-            public class Content
-            {
-                public Part[] parts { get; set; }
-
-                public class Part
+                var response = await Http.SendAsync(requestMessage);
+                var result = await response.Content.ReadAsStringAsync();
+                 apiResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<ApiResponse>(result);
+                if (apiResponse != null)
                 {
-                    public string text { get; set; }
+                    Console.WriteLine($"Code: {apiResponse.Code}");
+                    Console.WriteLine($"Message: {apiResponse.Message}");
+
+                    if (apiResponse.Liveness != null)
+                    {
+                        Console.WriteLine($"Liveness Code: {apiResponse.Liveness.Code}");
+                        Console.WriteLine($"Liveness Message: {apiResponse.Liveness.Message}");
+                        Console.WriteLine($"Is Live: {apiResponse.Liveness.IsLive}");
+                        Console.WriteLine($"Spoof Probability: {apiResponse.Liveness.SpoofProb}");
+                        Console.WriteLine($"Need to Review: {apiResponse.Liveness.NeedToReview}");
+                        Console.WriteLine($"Is Deepfake: {apiResponse.Liveness.IsDeepfake}");
+                        Console.WriteLine($"Deepfake Probability: {apiResponse.Liveness.DeepfakeProb}");
+                        Console.WriteLine($"Warning: {apiResponse.Liveness.Warning}");
+                    }
+
+                    if (apiResponse.FaceMatch != null)
+                    {
+                        Console.WriteLine($"Face Match Code: {apiResponse.FaceMatch.Code}");
+                        Console.WriteLine($"Face Match Message: {apiResponse.FaceMatch.Message}");
+                        Console.WriteLine($"Is Match: {apiResponse.FaceMatch.IsMatch}");
+                        Console.WriteLine($"Similarity: {apiResponse.FaceMatch.Similarity}%"); // Phần trăm giống
+                        Console.WriteLine($"Warning: {apiResponse.FaceMatch.Warning}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("No Face Match data found.");
+                    }
                 }
+                else
+                {
+                    Console.WriteLine("Failed to parse API response.");
+                }
+
+
+            }
+            catch (IOException ioEx)
+            {
+                Console.WriteLine($"Tệp quá lớn. Lỗi: {ioEx.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi: {ex.Message}");
             }
         }
+        else
+        {
+            Console.WriteLine("Vui lòng chọn video và CCCD.");
+        }
     }
+
+
+    public class FaceMatchData
+    {
+        [JsonProperty("code")]
+        public string Code { get; set; }
+
+        [JsonProperty("message")]
+        public string Message { get; set; }
+
+        [JsonProperty("isMatch")]
+        public string IsMatch { get; set; }
+
+        [JsonProperty("similarity")]
+        public string Similarity { get; set; }
+
+        [JsonProperty("warning")]
+        public string Warning { get; set; }
+    }
+
+    public class ApiResponse
+    {
+        [JsonProperty("code")]
+        public string Code { get; set; }
+
+        [JsonProperty("message")]
+        public string Message { get; set; }
+
+        [JsonProperty("liveness")]
+        public LivenessData Liveness { get; set; }
+
+        [JsonProperty("face_match")]
+        public FaceMatchData FaceMatch { get; set; }
+    }
+
+
+    public class LivenessData
+    {
+        [JsonProperty("code")]
+        public string Code { get; set; }
+
+        [JsonProperty("message")]
+        public string Message { get; set; }
+
+        [JsonProperty("is_live")]
+        public string IsLive { get; set; }
+
+        [JsonProperty("spoof_prob")]
+        public string SpoofProb { get; set; }
+
+        [JsonProperty("need_to_review")]
+        public string NeedToReview { get; set; }
+
+        [JsonProperty("is_deepfake")]
+        public string IsDeepfake { get; set; }
+
+        [JsonProperty("deepfake_prob")]
+        public string DeepfakeProb { get; set; }
+
+        [JsonProperty("warning")]
+        public string Warning { get; set; }
+    }
+
+
 }
+<script src="/js/face-api.min.js"> </script>
+
+<script>
+    let mediaRecorder;
+    let recordedChunks = [];
+    let videoStream;
+
+    function initializeRecording() {
+        console.log("JS: Initializing video recording...");
+        const videoPreview = document.getElementById("videoPreview");
+
+        // Yêu cầu quyền truy cập camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                videoPreview.srcObject = stream;
+            })
+            .catch((error) => {
+                console.error("Camera initialization failed: ", error);
+            });
+    }
+
+    // Bắt đầu ghi video
+    window.startCameraRecording = function () {
+        const videoElement = document.getElementById("videoPreview");
+        videoStream = videoElement.srcObject;
+        mediaRecorder = new MediaRecorder(videoStream);
+
+        mediaRecorder.ondataavailable = function (event) {
+            recordedChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = function () {
+            // Tạo Blob từ các chunk đã ghi
+            const blob = new Blob(recordedChunks, { type: "video/webm" });
+            const url = URL.createObjectURL(blob);
+
+            // Hiển thị video vừa quay
+            const videoPlayer = document.getElementById("videoPlayback");
+            videoPlayer.src = url;
+            videoPlayer.style.display = 'block';  // Hiển thị video
+
+            // Reset các chunk
+            recordedChunks = [];
+        };
+
+        mediaRecorder.start();
+    };
+
+    // Dừng quay video
+    window.stopCameraRecording = function () {
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+            mediaRecorder.stop();
+        }
+
+        // Kết thúc stream camera
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+        }
+    };
+
+</script>

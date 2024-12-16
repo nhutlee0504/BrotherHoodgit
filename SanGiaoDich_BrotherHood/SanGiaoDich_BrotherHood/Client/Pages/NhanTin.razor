@@ -1,5 +1,6 @@
 ﻿@page "/NhanTin"
 @using SanGiaoDich_BrotherHood.Shared.Models
+@using System.Text.RegularExpressions
 @inject HttpClient http
 @inject IJSRuntime jsruntime
 @inject NavigationManager Navigation
@@ -167,6 +168,40 @@
             object-position: center; 
         }
 
+    .product-info {
+        background-color: #f9f9f9; /* Màu nền sáng */
+        border: 1px solid #ddd; /* Viền nhẹ */
+        border-radius: 8px; /* Góc bo tròn */
+        padding: 20px; /* Padding bên trong */
+        max-width: 600px; /* Đặt độ rộng tối đa */
+        margin: 0 auto; /* Căn giữa */
+    }
+
+        .product-info p {
+            font-size: 1rem; /* Cỡ chữ */
+            margin-bottom: 10px; /* Khoảng cách giữa các phần tử */
+        }
+
+        .product-info .btn {
+            padding: 8px 15px; /* Padding cho nút */
+            font-size: 0.9rem; /* Cỡ chữ cho nút */
+            border-radius: 5px; /* Góc bo tròn cho nút */
+        }
+
+        .product-info .text-danger {
+            font-weight: bold; /* Đậm chữ cảnh báo */
+            font-size: 1rem; /* Cỡ chữ cảnh báo */
+        }
+
+        .product-info .mt-3 {
+            margin-top: 15px;
+        }
+
+        .product-info .btn:hover {
+            background-color: #0056b3; /* Màu nền nút khi hover */
+            border-color: #0056b3; /* Đổi màu viền nút khi hover */
+        }
+
 </style>
 
 <div class="container">
@@ -232,38 +267,64 @@
                         </div>
                     </div>
                     <div class="message-history py-3">
-                        @* Đoạn chat *@
                         @if (!string.IsNullOrEmpty(errorMessage))
                         {
                             <div class="alert alert-danger" role="alert">
                                 @errorMessage
                             </div>
                         }
+
                         @if (messageList.Any())
                         {
                             @foreach (var message in messageList)
                             {
-                                <div class="message-line d-flex flex-column @(message.UserSend == username ? "text-end" : "text-start")">
-                                    <div class="d-flex @(message.UserSend == username ? "justify-content-end" : "align-items-end") mb-3">
-                                        @* <div class="user-avatar">
-                                             <img src="https://plhold.com/avatar/60?text=@message.UserSend" alt="Avatar of @message.UserSend" />
-                                           </div> *@
+                                <div class="message-line d-flex flex-column @(message.UserSend == username ? "align-items-end" : "align-items-start") mb-3">
+                                    <!-- Message content -->
+                                    <div class="d-flex @(message.UserSend == username ? "justify-content-end" : "justify-content-start")">
+                                        <p class="message mb-0 @(message.UserSend == username ? "ms-auto" : "")">
+                                            @message.Content
+                                            <small class="date d-block mt-2">
+                                                @message.CreatedDate.ToString("HH:mm dd/MM/yyyy")
+                                            </small>
+                                        </p>
                                     </div>
-                                    <p class="message @(message.UserSend == username ? "ms-auto" : "")">
-                                        @message.Content
-                                        <small class="date d-flex @(message.UserSend == username ? "justify-content-start" : "justify-content-end") mt-3">
-                                            @message.CreatedDate.ToString("HH:mm dd/MM/yyyy")
-                                        </small>
-                                    </p>
+
+                                    <!-- Product Info Section -->
+                                    @if (!string.IsNullOrEmpty(message.Content))
+                                    {
+                                        var productId = ExtractProductId(message.Content);
+                                        if (productId.HasValue)
+                                        {
+                                            <div class="product-info mt-3 p-3 border rounded shadow-sm">
+                                                <button class="btn btn-primary btn-sm" @onclick="() => LoadProductInfo(productId.Value)">Tải thông tin sản phẩm</button>
+
+                                                @if (product != null)
+                                                {
+                                                    <div class="mt-3">
+                                                        <p><strong>Tên sản phẩm:</strong> @product.Name</p>
+                                                        <p><strong>ID sản phẩm:</strong> @product.IDProduct</p>
+                                                    </div>
+                                                }
+                                                else if (!string.IsNullOrEmpty(errorMessage))
+                                                {
+                                                    <p class="text-danger mt-2">@errorMessage</p>
+                                                }
+                                            </div>
+                                        }
+                                    }
                                 </div>
                             }
                         }
                         else
                         {
-                            <p class="justify-content:center;">Chưa có tin nhắn nào.</p>
+                            <p class="text-center">Chưa có tin nhắn nào.</p>
                         }
-
                     </div>
+
+
+
+
+
                     <div class="inputs mt-auto">
                         <div class="input-group mb-3">
                             <input type="text" class="form-control" placeholder="Nhập tinh nhắn" aria-label="Nhắn tin" aria-describedby="button-addon2" @bind="messageContent">
@@ -282,6 +343,7 @@
     private string selectedFilter = string.Empty;
     private List<Conversation> filteredConversationList = new();
     private string productName;
+    public Product product;
 
     private bool isLoading = true;
     private string errorMessage;
@@ -293,6 +355,43 @@
     private string selectedUser;
     private string messageContent;
     private System.Timers.Timer refreshTimer;
+    private async Task LoadProductInfo(int productId)
+    {
+        try
+        {
+            // Lấy thông tin sản phẩm từ API
+            product = await GetProductInfo(productId);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi khi lấy thông tin sản phẩm: {ex.Message}";
+        }
+    }
+
+    public async Task<Product> GetProductInfo(int productId)
+    {
+        try
+        {
+            // Gọi API để lấy thông tin sản phẩm theo productId
+            var product = await http.GetFromJsonAsync<Product>($"/api/product/GetProductById/{productId}");
+            return product;
+        }
+        catch (Exception ex)
+        {
+            // Xử lý lỗi nếu không thể lấy thông tin sản phẩm
+            Console.WriteLine($"Lỗi khi lấy thông tin sản phẩm: {ex.Message}");
+            return null;
+        }
+    }
+    private int? ExtractProductId(string content)
+    {
+        var match = Regex.Match(content, @"Mã sản phẩm là (\d+)");
+        if (match.Success)
+        {
+            return int.Parse(match.Groups[1].Value);  // Extract and return product ID
+        }
+        return null; // Return null if no match is found
+    }
     protected override async Task OnInitializedAsync()
     {
         await CheckTokenAndLoadAccountInfo();
@@ -300,8 +399,9 @@
         {
             await LoadConversations();
             filteredConversationList = conversationList;
-            StartAutoRefresh(); // Khởi động cơ chế tự động làm mới
+            StartAutoRefresh();
         }
+
     }
 
     // Hàm kiểm tra token và tải thông tin người dùng
@@ -418,12 +518,22 @@
             selectedUser = conversation.Username == username ? conversation.UserGive : conversation.Username;
             var url = $"api/Message/GetMessagesBetween?username={username}&selectedUser={selectedUser}";
             messageList = await http.GetFromJsonAsync<List<Messages>>(url);
+            foreach (var message in messageList)
+            {
+                var productId = ExtractProductId(message.Content);
+                if (productId.HasValue)
+                {
+                    var product = await GetProductInfo(productId.Value);
+
+                }
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Lỗi khi tải tin nhắn: {ex.Message}");
         }
     }
+
     private async Task SendMessage()
     {
         try

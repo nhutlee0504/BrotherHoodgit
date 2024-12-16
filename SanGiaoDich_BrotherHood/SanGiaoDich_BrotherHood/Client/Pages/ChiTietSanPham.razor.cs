@@ -247,15 +247,15 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                     }
 
                     // Tạo tin nhắn và gửi đi
-                    var message = new Messages
-                    {
-                        UserSend = accountInfo.UserName, // Lấy UserName từ accountInfo của người dùng hiện tại
-                        Content = $"Chào bạn, tôi quan tâm đến sản phẩm {product.Name}.",
-                        TypeContent = "Text",
-                        CreatedDate = DateTime.Now,
-                        IsDeleted = false,
-                        Status = "Sent",
-                    };
+                        var message = new Messages
+                        {
+                            UserSend = accountInfo.UserName, // Lấy UserName từ accountInfo của người dùng hiện tại
+                            Content = $"Chào bạn, tôi quan tâm đến sản phẩm {product.Name}. Mã sản phẩm là {product.IDProduct}",
+                            TypeContent = "Text",
+                            CreatedDate = DateTime.Now,
+                            IsDeleted = false,
+                            Status = "Sent",
+                        };
 
                     // Gửi tin nhắn
                     var response = await httpclient.PostAsJsonAsync($"api/message/CreateMess?username={accountInfo.UserName}&userGive={product.UserName}", message);
