@@ -4,111 +4,143 @@
 @inject HttpClient httpClient
 @inject NavigationManager NavigationManager
 <style>
-   
-    .table-posts {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: Arial, sans-serif;
-    }
-
-        .table-posts th, .table-posts td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-     
-        .table-posts th {
-            background-color: #4CAF50;
-            color: white;
-            font-weight: bold;
-        }
-
-        .table-posts tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-       
-        .table-posts tr:hover {
-            background-color: #f1f1f1;
-        }
-
-        .table-posts .action-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .table-posts .btn {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            color: white;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-
-        .table-posts .btn-view {
-            background-color: #2196F3; 
-        }
-
-        .table-posts .btn-edit {
-            background-color: #FF9800;
-        }
-
-        .table-posts .btn-delete {
-            background-color: #f44336; 
-        }
-
-        .table-posts .btn:hover {
-            opacity: 0.8;
-        }
+    /* Cập nhật lại search-filter-container */
     .search-filter-container {
         display: flex;
+        flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 16px;
-    }
-    .search-container {
-        display: flex;
-        align-items: center;
-    }
-
-    .search-input {
-        padding: 8px 12px;
-        border: 1px solid #ddd;
-        border-radius: 4px 0 0 4px;
-        outline: none;
-        font-size: 1em;
+        margin-bottom: 20px;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
-    .btn-search {
-        padding: 8px 12px;
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 0 4px 4px 0;
-        cursor: pointer;
-    }
-
-        .btn-search:hover {
-            background-color: #45a049;
-        }
-
+    /* Điều chỉnh phần container tìm kiếm và lọc để chúng đồng nhất */
+    .search-container,
     .filter-container {
         display: flex;
         align-items: center;
+        gap: 15px; /* Khoảng cách giữa các phần tử */
+        margin-bottom: 15px; /* Khoảng cách giữa các bộ lọc */
+        flex-wrap: wrap;
+        justify-content: flex-start;
     }
 
-    .filter-select {
-        padding: 8px 12px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 1em;
-        outline: none;
+        /* Cập nhật các input và select trong các bộ lọc */
+        .search-input,
+        .filter-select,
+        .filter-container input[type="date"] {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 250px; /* Đảm bảo các input có cùng chiều rộng */
+            box-sizing: border-box;
+        }
+
+    .btn-search,
+    .btn-primary {
+        padding: 12px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+        .btn-search:hover,
+        .btn-primary:hover {
+            background-color: #45a049;
+        }
+
+    /* Table Styles */
+    .table-posts {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+        .table-posts th {
+            padding: 16px;
+            background-color: #4CAF50;
+            color: white;
+            text-align: left;
+            font-size: 1rem;
+            text-transform: uppercase;
+        }
+
+        .table-posts td {
+            padding: 16px;
+            border-bottom: 1px solid #ddd;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .table-posts tr:hover {
+            background-color: #f9f9f9;
+        }
+
+    /* Các nút hành động */
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }
+
+    .btn-info {
+        background-color: royalblue;
+    }
+
+    .btn-danger {
+        background-color: #f44336;
+    }
+
+    /* Cập nhật các kiểu cho nút phân trang */
+    .pagination .page-link {
+        display: block;
+        padding: 12px 18px;
+        color: #4CAF50; /* Màu chữ sẽ giữ nguyên hoặc có thể đổi màu theo ý */
+        font-size: 1rem;
+        position: relative;
+        border: none; /* Loại bỏ đường viền */
+        background-color: transparent; /* Loại bỏ màu nền */
         cursor: pointer;
     }
 
+    .pagination .page-item.disabled .page-link {
+        color: #ccc; /* Để hiển thị màu khi trang bị vô hiệu hóa */
+    }
 
+    .pagination .active .page-link {
+        color: #4CAF50; /* Màu của trang hiện tại vẫn giữ như trước */
+    }
+
+    .pagination .page-link::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -4px;
+        height: 3px;
+        background-color: #4CAF50;
+        border-radius: 2px;
+        visibility: hidden; /* Ẩn underline */
+    }
+
+    .pagination .active .page-link::after {
+        visibility: visible;
+    }
+
+    .pagination .page-item {
+        margin: 0; /* Loại bỏ khoảng cách bên ngoài */
+    }
 </style>
 <div class="search-filter-container">
     <div class="search-container">
@@ -121,27 +153,24 @@
             @errorMessage
         </div>
     }
-   
+
 
     <div class="filter-container">
-        <div class="dropdown">
-            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                Chọn trạng thái
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                <li><a class="dropdown-item" href="#" value="published"><i class="ti ti-circle-check"></i> Đã duyệt</a></li>
-                <li><a class="dropdown-item" href="#" value="pending"><i class="ti ti-clock"></i> Đang chờ duyệt</a></li>
-                <li><a class="dropdown-item" href="#" value="pending"><i class="ti ti-ban"></i> Hủy duyệt</a></li>
-            </ul>
-        </div>
-
+        <select @bind="filterStatus" class="filter-select">
+            <option value="">Tất cả</option>
+            <option value="Đang chờ duyệt">Đang chờ duyệt</option>
+            <option value="Đã duyệt">Đã duyệt</option>
+            <option value="Đã xóa">Đã xóa</option>
+        </select>
+        <button class="btn btn-primary" @onclick="FilterByStatus">Lọc</button>
     </div>
+
     <div class="filter-container">
         <label for="startDate">Ngày bắt đầu:</label>
         <input type="date" id="startDate" @bind="startDate" class="filter-select" />
         <label for="endDate">Ngày kết thúc:</label>
         <input type="date" id="endDate" @bind="endDate" class="filter-select" />
-        <button class="btn btn-primary" @onclick="FilterByDate">Lọc theo ngày</button>
+        <button class="btn btn-primary" @onclick="FilterByDate">Lọc</button>
     </div>
 
 </div>
@@ -176,18 +205,37 @@
                     else
                     {
                         <a class="btn btn-info btn-sm" href="@($"/Admin/Product/{product.IDProduct}")">Xem</a>
-                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteProduct(product.IDProduct)">Xóa</button>
+                        @if (product.Status != "Đã xóa")
+                        {
+                            <button class="btn btn-danger btn-sm" @onclick="() => SoftDeleteProduct(product.IDProduct)">Xóa</button>
+                        }
                     }
                 </td>
             </tr>
         }
+
     </tbody>
 </table>
-<div class="d-flex justify-content-between align-items-center mt-3">
-    <button class="btn btn-secondary" @onclick="PreviousPage" disabled="@IsFirstPage">Trang trước</button>
-    <span>Trang @currentPage / @totalPages</span>
-    <button class="btn btn-secondary" @onclick="NextPage" disabled="@IsLastPage">Trang sau</button>
-</div>
+<nav aria-label="Page navigation" class="d-flex justify-content-center mt-3">
+    <ul class="pagination">
+        <li class="page-item @(IsFirstPage ? "disabled" : "")">
+            <a class="page-link" @onclick="PreviousPage">
+                Trang trước
+            </a>
+        </li>
+        @for (int i = 1; i <= totalPages; i++)
+        {
+            <li class="page-item @(currentPage == i ? "active" : "")">
+                <a class="page-link" @onclick="(() => ChangePage(i))">@i</a>
+            </li>
+        }
+        <li class="page-item @(IsLastPage ? "disabled" : "")">
+            <a class="page-link" @onclick="NextPage">
+                Trang sau
+            </a>
+        </li>
+    </ul>
+</nav>
 
 @code {
     private List<Product> products = new List<Product>();
@@ -203,13 +251,14 @@
     private DateTime? startDate = null;
     private DateTime? endDate = null;
 
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
             products = await httpClient.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
             productImages = new Dictionary<int, List<string>>();
-
+            products = products.Where(p => p.Status != "Đã xóa").ToList();
             foreach (var product in products)
             {
                 var images = await httpClient.GetFromJsonAsync<List<ImageProduct>>($"api/ImageProduct/GetImageProduct?id={product.IDProduct}");
@@ -391,5 +440,60 @@
             errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
         }
     }
+    private async Task SoftDeleteProduct(int id)
+    {
+        try
+        {
+            var response = await httpClient.PutAsync($"api/Product/SoftDelete/{id}", null);
 
+            if (response.IsSuccessStatusCode)
+            {
+                // Xóa sản phẩm khỏi danh sách sau khi xóa mềm
+                var deletedProduct = products.FirstOrDefault(p => p.IDProduct == id);
+                if (deletedProduct != null)
+                {
+                    products.Remove(deletedProduct);
+                }
+
+                Console.WriteLine($"Đã xóa mềm sản phẩm ID: {id}.");
+            }
+            else
+            {
+                errorMessage = $"Lỗi API: {response.ReasonPhrase}";
+                Console.WriteLine(errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi: {ex.Message}";
+            Console.WriteLine(errorMessage);
+        }
+    }
+    private string filterStatus = string.Empty;
+
+    private async Task FilterByStatus()
+    {
+        try
+        {
+            products = await httpClient.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
+
+            // Áp dụng bộ lọc trạng thái nếu người dùng chọn
+            if (!string.IsNullOrWhiteSpace(filterStatus))
+            {
+                products = products.Where(p => p.Status == filterStatus).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi khi lọc sản phẩm: {ex.Message}";
+            Console.WriteLine(errorMessage);
+        }
+    }
+    private void ChangePage(int pageNumber)
+    {
+        if (pageNumber > 0 && pageNumber <= totalPages)
+        {
+            currentPage = pageNumber;
+        }
+    }
 }
