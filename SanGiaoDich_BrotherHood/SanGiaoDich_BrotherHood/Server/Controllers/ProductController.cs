@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Routing;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using OfficeOpenXml;
+using SanGiaoDich_BrotherHood.Server.Data;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -19,10 +20,12 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
     public class ProductController : ControllerBase
     {
         private IProduct prod;
+        private readonly ApplicationDbContext _context;
 
-        public ProductController(IProduct prods)
+        public ProductController(IProduct prods, ApplicationDbContext context)
         {
             prod = prods;
+            _context = context;
         }
         [AllowAnonymous]
         [HttpGet("GetAllProduct")]
@@ -350,6 +353,20 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             public string Period { get; set; }
             public decimal Revenue { get; set; }
+        }
+
+        // API lọc theo ngày
+        [HttpGet("GetProductsByDate")]
+        public IActionResult GetProductsByDate(DateTime startDate, DateTime endDate)
+        {
+            // Điều chỉnh endDate để bao gồm cả dữ liệu ngày kết thúc
+            endDate = endDate.Date.AddDays(1).AddTicks(-1);
+
+            var products = _context.Products
+                .Where(p => p.StartDate >= startDate && p.StartDate <= endDate)
+                .ToList();
+
+            return Ok(products);
         }
 
     }

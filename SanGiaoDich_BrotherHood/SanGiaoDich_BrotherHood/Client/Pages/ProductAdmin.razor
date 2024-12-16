@@ -137,6 +137,14 @@
         </div>
 
     </div>
+    <div class="filter-container">
+        <label for="startDate">Ngày bắt đầu:</label>
+        <input type="date" id="startDate" @bind="startDate" class="filter-select" />
+        <label for="endDate">Ngày kết thúc:</label>
+        <input type="date" id="endDate" @bind="endDate" class="filter-select" />
+        <button class="btn btn-primary" @onclick="FilterByDate">Lọc theo ngày</button>
+    </div>
+
 </div>
 <table class="table table-striped d-none d-sm-table">
     <thead>
@@ -193,6 +201,8 @@
     private int pageSize = 10; // Số sản phẩm trên mỗi trang
     private int totalPages => (int)Math.Ceiling((double)(products.Count) / pageSize);
 
+    private DateTime? startDate = null;
+    private DateTime? endDate = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -340,4 +350,47 @@
             currentPage++;
         }
     }
+    private async Task FilterByDate()
+    {
+        try
+        {
+            errorMessage = string.Empty;
+
+            if (startDate == null || endDate == null)
+            {
+                errorMessage = "Vui lòng chọn cả ngày bắt đầu và ngày kết thúc.";
+                return;
+            }
+
+            if (startDate > endDate)
+            {
+                errorMessage = "Ngày bắt đầu không thể lớn hơn ngày kết thúc.";
+                return;
+            }
+
+            // Điều chỉnh ngày kết thúc thành 23:59:59
+            var adjustedEndDate = endDate?.AddDays(1).AddTicks(-1);
+
+            // Gửi yêu cầu đến API
+            var response = await httpClient.GetAsync(
+                $"api/product/GetProductsByDate?startDate={startDate:yyyy-MM-dd}&endDate={adjustedEndDate:yyyy-MM-dd}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<List<Product>>();
+                products = result ?? new List<Product>();
+            }
+            else
+            {
+                errorMessage = $"Lỗi API: {response.ReasonPhrase}";
+            }
+
+            currentPage = 1; // Reset trang về đầu
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
+        }
+    }
+
 }
