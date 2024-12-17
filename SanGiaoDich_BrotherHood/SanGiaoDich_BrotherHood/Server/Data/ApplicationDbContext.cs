@@ -39,5 +39,6 @@ namespace SanGiaoDich_BrotherHood.Server.Data
         public DbSet<ConversationParticipant> ConversationParticipants { get; set; }
         public DbSet<PaymentResponseModel> PaymentResponses { get; set; }
         public DbSet<PaymentRequestModel> PaymentRequests { get; set; }
+        public DbSet<Withdrawal_information> withdrawal_Information { get; set; }
     }
 }

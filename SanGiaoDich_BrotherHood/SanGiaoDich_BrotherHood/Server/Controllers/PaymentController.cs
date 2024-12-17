@@ -17,6 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using static SanGiaoDich_BrotherHood.Client.Pages.Dashboard;
 using Net.payOS.Types;
 using Net.payOS;
+using SanGiaoDich_BrotherHood.Shared.Dto;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -171,6 +172,45 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { message = $"Lỗi: {ex.Message}", details = ex.StackTrace });
+            }
+        }
+
+        [HttpGet("withdrawals")]
+        public async Task<IActionResult> GetAllWithdrawals()
+        {
+            var withdrawals = await _vnPayService.GetAllWithdrawals();
+            return Ok(withdrawals);
+        }
+
+        [HttpPost("withdrawals")]
+        public async Task <IActionResult> AddWithdrawal( Withdrawal_informationDto withdrawal)
+        {
+            if (withdrawal == null)
+            {
+                return BadRequest("Thông tin yêu cầu rút tiền không hợp lệ.");
+            }
+
+            var newWithdrawal = await _vnPayService.AddWithdrawal(withdrawal);
+            return Ok(newWithdrawal);
+        }
+        [HttpPut("update-withdrawal/{id}/{status}")]
+        public async Task<IActionResult> UpdateWithdrawal(int id, string status)
+        {
+            try
+            {
+                // Gọi phương thức UpdateWithDaral từ service
+                var updatedWithdrawal = await _vnPayService.UpdateWithDaral(id, status);
+
+                if (updatedWithdrawal == null)
+                {
+                    return NotFound("Đơn rút tiền không tồn tại.");
+                }
+
+                return Ok(new { message = "Cập nhật yêu cầu rút tiền thành công", withdrawal = updatedWithdrawal });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
             }
         }
 

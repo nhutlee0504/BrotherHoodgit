@@ -4,9 +4,13 @@ using Microsoft.Extensions.Configuration;
 using Org.BouncyCastle.Asn1.Ocsp;
 using SanGiaoDich_BrotherHood.Server.Data;
 using SanGiaoDich_BrotherHood.Server.Library;
+using SanGiaoDich_BrotherHood.Shared.Dto;
 using SanGiaoDich_BrotherHood.Shared.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace SanGiaoDich_BrotherHood.Server.Services
 {
@@ -14,11 +18,34 @@ namespace SanGiaoDich_BrotherHood.Server.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
-        public VnPayService(IConfiguration configuration, ApplicationDbContext context)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public VnPayService(IConfiguration configuration, ApplicationDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _configuration = configuration;
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
         }
+
+        public async Task<Withdrawal_information> AddWithdrawal(Withdrawal_informationDto withdrawal)
+        {
+            var user = GetUserInfoFromClaims();
+            var newWI = new Withdrawal_information
+            {
+                PaymentType = withdrawal.PaymentType,
+                Amount = withdrawal.Amount,
+                AccountNumber = withdrawal.AccountNumber,
+                OrderDescription = user.FullName + "yêu cầu rút tiền",
+                CreatedDate = DateTime.Now,
+                Bank = withdrawal.Bank,
+                Status = withdrawal.Status,
+                UserName = user.UserName,
+                FullName = user.FullName,
+            };
+            await _context.withdrawal_Information.AddAsync(newWI);
+            await _context.SaveChangesAsync();
+            return newWI;
+        }
+
         public string CreatePaymentUrl(PaymentRequestModel model, HttpContext context)
         {
 
@@ -49,6 +76,10 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
         }
 
+        public async Task<IEnumerable<Withdrawal_information>> GetAllWithdrawals()
+        {
+            return await _context.withdrawal_Information.ToListAsync();
+        }
 
         public PaymentResponseModel PaymentExecute(IQueryCollection collections)
         {
@@ -141,6 +172,80 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             return result;
         }
 
+        private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()
+        {
+            var userClaim = _httpContextAccessor.HttpContext?.User;
+            if (userClaim != null && userClaim.Identity.IsAuthenticated)
+            {
+                // Kiểm tra thời gian hết hạn của token
+                var expirationClaim = userClaim.FindFirst("exp");
+                if (expirationClaim != null && long.TryParse(expirationClaim.Value, out long exp))
+                {
+                    var expirationTime = DateTimeOffset.FromUnixTimeSeconds(exp).UtcDateTime;
+                    if (expirationTime < DateTime.UtcNow)
+                    {
+                        throw new UnauthorizedAccessException("Token đã hết hạn. Vui lòng đăng nhập lại.");
+                    }
+                }
 
+                var userNameClaim = userClaim.FindFirst(ClaimTypes.Name)?.Value ?? string.Empty;
+                var emailClaim = userClaim.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
+                var fullNameClaim = userClaim.FindFirst("FullName")?.Value ?? string.Empty;
+                var phoneNumberClaim = userClaim.FindFirst("PhoneNumber")?.Value ?? string.Empty;
+                var genderClaim = userClaim.FindFirst("Gender")?.Value ?? string.Empty;
+                var idCardClaim = userClaim.FindFirst("IDCard")?.Value ?? string.Empty;
+                var imageAccountClaim = userClaim.FindFirst("ImageAccount")?.Value ?? string.Empty;
+                var roleClaim = userClaim.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+
+                DateTime? birthday = null;
+                var birthdayClaimValue = userClaim.FindFirst("Birthday")?.Value;
+                if (!string.IsNullOrWhiteSpace(birthdayClaimValue) && DateTime.TryParse(birthdayClaimValue, out DateTime parsedBirthday))
+                {
+                    birthday = parsedBirthday;
+                }
+
+                bool isDelete = false;
+                var isDeleteClaimValue = userClaim.FindFirst("IsDelete")?.Value;
+                if (isDeleteClaimValue != null && bool.TryParse(isDeleteClaimValue, out bool parsedIsDeleted))
+                {
+                    isDelete = parsedIsDeleted;
+                }
+
+                DateTime? timeBanned = null;
+                var timeBannedClaimValue = userClaim.FindFirst("TimeBanned")?.Value;
+                if (!string.IsNullOrWhiteSpace(timeBannedClaimValue) && DateTime.TryParse(timeBannedClaimValue, out DateTime parsedTimeBanned))
+                {
+                    timeBanned = parsedTimeBanned;
+                }
+
+                return (
+                    userNameClaim,
+                    emailClaim,
+                    fullNameClaim,
+                    phoneNumberClaim,
+                    genderClaim,
+                    idCardClaim,
+                    birthday,
+                    imageAccountClaim,
+                    roleClaim,
+                    isDelete,
+                    timeBanned
+                );
+            }
+
+            throw new UnauthorizedAccessException("Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.");
+        }
+
+        public async Task<Withdrawal_information> UpdateWithDaral(int id, string status)
+        {
+            var FInd = await _context.withdrawal_Information.FindAsync(id);
+            if (FInd == null)
+            {
+                throw new NotImplementedException();
+            }
+            FInd.Status = status;
+            await _context.SaveChangesAsync();
+            return FInd;
+        }
     }
 }
