@@ -15,6 +15,7 @@ using System.Security.Principal;
 using System.Text.Json;
 using System.Text;
 using System.Threading.Tasks;
+using OfficeOpenXml;
 
 namespace SanGiaoDich_BrotherHood.Server.Services
 {
@@ -24,10 +25,9 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration; // Thêm IConfiguration
         private readonly HttpClient _httpClient;
-		private readonly string _apiUrl = "https://generativelanguage.googleapis.com/v1beta2/models/gemini-1.5-safe/contentModeration"; // Địa chỉ API kiểm duyệt văn bản
-		private readonly string _apiKey = "AIzaSyDbce3o_4id0lVOhGr0Xva0KJcVeR5RRc4"; // Thay API key của bạn
+        private object package;
 
-		public ProductResponse(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, HttpClient httpClient)
+        public ProductResponse(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, HttpClient httpClient)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
@@ -35,193 +35,76 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             _httpClient = httpClient;
         }
 
-		public async Task<bool> ContainsProfanityAsync(string text)
-		{
-			if (string.IsNullOrWhiteSpace(text))
-				throw new ArgumentException("Nội dung kiểm tra không được để trống.");
-
-			var requestPayload = new { text };
-			var requestContent = new StringContent(
-				JsonSerializer.Serialize(requestPayload),
-				Encoding.UTF8,
-				"application/json"
-			);
-
-			// Sử dụng HttpRequestMessage để thêm header Authorization
-			var request = new HttpRequestMessage(HttpMethod.Post, _apiUrl)
-			{
-				Content = requestContent
-			};
-
-			request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _apiKey);
-
-			try
-			{
-				var response = await _httpClient.SendAsync(request);
-
-				if (!response.IsSuccessStatusCode)
-				{
-					var errorDetails = await response.Content.ReadAsStringAsync();
-					throw new InvalidOperationException($"Lỗi từ API kiểm duyệt: {response.StatusCode} - {errorDetails}");
-				}
-
-				var result = await response.Content.ReadAsStringAsync();
-				var profanityResult = JsonSerializer.Deserialize<ProfanityCheckResult>(result);
-
-				if (profanityResult == null)
-					throw new InvalidOperationException("API trả về phản hồi không hợp lệ hoặc null.");
-
-				return profanityResult.IsProfane;
-			}
-			catch (HttpRequestException ex)
-			{
-				throw new InvalidOperationException($"Lỗi kết nối đến API kiểm duyệt: {ex.Message}");
-			}
-			catch (JsonException ex)
-			{
-				throw new InvalidOperationException($"Lỗi giải mã JSON từ phản hồi API: {ex.Message}");
-			}
-			catch (Exception ex)
-			{
-				throw new InvalidOperationException($"Lỗi không xác định: {ex.Message}");
-			}
-		}
-
-
-		public class ProfanityCheckResult
-		{
-			public bool IsProfane { get; set; }
-			public string Reason { get; set; } // Nếu API cung cấp lý do (optional)
-		}
-
-
-		// Định nghĩa model phản hồi của API kiểm duyệt
-		private class ModerationResponse
-		{
-			public bool IsSafe { get; set; }
-			public string Reason { get; set; }
-		}
-
-		public async Task<Product> AddProduct(ProductDto product)
-		{
-
-			var user = GetUserInfoFromClaims();
-
-			if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null)
-			{
-				throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
-			}
-
-			var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
-
-			if (existingUser == null)
-			{
-				throw new InvalidOperationException("Người dùng không tồn tại");
-			}
-
-			int deductionAmount;
-			if (product.ProrityLevel == "Ưu tiên")
-			{
-				deductionAmount = 50000; 
-			}
-			else if (product.ProrityLevel == "Phổ thông")
-			{
-				deductionAmount = 25000;
-			}
-			else
-			{
-				throw new InvalidOperationException("Mức độ ưu tiên không hợp lệ");
-			}
-
-			if (existingUser.PreSystem < deductionAmount)
-			{
-				throw new InvalidOperationException("Số dư không đủ để thực hiện thao tác này");
-			}
-
-			existingUser.PreSystem -= deductionAmount;
-			_context.Accounts.Update(existingUser);
-
-			var newProd = new Product
-			{
-				Name = product.Name,
-				Quantity = product.Quantity,
-				Price = product.Price,
-				Description = product.Description,
-				IDCategory = product.CategoryId,
-				Status = "Đang chờ duyệt",
-				ProrityLevel = product.ProrityLevel,
-				CreatedDate = DateTime.Now,
-				UpdatedDate = DateTime.Now,
-				StartDate = DateTime.Now,
-				UserName = user.UserName,
-				AccountAccept = "Admin",
-                PriceUp = product.PriceUp
-			};
-
-			await _context.Products.AddAsync(newProd);
-			await _context.SaveChangesAsync();
-
-			return newProd;
-		}
-
-		public async Task<IEnumerable<Product>> GetAllProductsAsync()//Lấy tất cả sản phẩm
+        public async Task<Product> AddProduct(ProductDto product)
         {
-			var currentDate = DateTime.Now.Date; // Ngày hiện tại
-			var products = await _context.Products.OrderByDescending(cre => cre.CreatedDate).ToListAsync();
-            if (products == null)
+            var user = GetUserInfoFromClaims();
+
+            if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null)
+            {
+                throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
+            }
+            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
+
+            if (existingUser == null)
+            {
+                throw new InvalidOperationException("Người dùng không tồn tại");
+            }
+
+
+            int deductionAmount;
+            if (product.ProrityLevel == "Ưu tiên")
+            {
+                deductionAmount = 50000; // Mức trừ cho sản phẩm ưu tiên
+            }
+            else if (product.ProrityLevel == "Phổ thông")
+            {
+                deductionAmount = 25000; // Mức trừ cho sản phẩm phổ thông
+            }
+            else
+            {
+                throw new InvalidOperationException("Mức độ ưu tiên không hợp lệ");
+            }
+
+            // Kiểm tra số dư
+            if (existingUser.PreSystem < deductionAmount)
+            {
+                throw new InvalidOperationException("Số dư không đủ để thực hiện thao tác này");
+            }
+
+            // Trừ số dư
+            existingUser.PreSystem -= deductionAmount;
+            _context.Accounts.Update(existingUser);
+
+            var newProd = new Product
+            {
+                Name = product.Name,
+                Quantity = product.Quantity,
+                Price = product.Price,
+                Description = product.Description,
+                IDCategory = product.CategoryId,
+                Status = "Đã duyệt",
+                ProrityLevel = product.ProrityLevel,
+                CreatedDate = DateTime.Now,
+                UpdatedDate = DateTime.Now,
+                StartDate = DateTime.Now,
+                UserName = user.UserName,
+                AccountAccept = "Admin"
+
+            };
+
+            await _context.Products.AddAsync(newProd);
+            await _context.SaveChangesAsync();
+
+            return newProd;
+        }
+        public async Task<IEnumerable<Product>> GetAllProductsAsync()//Lấy tất cả sản phẩm
+        {
+            var getP = await _context.Products.ToListAsync();
+            if (getP == null)
             {
                 throw new NotImplementedException("Không có sản phẩm hoặc không tìm thấy sản phẩm của bạn");
             }
-			foreach (var product in products)
-			{
-				// Kiểm tra nếu ngày hết hạn trùng với ngày hiện tại
-				if (product.EndDate != null && product.EndDate.Value.Date == currentDate)
-				{
-					// Lấy thông tin người bán
-					var seller = await _context.Accounts.FindAsync(product.UserName);
-
-					if (seller == null)
-					{
-						// Nếu không tìm thấy người bán, chỉnh trạng thái sản phẩm về hết hạn
-						product.Status = "Hết hạn";
-						continue;
-					}
-
-					// Xử lý gia hạn dựa trên mức độ sản phẩm
-					if (product.ProrityLevel == "Phổ thông")
-					{
-						if (seller.PreSystem >= 25000)
-						{
-							// Trừ tiền và gia hạn 7 ngày
-							seller.PreSystem -= 25000;
-							product.EndDate = currentDate.AddDays(7);
-						}
-						else
-						{
-							// Không đủ số dư, chỉnh trạng thái sản phẩm về hết hạn
-							product.Status = "Hết hạn";
-						}
-					}
-					else if (product.ProrityLevel == "Ưu tiên")
-					{
-						if (seller.PreSystem >= 50000)
-						{
-							// Trừ tiền và gia hạn 30 ngày
-							seller.PreSystem -= 50000;
-							product.EndDate = currentDate.AddDays(30);
-						}
-						else
-						{
-							// Không đủ số dư, chỉnh trạng thái sản phẩm về hết hạn
-							product.Status = "Hết hạn";
-						}
-					}
-				}
-			}
-
-			// Lưu thay đổi vào CSDL
-			await _context.SaveChangesAsync();
-			return products;
+            return getP;
         }
 
         public async Task<IEnumerable<Product>> GetProductsAccount()//Lấy tất cả danh sách sản phẩm của người đăng nhập
@@ -235,29 +118,30 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             return getP;
         }
 
-		public async Task<IEnumerable<Product>> GetProductByNameAccount(string username)
-		{
-			var products = await _context.Products
-				.Include(p => p.imageProducts) // Bao gồm thông tin hình ảnh
-				.Include(p => p.Category) // Bao gồm thông tin danh mục
-				.Where(p => p.UserName == username)
-				.ToListAsync();
+        public async Task<IEnumerable<Product>> GetProductByNameAccount(string username)
+        {
+            var products = await _context.Products
+                .Include(p => p.imageProducts) // Bao gồm thông tin hình ảnh
+                .Include(p => p.Category) // Bao gồm thông tin danh mục
+                .Where(p => p.UserName == username)
+                .ToListAsync();
 
-			return products.Select(p => new Product
-			{
-				IDProduct = p.IDProduct,
-				ProrityLevel = p.ProrityLevel,
-				Name = p.Name,
-				Price = p.Price,
-				UserName = p.UserName,
-				Status = p.Status,
-				StartDate = p.StartDate,
-				imageProducts = p.imageProducts ?? new List<ImageProduct>(), // Đảm bảo không null
-				IDCategory = p.IDCategory // Lấy thông tin danh mục
-			}).ToList();
-		}
+            return products.Select(p => new Product
+            {
+                IDProduct = p.IDProduct,
+                Name = p.Name,
+                Price = p.Price,
+                UserName = p.UserName,
+                Status = p.Status,
+                ProrityLevel = p.ProrityLevel,
+                Quantity = p.Quantity,
+                StartDate = p.StartDate,
+                imageProducts = p.imageProducts ?? new List<ImageProduct>(), // Đảm bảo không null
+                IDCategory = p.IDCategory // Lấy thông tin danh mục
+            }).ToList();
+        }
 
-		public async Task<Product> DeleteProductById(int id)//Xóa sản phẩm
+        public async Task<Product> DeleteProductById(int id)//Xóa sản phẩm
         {
             var user = GetUserInfoFromClaims();
             //if (user.UserName == null || user.Email == null || user.FullName == null || user.PhoneNumber == null || user.IDCard == null)
@@ -265,7 +149,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             //    throw new InvalidOperationException("Thông tin người dùng này là bắt buộc");
             //}
             var product = await _context.Products.FirstOrDefaultAsync(x => x.IDProduct == id);
-            if(product == null)
+            if (product == null)
             {
                 throw new NotImplementedException("Không tìm thấy sản phẩm");
             }
@@ -281,21 +165,37 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public async Task<Product> GetProductById(int id) // Xem chi tiết sản phẩm
         {
             var product = await _context.Products
-                .Include(p => p.imageProducts)
-                .FirstOrDefaultAsync(x => x.IDProduct == id);
+                .Include(p => p.imageProducts) // Bao gồm thông tin hình ảnh
+                .Include(p => p.Category) // Bao gồm thông tin danh mục
+                .FirstOrDefaultAsync(p => p.IDProduct == id);
 
             if (product == null)
             {
                 throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
             }
 
-            return product;
+            // Trả về sản phẩm với thông tin đã được bao gồm
+            return new Product
+            {
+                IDProduct = product.IDProduct,
+                Name = product.Name,
+                Price = product.Price,
+                UserName = product.UserName,
+                Status = product.Status,
+                StartDate = product.StartDate,
+                imageProducts = product.imageProducts ?? new List<ImageProduct>(), // Đảm bảo không null
+                IDCategory = product.IDCategory,
+                Description = product.Description,
+                ProrityLevel = product.ProrityLevel,
+                Quantity = product.Quantity,
+            };
         }
+
 
         public async Task<IEnumerable<Product>> GetProductByName(string name)//Tìm sản phẩm theo tên
         {
             var GetName = await _context.Products.Where(x => x.Name.Contains(name)).ToListAsync();
-            if(GetName == null)
+            if (GetName == null)
             {
                 throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
             }
@@ -310,7 +210,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             {
                 throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
             }
-            if(existingProduct.UserName != user.UserName)
+            if (existingProduct.UserName != user.UserName)
             {
                 throw new UnauthorizedAccessException("Bạn không có quyền thay đổi thông tin sản phẩm");
             }
@@ -346,7 +246,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             decimal refundAmount = 0;
             if (existingProduct.ProrityLevel == "Phổ thông")
             {
-                refundAmount = 25000 * 0.95m; 
+                refundAmount = 25000 * 0.95m;
             }
             else if (existingProduct.ProrityLevel == "Ưu tiên")
             {
@@ -358,7 +258,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             }
 
 
-     
+
             var user = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == existingProduct.UserName);
             if (user == null)
             {
@@ -371,7 +271,26 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
             return existingProduct;
         }
+        public async Task<IEnumerable<dynamic>> GetStatisticsByStatusAsync()
+        {
+            var products = await _context.Products.ToListAsync();
 
+            if (products == null || !products.Any())
+            {
+                throw new InvalidOperationException("Không có sản phẩm nào để thống kê.");
+            }
+
+            var statistics = products
+                .GroupBy(p => p.Status)
+                .Select(group => new
+                {
+                    Status = group.Key,
+                    Count = group.Count()
+                })
+                .ToList();
+
+            return statistics;
+        }
 
         //Phương thức ngooài
 
@@ -421,45 +340,150 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             throw new UnauthorizedAccessException("Vui lòng đăng nhập vào hệ thống.");
         }
 
-		public async Task<Product> UpdateProrityLevel(int id)
-		{
-			var prodFind = await _context.Products.FindAsync(id);
+        public async Task<Product> UpdateProrityLevel(int id)
+        {
+            var prodFind = await _context.Products.FindAsync(id);
 
-			if (prodFind == null)
-			{
-				throw new NotImplementedException("Không tìm thấy sản phẩm");
-			}
+            if (prodFind == null)
+            {
+                throw new NotImplementedException("Không tìm thấy sản phẩm");
+            }
 
-			if (prodFind.ProrityLevel == "Ưu tiên")
-			{
-				throw new InvalidOperationException("Sản phẩm đã ở mức ưu tiên");
-			}
+            if (prodFind.ProrityLevel == "Ưu tiên")
+            {
+                throw new InvalidOperationException("Sản phẩm đã ở mức ưu tiên");
+            }
 
-			// Trừ tiền của người dùng
-			var user = GetUserInfoFromClaims();
-			var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
+            // Trừ tiền của người dùng
+            var user = GetUserInfoFromClaims();
+            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == user.UserName);
 
-			if (existingUser == null)
-			{
-				throw new InvalidOperationException("Người dùng không tồn tại");
-			}
+            if (existingUser == null)
+            {
+                throw new InvalidOperationException("Người dùng không tồn tại");
+            }
 
-			const int upgradeCost = 50000; // Giá nâng cấp lên ưu tiên
-			if (existingUser.PreSystem < upgradeCost)
-			{
-				throw new InvalidOperationException("Số dư không đủ để nâng cấp sản phẩm");
-			}
+            const int upgradeCost = 50000; // Giá nâng cấp lên ưu tiên
+            if (existingUser.PreSystem < upgradeCost)
+            {
+                throw new InvalidOperationException("Số dư không đủ để nâng cấp sản phẩm");
+            }
 
-			existingUser.PreSystem -= upgradeCost;
-			_context.Accounts.Update(existingUser);
+            existingUser.PreSystem -= upgradeCost;
+            _context.Accounts.Update(existingUser);
 
-			// Cập nhật mức độ ưu tiên
-			prodFind.ProrityLevel = "Ưu tiên";
-			prodFind.UpdatedDate = DateTime.Now;
+            // Cập nhật mức độ ưu tiên
+            prodFind.ProrityLevel = "Ưu tiên";
+            prodFind.UpdatedDate = DateTime.Now;
 
-			await _context.SaveChangesAsync();
-			return prodFind;
-		}
-	}
-      
+            await _context.SaveChangesAsync();
+            return prodFind;
+        }
+
+        // Lấy tổng doanh thu
+        public async Task<decimal> GetTotalRevenueAsync()
+        {
+            var totalRevenue = await _context.Products
+                .Where(p => p.Status == "Đã duyệt")
+                .SumAsync(p => p.PriceUp);  // Cộng giá đã tăng (PriceUp) thay vì Price
+            return totalRevenue;
+        }
+
+        // Lấy doanh thu theo tuần
+        public async Task<decimal> GetRevenueByWeekAsync(DateTime startDate)
+        {
+            // Xác định ngày bắt đầu và ngày kết thúc của tuần
+            var startOfWeek = startDate.Date;
+            var endOfWeek = startOfWeek.AddDays(7); // Lấy ngày đầu tiên của tuần tiếp theo
+
+            // Kiểm tra nếu không có đơn hàng trong tuần
+            var revenue = await _context.Products
+                .Where(order => order.CreatedDate >= startOfWeek && order.CreatedDate < endOfWeek)
+                .SumAsync(order => (decimal?)order.PriceUp) ?? 0; // Cộng giá đã tăng (PriceUp)
+
+            return revenue;
+        }
+
+        // Lấy doanh thu theo tháng
+        public async Task<decimal> GetRevenueByMonthAsync(int month, int year)
+        {
+            // Kiểm tra dữ liệu đầu vào hợp lệ
+            if (month < 1 || month > 12 || year < 1)
+                throw new ArgumentException("Tháng hoặc năm không hợp lệ.");
+
+            // Xác định ngày bắt đầu và ngày kết thúc của tháng
+            var startOfMonth = new DateTime(year, month, 1);
+            var endOfMonth = startOfMonth.AddMonths(1); // Lấy ngày đầu tiên của tháng tiếp theo
+
+            // Kiểm tra nếu không có đơn hàng trong tháng
+            var revenue = await _context.Products
+                .Where(order => order.CreatedDate >= startOfMonth && order.CreatedDate < endOfMonth)
+                .SumAsync(order => (decimal?)order.PriceUp) ?? 0; // Cộng giá đã tăng (PriceUp)
+
+            return revenue;
+        }
+
+        // Lấy doanh thu theo ngày
+        public async Task<decimal> GetRevenueByDateAsync(DateTime date)
+        {
+            // Xác định ngày bắt đầu và ngày kết thúc của ngày
+            var startOfDay = date.Date;
+            var endOfDay = startOfDay.AddDays(1); // Lấy ngày tiếp theo để so sánh
+
+            // Kiểm tra nếu không có đơn hàng trong ngày
+            var revenue = await _context.Products
+                .Where(order => order.CreatedDate >= startOfDay && order.CreatedDate < endOfDay && order.Status.Contains("Đã duyệt"))
+                .SumAsync(order => (decimal?)order.PriceUp) ?? 0; // Cộng giá đã tăng (PriceUp)
+
+            return revenue;
+        }
+
+        public async Task<byte[]> ExportProductsToExcelAsync()
+        {
+            // Lấy danh sách sản phẩm từ database
+            var products = await GetAllProductsAsync();
+
+            // Sử dụng EPPlus để tạo file Excel
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Products");
+
+                // Tiêu đề cột
+                worksheet.Cells[1, 1].Value = "Tên sản phẩm";
+                worksheet.Cells[1, 2].Value = "Giá";
+                worksheet.Cells[1, 3].Value = "Số lượng";
+                worksheet.Cells[1, 4].Value = "Ngày tạo";
+
+                // Thêm dữ liệu sản phẩm
+                int row = 2;
+                foreach (var product in products)
+                {
+                    worksheet.Cells[row, 1].Value = product.Name;
+                    worksheet.Cells[row, 2].Value = product.Price;
+                    worksheet.Cells[row, 3].Value = product.Quantity;
+
+                    // Đảm bảo định dạng ngày tháng cho Excel
+                    worksheet.Cells[row, 4].Value = product.CreatedDate.HasValue
+                        ? product.CreatedDate.Value.ToString("yyyy-MM-dd HH:mm:ss")
+                        : string.Empty; // Hoặc giá trị mặc định nào đó
+
+                    row++;
+                }
+
+                // Tự động điều chỉnh kích thước cột
+                worksheet.Cells.AutoFitColumns();
+
+                // Lưu dữ liệu vào bộ nhớ và chuyển thành mảng byte
+                using (var stream = new MemoryStream())
+                {
+                    package.SaveAs(stream);
+                    return stream.ToArray(); // Trả về mảng byte từ MemoryStream
+                }
+            }
+        }
+
+
+
+    }
+
 }

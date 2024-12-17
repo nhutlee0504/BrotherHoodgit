@@ -39,6 +39,8 @@ namespace API.Controllers
             }
         }
 
+
+
         [HttpPost("AddRating")]
         public async Task<IActionResult> RateProduct(int billDetailId, int star, string comment, IFormFile image)
         {
@@ -64,5 +66,24 @@ namespace API.Controllers
                 return BadRequest($"Có lỗi xảy ra: {ex.Message}");
             }
         }
-    }
+
+		[HttpGet("{username}")]
+		public async Task<ActionResult> GetRatingsUser(string username)
+		{
+			try
+			{
+				var ratings = await _ratingService.GetRatingUser(username);
+				if (ratings == null)
+				{
+					return NotFound("Không tìm thấy đánh giá cho sản phẩm này.");
+				}
+
+				return Ok(ratings);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Lỗi server: {ex.Message}");
+			}
+		}
+	}
 }

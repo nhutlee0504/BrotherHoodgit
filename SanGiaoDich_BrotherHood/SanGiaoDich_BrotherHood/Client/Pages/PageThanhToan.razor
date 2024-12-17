@@ -1,6 +1,7 @@
 ﻿@page "/PageThanhToan"
 @using System.Text.Json
 @using SanGiaoDich_BrotherHood.Shared.Models
+@using SanGiaoDich_BrotherHood.Shared.Dto
 @inject HttpClient http
 @inject NavigationManager navigation
 @inject IJSRuntime jsruntime
@@ -10,11 +11,13 @@
     private decimal totalPrice = 0;
     private SellerInfo sellerInfo;
     private List<AddressDetail> addresses;
+    private InfoAccountDto account;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            await CheckLogined();
             // Lấy thông tin giỏ hàng từ localStorage
             var selectedItemsJson = await jsruntime.InvokeAsync<string>("localStorage.getItem", "selectedCartItems");
             if (!string.IsNullOrEmpty(selectedItemsJson))
@@ -36,27 +39,97 @@
                     sellerInfo = response;
                 }
             }
-
-            addresses = await http.GetFromJsonAsync<List<AddressDetail>>($"api/AddressDetail/{bill.UserName}");
+            addresses = await http.GetFromJsonAsync<List<AddressDetail>>($"api/AddressDetail/{account.UserName}");
+            if (addresses != null && addresses.Count > 0)
+            {
+                var firstAddress = addresses.First();
+                bill.DeliveryAddress = $"{firstAddress.AdditionalDetail}, {firstAddress.Wardcommune}, {firstAddress.District}, {firstAddress.ProvinceCity}";
+            }
         }
         catch (Exception ex)
         {
             await jsruntime.InvokeVoidAsync("alert", $"Đã xảy ra lỗi khi tải dữ liệu: {ex.Message}");
         }
     }
+    private async Task CheckLogined()
+    {
+        var token = await jsruntime.InvokeAsync<string>("localStorage.getItem", "token");
 
+        if (!string.IsNullOrEmpty(token))
+        {
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            await LoadAccount();
+        }
+    }
+
+    private async Task LoadAccount()
+    {
+        try
+        {
+            var response = await http.GetAsync("api/User/GetMyInfo");
+
+            if (response.IsSuccessStatusCode)
+            {
+                account = await response.Content.ReadFromJsonAsync<InfoAccountDto>();
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Có lỗi xảy ra: " + ex.Message;
+        }
+    }
+
+    private string payType = "Thanh toán bằng tiền mặt";
+    private void UpdatePaymentType(string paymentType)
+    {
+        payType = paymentType; // Cập nhật giá trị của payType
+        bill.PaymentType = payType; // Đồng thời cập nhật vào bill
+    }
     private async Task PlaceOrder()
     {
-        if (selectedCartItems == null || !selectedCartItems.Any())
+        // Validate required fields
+        if (string.IsNullOrEmpty(bill.FullName))
         {
-            await jsruntime.InvokeVoidAsync("alert", "Bạn chưa chọn sản phẩm nào.");
+            errorMessage = "Họ và tên không được để trống.";
+            await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
+            return;
+        }
+        if (string.IsNullOrEmpty(bill.Email))
+        {
+            errorMessage = "Email không được để trống.";
+            await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
+            return;
+        }
+        if (string.IsNullOrEmpty(bill.DeliveryAddress))
+        {
+            errorMessage = "Địa chỉ nhận hàng không được để trống.";
+            await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
+            return;
+        }
+        if (string.IsNullOrEmpty(bill.PhoneNumber))
+        {
+            errorMessage = "Số điện thoại không được để trống.";
+            await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
             return;
         }
 
+        // Check if selected cart items are empty
+        if (selectedCartItems == null || !selectedCartItems.Any())
+        {
+            errorMessage = "Bạn chưa chọn sản phẩm nào.";
+            await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
+            return;
+        }
+
+        // Proceed with placing the order if all fields are valid
         bill.Total = totalPrice;
         bill.OrderDate = DateTime.Now;
         bill.Status = "Chờ xác nhận";
-        bill.PaymentType = "Thanh toán bằng tiền mặt";
+        bill.PaymentType = payType;
 
         try
         {
@@ -81,44 +154,51 @@
                     if (!billDetailResponse.IsSuccessStatusCode)
                     {
                         var error = await billDetailResponse.Content.ReadAsStringAsync();
-                        await jsruntime.InvokeVoidAsync("alert", $"Đã có lỗi khi thêm chi tiết đơn hàng: {error}");
+                        errorMessage = $"Đã có lỗi khi thêm chi tiết đơn hàng: {error}";
+                        await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
+                        return;
                     }
                 }
 
-                // Xóa từng sản phẩm khỏi giỏ hàng sau khi thanh toán thành công
                 foreach (var item in selectedCartItems)
                 {
                     var deleteResponse = await http.DeleteAsync($"api/CartItem/delete/{item.CartItemID}");
                     if (!deleteResponse.IsSuccessStatusCode)
                     {
                         var error = await deleteResponse.Content.ReadAsStringAsync();
-                        await jsruntime.InvokeVoidAsync("alert", $"Không thể xóa sản phẩm {item.ProductName} khỏi giỏ hàng: {error}");
+                        errorMessage = $"Không thể xóa sản phẩm {item.ProductName} khỏi giỏ hàng: {error}";
+                        await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
+                        return;
                     }
                 }
 
-                // Cập nhật giao diện
+                // Clear cart and reset total price
                 selectedCartItems.Clear();
                 totalPrice = 0;
-                await jsruntime.InvokeVoidAsync("alert", "Đặt hàng thành công");
-                navigation.NavigateTo("/");
+
+                // Show success modal
+                await jsruntime.InvokeVoidAsync("ShowModal", "orderModal");
+                navigation.NavigateTo("/", forceLoad: true);
             }
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                await jsruntime.InvokeVoidAsync("alert", $"Đặt hàng thất bại: {error}");
+                errorMessage = $"Đặt hàng thất bại: {error}";
+                await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
             }
         }
         catch (Exception ex)
         {
-            await jsruntime.InvokeVoidAsync("alert", $"Có lỗi xảy ra: {ex.Message}");
+            errorMessage = $"Có lỗi xảy ra: {ex.Message}";
+            await jsruntime.InvokeVoidAsync("ShowModal", "errorModal");
         }
     }
-
     private async void selectAddress(int id)
     {
         var address = addresses.Where(x => x.IDAddress == id).FirstOrDefault();
         if (address != null)
         {
+            bill.DeliveryAddress = null;
             bill.DeliveryAddress = $"{address.AdditionalDetail}, {address.Wardcommune}, {address.District}, {address.ProvinceCity}";
             await jsruntime.InvokeVoidAsync("hideModal", "modalAddress");
         }
@@ -166,8 +246,10 @@
         public string FullName { get; set; }
         public string PhoneNumber { get; set; }
         public string Email { get; set; }
-        public string AvatarUrl { get; set; }
+        public string ImageAccount { get; set; }
     }
+
+    private string errorMessage;
 }
 <style>
 
@@ -234,7 +316,7 @@
                                         <div class="mb-3 col-md-10 offset-1">
                                             <table class="table table-striped table-bordered">
                                                 <tbody>
-                                                    @if (addresses != null)
+                                                    @if (addresses != null && addresses.Count > 0)
                                                     {
                                                         foreach (var x in addresses)
                                                         {
@@ -324,7 +406,7 @@
                     </div>
                     <div class="seller-info position-relative p-2 bg-white border rounded shadow-sm d-flex align-items-center">
                         <div class="position-relative">
-                            <img src="@sellerInfo?.AvatarUrl" alt="Seller Image" class="rounded-circle me-4" style="width: 45px; height: 45px; object-fit: cover;">
+                            <img src="@sellerInfo?.ImageAccount" alt="Seller Image" class="rounded-circle me-4" style="width: 45px; height: 45px; object-fit: cover;">
 
                         </div>
                         <div>
@@ -349,7 +431,7 @@
                             <div class="payment-method bg-light p-3 rounded shadow-sm">
                                 <div class="payment-options">
                                     <label class="d-flex align-items-center mb-2">
-                                        <input type="radio" name="payment" class="form-check-input" checked>
+                                        <input type="radio" name="payment" class="form-check-input" @onchange="@(() => UpdatePaymentType("Thanh toán bằng tiền mặt"))" checked>
                                         <span class="ml-2">Thanh toán bằng tiền mặt</span>
                                     </label>
                                     <p class="text-muted ml-4" style="font-size: 0.9em;">
@@ -357,15 +439,7 @@
                                     </p>
 
                                     <label class="d-flex align-items-center mb-2">
-                                        <input type="radio" name="payment" class="form-check-input">
-                                        <span class="ml-2">Thanh toán qua chuyển khoản</span>
-                                    </label>
-                                    <p class="text-muted ml-4" style="font-size: 0.9em;">
-                                        Bạn có thể chuyển khoản qua ngân hàng theo thông tin tài khoản mà chúng tôi cung cấp.
-                                    </p>
-
-                                    <label class="d-flex align-items-center mb-2">
-                                        <input type="radio" name="payment" class="form-check-input">
+                                        <input type="radio" name="payment" class="form-check-input" @onchange="@(() => UpdatePaymentType("Thanh toán qua ví"))">
                                         <span class="ml-2">Thanh toán qua ví VnPay</span>
                                     </label>
                                     <p class="text-muted ml-4" style="font-size: 0.9em;">
@@ -409,12 +483,57 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderModalLabel">Thông báo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Đơn hàng của bạn đã được đặt thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất có thể.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="errorModalLabel">Thông báo lỗi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>@errorMessage</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 <script>
     function hideModal(modalId) {
         const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
         if (modal) {
             modal.hide();
+        }
+    }
+</script>
+<script>
+    function ShowModal(modalId) {
+        const modalElement = document.getElementById(modalId);
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        } else {
+            console.error("Modal element not found:", modalId);
         }
     }
 </script>

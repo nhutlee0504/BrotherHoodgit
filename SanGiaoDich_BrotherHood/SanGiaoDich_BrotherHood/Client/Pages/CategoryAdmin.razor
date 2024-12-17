@@ -25,16 +25,11 @@
     }
     else if (isSearchEmpty)
     {
-        <div class="alert alert-warning" role="alert">
+        <div class="alert alert-danger" role="alert">
             Không tìm thấy kết quả phù hợp với từ khóa: <strong>@searchTerm</strong>.
         </div>
     }
-    else if (categories == null || !categories.Any())
-    {
-        <div class="alert alert-info" role="alert">
-            Không có dữ liệu để hiển thị.
-        </div>
-    }
+
     else
     {
         <table class="table table-hover table-striped">
@@ -52,11 +47,12 @@
                     <tr>
                         <td>@category.IDCategory</td>
                         <td>@category.NameCate</td>
-                        <td class="text-center">@category.CreatedDate:dd/MM/yyyy</td>
+                        <td class="text-center">@category.CreatedDate.ToString("dd/MM/yyyy | HH:mm:ss")</td>
                         <td class="text-center">
-                            <button class="btn btn-sm btn-info" @onclick="() => EditCategory(category)">
+                            <button class="btn btn-sm btn-info" @onclick="() => EditCategory(category)" data-bs-toggle="modal" data-bs-target="#createCategoryModal">
                                 <i class="bi bi-pencil-square"></i> Sửa
                             </button>
+
                             <button class="btn btn-sm btn-danger" @onclick="() => DeleteCategory(category.IDCategory)">
                                 <i class="bi bi-trash"></i> Xóa
                             </button>
@@ -94,6 +90,7 @@
             </div>
         </div>
     </div>
+
 </div>
 
 @code {
@@ -133,15 +130,24 @@
             {
                 if (int.TryParse(searchTerm, out int categoryId))
                 {
-                    var result = await httpClient.GetFromJsonAsync<Category>($"api/Category/GetCategoryByID/{categoryId}");
-                    if (result != null)
+                    var response = await httpClient.GetAsync($"api/Category/GetCategoryByID/{categoryId}");
+                    if (response.IsSuccessStatusCode)
                     {
-                        categories = new List<Category> { result };
+                        var result = await response.Content.ReadFromJsonAsync<Category>();
+                        if (result != null)
+                        {
+                            categories = new List<Category> { result };
+                        }
                     }
-                    else
+                    else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
                         categories.Clear();
                         isSearchEmpty = true;
+                        errorMessage = $"Không tìm thấy danh mục với ID: {categoryId}";
+                    }
+                    else
+                    {
+                        throw new Exception($"Lỗi không xác định: {response.StatusCode}");
                     }
                 }
                 else
@@ -160,13 +166,14 @@
         }
         catch (HttpRequestException ex)
         {
-            errorMessage = $"Không tìm thấy loại sản phẩm: {ex.Message}";
+            errorMessage = $"Lỗi HTTP: {ex.Message}";
         }
         catch (Exception ex)
         {
             errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
         }
     }
+
 
     private void EditCategory(Category category)
     {
@@ -180,13 +187,14 @@
         modalTitle = "Chỉnh sửa danh mục";
     }
 
+
     private async Task HandleValidSubmit()
     {
         errorMessage = null;
 
         try
         {
-            if (editingCategory.IDCategory == 0)
+            if (editingCategory.IDCategory == 0) // Thêm mới
             {
                 var response = await httpClient.PostAsJsonAsync("api/Category/AddCategory", editingCategory);
                 if (response.IsSuccessStatusCode)
@@ -194,7 +202,7 @@
                     categories.Add(await response.Content.ReadFromJsonAsync<Category>());
                 }
             }
-            else
+            else // Chỉnh sửa
             {
                 var response = await httpClient.PutAsJsonAsync($"api/Category/UpdateCategory/{editingCategory.IDCategory}", editingCategory);
                 if (response.IsSuccessStatusCode)
@@ -216,6 +224,7 @@
             errorMessage = $"Không thể lưu thay đổi: {ex.Message}";
         }
     }
+
 
     private async Task DeleteCategory(int categoryId)
     {

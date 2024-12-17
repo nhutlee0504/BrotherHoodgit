@@ -131,7 +131,30 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 			}
 		}
 
-		[HttpPut("UpdateProfileImage")]
+        [HttpPut]
+        [Route("UpdateAccountInfo2")]
+        public async Task<IActionResult> UpdateAccountInfo2(string phone, string description)
+        {
+            try
+            {
+                var updatedUser = await _user.UpdateAccountInfo2(phone, description);
+                return Ok(updatedUser);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        [HttpPut("UpdateProfileImage")]
 		public async Task<IActionResult> UpdateProfileImage(IFormFile imageFile)
 		{
 			try
@@ -361,6 +384,12 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+        [HttpGet("UserStatistics")]
+        public async Task<IActionResult> GetUserStatistics()
+        {
+            var statistics = await _user.GetUserStatisticsAsync();
+            return Ok(statistics);
         }
 
     }

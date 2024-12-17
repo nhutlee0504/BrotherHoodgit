@@ -104,8 +104,5 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             }
         }
 
-
-
-
     }
 }

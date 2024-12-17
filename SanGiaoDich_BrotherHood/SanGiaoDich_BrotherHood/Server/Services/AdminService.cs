@@ -358,6 +358,45 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             }
             throw new NotImplementedException("Không tìm thấy tài khoản");
         }
+        public async Task<Account> RegisterAccount(RegisterDto registerDto)
+        {
+            // Kiểm tra mật khẩu hợp lệ
+            if (!IsValidPassword(registerDto.Password))
+            {
+                throw new ArgumentException("Mật khẩu phải có ít nhất 6 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.");
+            }
+
+            // Kiểm tra tên người dùng đã tồn tại chưa
+            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == registerDto.UserName);
+            if (existingUser != null)
+            {
+                throw new ArgumentException("Tên người dùng đã tồn tại.");
+            }
+
+            // Kiểm tra mật khẩu và xác nhận mật khẩu có khớp không
+            if (registerDto.Password != registerDto.ConformPassword)
+            {
+                throw new ArgumentException("Mật khẩu và xác nhận mật khẩu không khớp.");
+            }
+
+            // Tạo tài khoản người dùng mới
+            var newAccount = new Account
+            {
+                UserName = registerDto.UserName,
+                Password = HashPassword(registerDto.Password), // Mã hóa mật khẩu
+                IsDelete = false,
+                CreatedTime = DateTime.Now,
+                Role = registerDto.Role ?? "Nhân viên", // Phân quyền
+                PreSystem = 10000, // Điểm ban đầu cho người dùng
+                IsActived = true // Tài khoản mặc định được kích hoạt
+            };
+
+            // Thêm tài khoản vào cơ sở dữ liệu
+            await _context.Accounts.AddAsync(newAccount);
+            await _context.SaveChangesAsync();
+
+            return newAccount;
+        }
 
     }
 }

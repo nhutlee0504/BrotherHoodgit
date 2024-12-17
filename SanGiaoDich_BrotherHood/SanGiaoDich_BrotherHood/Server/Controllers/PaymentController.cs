@@ -15,6 +15,8 @@ using Microsoft.Extensions.Configuration;
 using SanGiaoDich_BrotherHood.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using static SanGiaoDich_BrotherHood.Client.Pages.Dashboard;
+using Net.payOS.Types;
+using Net.payOS;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -136,6 +138,40 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             public bool Success { get; set; }
             public DateTime CreatedDate { get; set; }
             public string PaymentMethod { get; set; }
+        }
+        [HttpPost("create-receive-qr")]
+        public async Task<IActionResult> CreateReceiveQr()
+        {
+            var clientId = "72f89b23-fde5-4396-8c23-328ddbe5e90a";
+            var apiKey = "1bc41f02-384e-4689-a41b-49c76e757a07";
+            var checksumKey = "fe4fd7424bc7faf90386006c26a9ff43ff9d1afe01d8da214544e1416c4cd61e";
+
+            var payOS = new PayOS(clientId, apiKey, checksumKey);
+
+            var domain = "https://localhost:5001"; // Đường dẫn ứng dụng của bạn
+            var items = new List<Net.payOS.Types.ItemData>
+    {
+        new Net.payOS.Types.ItemData("Nhận tiền từ ví", 1, 0) // Không cần sản phẩm cụ thể
+    };
+
+            var paymentLinkRequest = new PaymentData(
+                orderCode: int.Parse(DateTimeOffset.Now.ToString("ffffff")),
+                amount: 50000, // Số tiền muốn nhận
+                description: "Nhận tiền thông qua QR",
+                items: items,
+                returnUrl: domain + "/success",
+                cancelUrl: domain + "/cancel"
+            );
+
+            try
+            {
+                var response = await payOS.createPaymentLink(paymentLinkRequest);
+                return Ok(new { QrUrl = response.checkoutUrl });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = $"Lỗi: {ex.Message}", details = ex.StackTrace });
+            }
         }
 
     }

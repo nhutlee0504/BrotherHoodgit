@@ -13,7 +13,7 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         [Key]
         public int IDBill { get; set; }
 
-        [Column(TypeName = "varchar(20)")]
+        [Column(TypeName = "nvarchar(20)")]
         public string FullName { get; set; }
 
         [Column(TypeName = "varchar(12)")]

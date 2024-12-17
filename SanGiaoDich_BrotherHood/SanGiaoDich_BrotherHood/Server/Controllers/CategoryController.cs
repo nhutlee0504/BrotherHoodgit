@@ -79,11 +79,23 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         }
 
 
-        [HttpPut("IDCate")]
+        [HttpPut("UpdateCategory/{IDCate}")]
         public async Task<ActionResult> UpdateCategory(int IDCate, Category cate)
         {
-            return Ok(await category.UpdateCategory(IDCate,cate));
+            var existingCategory = await category.GeCategory(IDCate);
+            if (existingCategory == null)
+            {
+                return NotFound($"Không tìm thấy danh mục với ID: {IDCate}");
+            }
+
+            existingCategory.NameCate = cate.NameCate;
+            existingCategory.UpdatedDate = DateTime.Now;
+            existingCategory.UserUpdated = "Admin"; // Thay đổi theo user thực tế
+
+            var updatedCategory = await category.UpdateCategory(IDCate, existingCategory);
+            return Ok(updatedCategory);
         }
+
 
         [HttpDelete("IDCate")]
         public async Task<ActionResult> DeleteCategory(int IDCate)

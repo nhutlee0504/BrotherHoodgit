@@ -247,7 +247,7 @@
     private int currentPage = 1;
     private int pageSize = 10; // Số sản phẩm trên mỗi trang
     private int totalPages => (int)Math.Ceiling((double)(products.Count) / pageSize);
-    
+
     private DateTime? startDate = null;
     private DateTime? endDate = null;
 
@@ -368,7 +368,7 @@
 
     private void ViewProduct(int id)
     {
-        
+
         Console.WriteLine($"Xem sản phẩm ID: {id}");
     }
     private void EditProduct(int id)

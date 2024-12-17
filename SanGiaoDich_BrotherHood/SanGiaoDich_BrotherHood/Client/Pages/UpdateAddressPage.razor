@@ -107,7 +107,7 @@
     {
         try
         {
-            var response1 = await http.GetAsync($"api/AddressDetail/GetAddressDetailsByUserName/{account.UserName}");
+            var response1 = await http.GetAsync($"api/AddressDetail/{account.UserName}");
             if (response1.IsSuccessStatusCode)
             {
                 listAddressByUser = await response1.Content.ReadFromJsonAsync<List<AddressDetail>>();

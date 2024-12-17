@@ -19,5 +19,6 @@ namespace API.Services
         public Task<Product> AcceptProduct(int idproduct);
         public Task<Product> CancleProduct(int idproduct);
         public Task<Product> DeleteProductById(int id);
+        Task<IEnumerable<dynamic>> GetStatisticsByStatusAsync();
     }
 }

@@ -14,13 +14,10 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int PaymentReqID { get; set; }
-
-      
         public string PaymentType { get; set; }
         public double Amount { get; set; }
         public string OrderDescription { get; set; }
         public DateTime CreatedDate { get; set; }
-        
         public string TxnRef { get; set; }
         [ForeignKey("Account")]
         public string UserName { get; set; }

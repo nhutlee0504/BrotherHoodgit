@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace SanGiaoDich_BrotherHood.Shared.Models
 {
@@ -20,9 +21,11 @@ namespace SanGiaoDich_BrotherHood.Shared.Models
         public string Comment { get; set; }
 
         [Column(TypeName = "varchar(150)")]
-        public string Image {  get; set; }  
-
+        public string Image {  get; set; }
+        [JsonIgnore]  
+        
         public Account Account { get; set; }
+        [JsonIgnore]
         public BillDetail BillDetail { get; set; }
     }
 }

@@ -17,5 +17,7 @@ namespace API.Services
         Task<Account> UpdateAccountInfo(string email);
         Task<Account> UpdateProfileImage(IFormFile imageFile);
         public Task<Account> ChangePassword(string username, InfoAccountDto info);
+        Task<IEnumerable<Account>> GetAccounts();
+
     }
 }

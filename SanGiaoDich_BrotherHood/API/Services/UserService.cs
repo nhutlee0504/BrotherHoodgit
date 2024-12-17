@@ -23,6 +23,9 @@ namespace API.Services
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
+
+        public IEnumerable<object> Accounts => throw new NotImplementedException();
+
         public UserService(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
         {
             _context = context;
@@ -320,5 +323,9 @@ namespace API.Services
             throw new UnauthorizedAccessException("Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.");
         }
 
+        public Task<IEnumerable<Account>> GetAccounts()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

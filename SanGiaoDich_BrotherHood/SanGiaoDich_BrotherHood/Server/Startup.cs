@@ -17,6 +17,7 @@ using Microsoft.OpenApi.Models;
 using SanGiaoDich_BrotherHood.Server.Configurations;
 using SanGiaoDich_BrotherHood.Server.Data;
 using SanGiaoDich_BrotherHood.Server.Services;
+using System;
 using System.Text;
 
 namespace SanGiaoDich_BrotherHood.Server
@@ -34,10 +35,16 @@ namespace SanGiaoDich_BrotherHood.Server
         {
             services.AddControllers();
             services.AddRazorPages();
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+			services.AddDbContext<ApplicationDbContext>(options =>
+	  options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"),
+		  sqlOptions => sqlOptions.EnableRetryOnFailure(
+			  maxRetryCount: 3, // Số lần thử lại tối đa
+			  maxRetryDelay: TimeSpan.FromSeconds(5), // Thời gian tối đa giữa các lần thử lại
+			  errorNumbersToAdd: null) // Các mã lỗi SQL có thể thử lại
+	  )
+  );
 
-            services.AddHttpClient();
+			services.AddHttpClient();
 
             // Swagger configuration
             services.AddSwaggerGen(c =>

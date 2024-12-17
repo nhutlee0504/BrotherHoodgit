@@ -138,7 +138,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .HasColumnType("varchar(150)");
 
                     b.Property<string>("FullName")
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");

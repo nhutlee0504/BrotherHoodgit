@@ -1,6 +1,7 @@
 ﻿using API.Data;
 using API.Dto;
 using API.Models;
+using FirebaseAdmin.Auth.Hash;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -373,6 +374,57 @@ namespace API.Services
 
             throw new UnauthorizedAccessException("Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.");
         }
+
+        public async Task<Account> RegisterAccount(RegisterDto registerDto)
+        {
+            // Kiểm tra mật khẩu hợp lệ
+            if (!IsValidPassword(registerDto.Password))
+            {
+                throw new ArgumentException("Mật khẩu phải có ít nhất 6 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.");
+            }
+
+            // Kiểm tra xem tên người dùng đã tồn tại chưa
+            var existingUser = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == registerDto.UserName);
+            if (existingUser != null)
+            {
+                throw new ArgumentException("Tên người dùng đã tồn tại.");
+            }
+
+            // Kiểm tra mật khẩu và xác nhận mật khẩu có khớp không
+            if (registerDto.Password != registerDto.ConformPassword)
+            {
+                throw new ArgumentException("Mật khẩu và xác nhận mật khẩu không khớp.");
+            }
+
+            // Gán quyền mặc định là "Nhân viên" nếu không có quyền trong request
+            var role = string.IsNullOrEmpty(registerDto.Role) ? "Nhân viên" : registerDto.Role;
+
+            // Kiểm tra vai trò hợp lệ (Chỉ cho phép 'Admin' hoặc 'Nhân viên')
+            var validRoles = new List<string> { "Admin", "Nhân viên" };
+            if (!validRoles.Contains(role))
+            {
+                throw new ArgumentException("Vai trò không hợp lệ. Vai trò hợp lệ là 'Admin' hoặc 'Nhân viên'.");
+            }
+
+            // Tạo tài khoản người dùng mới
+            var newAccount = new Account
+            {
+                UserName = registerDto.UserName,
+                Password = HashPassword(registerDto.Password), // Mã hóa mật khẩu
+                IsDelete = false,
+                CreatedTime = DateTime.Now,
+                Role = role, // Phân quyền theo lựa chọn của người dùng hoặc mặc định "Nhân viên"
+                PreSystem = 10000,  // Điểm hoặc thông số ban đầu cho người dùng
+                IsActived = true   // Tài khoản mặc định được kích hoạt
+            };
+
+            // Thêm tài khoản mới vào cơ sở dữ liệu
+            await _context.Accounts.AddAsync(newAccount);
+            await _context.SaveChangesAsync();
+
+            return newAccount;
+        }
+
 
     }
 }

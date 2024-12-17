@@ -7,6 +7,8 @@ using System;
 
 using System.Collections.Generic;
 using SanGiaoDich_BrotherHood.Server.Services;
+using System.Linq;
+using SanGiaoDich_BrotherHood.Server.Dto;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -41,7 +43,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         }
 
         [HttpPost("AddRating")]
-        public async Task<IActionResult> RateProduct(int billDetailId, int star, string comment, IFormFile image)
+        public async Task<IActionResult> RateProduct(int billDetailId, int star, string comment, string image)
         {
             try
             {
@@ -65,5 +67,52 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 return BadRequest($"Có lỗi xảy ra: {ex.Message}");
             }
         }
+
+		[HttpGet("GetRatingsUser{username}")]
+		public async Task<ActionResult> GetRatingsUser(string username)
+		{
+			try
+			{
+				var ratings = await _ratingService.GetRatingUser(username);
+				if (ratings == null || !ratings.Any())
+				{
+					return NotFound("Không tìm thấy đánh giá cho sản phẩm này.");
+				}
+
+				// Chuyển đổi sang RatingDto trước khi trả về client
+				var ratingDtos = ratings.Select(r => new RatingDto
+				{
+					Star = r.Star,
+					Comment = r.Comment,
+					Image = r.Image,
+					UserName = r.UserName,
+                    FullName = r.FullName,
+                    ImageAccount = r.ImageAccount,
+                    ProductImage = r.ProductImage,
+                    ProductName = r.ProductName,
+				}).ToList();
+
+				return Ok(ratingDtos);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Lỗi server: {ex.Message}");
+			}
+		}
+
+        [HttpGet("IsProductRated")]
+        public async Task<IActionResult> IsProductRated(int billDetailId)
+        {
+            try
+            {
+                var isRated = await _ratingService.IsProductRated(billDetailId);
+                return Ok(isRated);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
     }
 }

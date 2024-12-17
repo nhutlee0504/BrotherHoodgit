@@ -27,7 +27,7 @@ namespace API.Services
                 using (IDbConnection db = new SqlConnection(connectionString))
                 {
                     var parameters = new DynamicParameters();
-                    parameters.Add("@UserName", conversation.UserName); 
+                    parameters.Add("@UserName", conversation.Username); 
                     var result = await db.QuerySingleOrDefaultAsync<Conversation>(
                         "AddConversation", 
                         parameters,
