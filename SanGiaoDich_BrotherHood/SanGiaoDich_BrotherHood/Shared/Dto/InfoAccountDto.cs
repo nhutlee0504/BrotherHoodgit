@@ -15,5 +15,6 @@ namespace SanGiaoDich_BrotherHood.Shared.Dto
 		public DateTime? Birthday { get; set; }
 		public string Introduce { get; set; }
 		public string Password { get; set; }
+		public string Dob {  get; set; }
 	}
 }

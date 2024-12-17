@@ -40,7 +40,7 @@
                 }
             }
             addresses = await http.GetFromJsonAsync<List<AddressDetail>>($"api/AddressDetail/{account.UserName}");
-            if(addresses != null && addresses.Count > 0)
+            if (addresses != null && addresses.Count > 0)
             {
                 var firstAddress = addresses.First();
                 bill.DeliveryAddress = $"{firstAddress.AdditionalDetail}, {firstAddress.Wardcommune}, {firstAddress.District}, {firstAddress.ProvinceCity}";

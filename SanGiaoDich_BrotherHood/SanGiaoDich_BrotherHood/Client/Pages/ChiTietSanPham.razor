@@ -114,18 +114,34 @@
                 <!-- Ảnh lớn -->
                 <div class="row mb-4">
                     <div class="col-md-12">
-                        <img src="@images.First().Image" class="img-fluid" alt="Ảnh chính" style="border-radius: 15px; max-height: 400px; width: 100%; object-fit: cover;">
+                        <img src="@images.First().Image" class="img-fluid" alt="Ảnh chính" style="border-radius: 15px; max-height: 400px; width: 100%; object-fit: cover;" data-bs-toggle="modal" data-bs-target="#imageModal" onclick="openModal('@images.First().Image')">
                     </div>
                 </div>
 
                 <!-- Ảnh nhỏ -->
                 <div class="row">
-                    @foreach (var item in images.Skip(1))
-                    {
-                        <div class="col-md-6 mb-2 d-flex">
-                            <img src="@item.Image" class="img-fluid flex-fill" alt="Ảnh phụ" style="border-radius: 15px; height: 150px; object-fit: cover;">
+                    <div class="col-md-12">
+                        <div class="d-flex flex-row overflow-hidden" style="gap: 10px; padding: 10px 0;">
+                            @if (images.Count() > 4)
+                            {
+                                <button class="btn btn-outline-secondary" type="button" @onclick="() => ScrollImages(-1)" style="height: 150px; align-self: center;">&lt;</button>
+                            }
+
+                            <div id="smallImageContainer" class="d-flex flex-row" style="width: calc(100% - 80px); overflow: hidden;">
+                                @foreach (var image in GetVisibleImages())
+                                {
+                                    <div class="mb-2 d-flex">
+                                        <img src="@image.Image" class="img-fluid" alt="Ảnh phụ" style="border-radius: 15px; height: 150px; object-fit: cover; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#imageModal" onclick="openModal('@image.Image')">
+                                    </div>
+                                }
+                            </div>
+
+                            @if (images.Count() > 4)
+                            {
+                                <button class="btn btn-outline-secondary" type="button" @onclick="() => ScrollImages(1)" style="height: 150px; align-self: center;">&gt;</button>
+                            }
                         </div>
-                    }
+                    </div>
                 </div>
             }
             else
@@ -134,6 +150,14 @@
                     Không có hình ảnh cho sản phẩm này.
                 </div>
             }
+
+            <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-body p-0 d-flex justify-content-center align-items-center">
+                        <img id="modalImage" src="" class="img-fluid" alt="Ảnh phóng to" style="border-radius: 15px; max-width: 90vw; max-height: 90vh; object-fit: contain; display: block; margin: auto;">
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="col-md-6 shadow rounded">
@@ -141,7 +165,7 @@
             <div class="profile-card mb-3">
                 <div class="profile-avatar">
                     <a href="ThongTinNguoiDung/@name">
-                        <img src="@user?.ImageAccount" alt="Người bán" class="img-fluid rounded-circle" style="max-width: 100px;" />
+                        <img src="@user?.ImageAccount" alt="Người bán" class="rounded-circle me-3" style="width: 100px; height: 100px; object-fit: cover;" />
                     </a>
 
                 </div>
@@ -155,12 +179,18 @@
                                     <strong>@user.FullName</strong>
                                 </p>
                             </div>
+                            <div class="col-3 col-md-4 d-flex justify-content-end">
+                                <span class="badge text-bg-success d-flex align-items-center" style="background-color: green; padding: 5px 10px;">
+                                    <img src="/AnhAvatar/king.png" style="width:18px; margin-right: 5px;" />
+                                    Thành viên
+                                </span>
+                            </div>
                         </div>
                     }
 
-               @*      <p>
+                    <p>
                         <i class="bi bi-bag"></i> Các sản phẩm đã bán: <strong>100</strong>
-                    </p> *@
+                    </p>
                     <p class="text-success mb-0">
                         Đang hoạt động
                     </p>
@@ -177,20 +207,38 @@
             <p><strong>Loại sản phẩm:</strong> @categoryName</p>
             <p><i class="bi bi-clock"></i> Đăng vào lúc: @(product?.StartDate?.ToString("dd/MM/yyyy") ?? "Chưa xác định")</p>
 
-                <button class="btn btn-danger rounded-pill mb-2 w-100" @onclick="GoToMessagingPage">
-                    <i class="bi bi-person-circle"></i> Liên hệ người bán
-                </button>
-                <button class="btn btn-success rounded-pill mb-2 w-100"><i class="bi bi-telephone-forward"></i> Liên hệ qua @user?.PhoneNumber </button>
+            @if (user != null)
+            {
+                @if(accountInfo != null)
+                {
+                       @if(accountInfo.UserName == user.UserName)
+                {
+                }
+                else
+                {
+                    <button class="btn btn-danger rounded-pill mb-2 w-100" @onclick="GoToMessagingPage">
+                        <i class="bi bi-person-circle"></i> Liên hệ người bán
+                    </button>
+                    <button class="btn btn-success rounded-pill mb-2 w-100"><i class="bi bi-telephone-forward"></i> Liên hệ qua @user?.PhoneNumber </button>
+                }
+                }
+                else
+                {
+                    
+                }
+             
+            }
         </div>
     </div>
 
     <div class="product-description card mt-4">
         <div class="card-header bg-green text-white">
-            <h4 class="card-title">Mô tả sản phẩm</h4>
+            <h4 class="card-title" style="color:white">Mô tả sản phẩm</h4>
         </div>
         <div class="card-body">
-            <p>@product?.Description</p>
+            <p>@((MarkupString)product?.Description)</p>
         </div>
+
     </div>
 
     <div class="mt-4">
@@ -226,7 +274,11 @@
         </div>
     </div>
 </div>
-
+<script>
+    function openModal(imageUrl) {
+        document.getElementById('modalImage').src = imageUrl;
+    }
+</script>
 @code {
     [Inject] NavigationManager NavigationManager { get; set; }
 
@@ -234,5 +286,18 @@
     {
       
         NavigationManager.NavigateTo($"/ChiTietSanPham/{productId}?forceReload=true", true);
+    }
+
+    private int currentStartIndex = 1;
+    private const int maxVisible = 4;
+
+    private IEnumerable<ImageProduct> GetVisibleImages()
+    {
+        return images.Skip(currentStartIndex).Take(maxVisible);
+    }
+
+    private void ScrollImages(int direction)
+    {
+        currentStartIndex = Math.Clamp(currentStartIndex + direction, 0, images.Count - maxVisible);
     }
 }

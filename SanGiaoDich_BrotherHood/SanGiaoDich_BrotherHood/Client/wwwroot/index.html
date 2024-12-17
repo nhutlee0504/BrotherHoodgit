@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Hệ Thống Giao dịch sản phẩm Second-Hand BrotherHood</title>
-    <link href="/AnhGiaoDien/Logo.jpg" rel="icon"/>
+    <link href="/AnhGiaoDien/Logo.jpg" rel="icon" />
     <base href="/" />
     <!-- Update to Bootstrap 5 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
@@ -14,10 +14,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="css/app.css" rel="stylesheet" />
     <link href="css/Loading.css" rel="stylesheet" />
-    
-
     <link href="SanGiaoDich_BrotherHood.Client.styles.css" rel="stylesheet" />
-
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 </head>
 
 <body>
@@ -41,6 +40,32 @@
 
     <!-- Optional: Bootstrap 5 Bundle (for components like modals etc.) -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script> -->
+    <script>
+        // Khởi tạo Quill editor
+        function initializeQuillEditor() {
+            var quill = new Quill('#editor', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        ['bold', 'italic', 'underline'],
+                        ['link'],
+                        [{ 'align': [] }],
+                        ['clean']
+                    ]
+                }
+            });
+
+            // Gán Quill instance vào window để có thể sử dụng ở Blazor
+            window.quill = quill;
+        }
+
+        // Hàm lấy nội dung từ Quill
+        function getQuillContent() {
+            return window.quill.root.innerHTML;
+        }
+    </script>
     <script src="js/site.js"></script>
 </body>
 

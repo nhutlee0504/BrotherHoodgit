@@ -131,7 +131,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
         public async Task<IEnumerable<Bill>> GetBillsByUserName(string userName)
         {
-            return await _context.Bills.Where(x => x.UserName.Contains(userName)).ToListAsync();
+            return await _context.Bills.Where(x => x.FullName.Contains(userName)).ToListAsync();
         }
 
         public async Task<Bill> UpdateBill(int IDBill, Bill bill)

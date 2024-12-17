@@ -22,15 +22,14 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             this.address = address;
         }
 
-        [HttpGet("GetAddresses")]
+        [HttpGet]
         public async Task<ActionResult> GetAddressDetails()
         {
             return Ok(await address.GetAddressDetails());
         }
 
 
-        [HttpGet]
-        [Route("{userName}")]
+        [HttpGet("{userName}")]
         public async Task<ActionResult> GetAddressDetailsByUserName(string userName)
         {
             return Ok(await address.GetAddressDetailsByUserName(userName));

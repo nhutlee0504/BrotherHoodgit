@@ -65,6 +65,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             public string Gender { get; set; }
             public DateTime? Birthday { get; set; }
             public string ImageAccount { get; set; }
+            public string Dob { get; set; }
         }
 
         public class IProd
@@ -95,8 +96,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             await LoadProductImages();
             UpdatePageProducts();
             await LoadBill();
-            CountCompletedBills();
             await LoadUserDataAsync();
+            CountCompletedBills();
 
             try
             {
@@ -142,7 +143,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
             {
 
                 userAccount = await HttpClient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{username}");
-                userAddress = await HttpClient.GetFromJsonAsync<IEnumerable<AddressDetail>>($"api/addressdetail/GetAddressDetailsByUserName/{username}");
+                userAddress = await HttpClient.GetFromJsonAsync<IEnumerable<AddressDetail>>($"api/AddressDetail/{username}");
                 firstAddress = userAddress?.FirstOrDefault();
                 userBill = await HttpClient.GetFromJsonAsync<IEnumerable<Bill>>($"api/bill/GetBillsByUserName/{username}");
                 countBill = userBill.Count();
@@ -153,7 +154,8 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                     Phone = userAccount.PhoneNumber,
                     Gender = userAccount.Gender,
                     Birthday = userAccount.Birthday,
-                    Introduce = userAccount.Introduce
+                    Introduce = userAccount.Introduce,
+                    Dob = userAccount.Dob,
                 };
                 isLoading = false;
 
@@ -810,7 +812,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 
 		private void NavigatePost()
 		{
-			if (infoAccountDto.Email == null || infoAccountDto.IdCard == null)
+			if (userAccount.Email == null || userAccount.ID == null)
 			{
 				// Hiển thị modal nếu thông tin không đầy đủ
 				isModalVisible = true;
