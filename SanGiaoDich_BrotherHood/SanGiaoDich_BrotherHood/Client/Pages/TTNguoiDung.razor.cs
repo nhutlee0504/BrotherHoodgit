@@ -151,7 +151,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
                 {
                     FullName = userAccount.FullName,
                     Email = userAccount.Email,
-                    Phone = userAccount.PhoneNumber,
+                    PhoneNumber = userAccount.PhoneNumber,
                     Gender = userAccount.Gender,
                     Birthday = userAccount.Birthday,
                     Introduce = userAccount.Introduce,
@@ -512,13 +512,13 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
         {
             try
             {
-                if (string.IsNullOrEmpty(infoAccountDto.Phone) && string.IsNullOrEmpty(infoAccountDto.Introduce))
+                if (string.IsNullOrEmpty(infoAccountDto.PhoneNumber) && string.IsNullOrEmpty(infoAccountDto.Introduce))
                 {
                     errorMessage = "Số điện thoại hoặc mô tả phải được nhập.";
                     return;
                 }
 
-                var response = await HttpClient.PutAsJsonAsync($"api/user/UpdateAccountInfo2?phone={infoAccountDto.Phone}&description={infoAccountDto.Introduce}", new { });
+                var response = await HttpClient.PutAsJsonAsync($"api/user/UpdateAccountInfo2?phone={infoAccountDto.PhoneNumber}&description={infoAccountDto.Introduce}", new { });
 
                 if (response.IsSuccessStatusCode)
                 {

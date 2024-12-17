@@ -85,6 +85,16 @@
 		pointer-events: none;
 		opacity: 0.6;
 	}
+
+	.pagination .page-item.selected .page-link {
+		background-color: #28A745 !important;
+		color: white !important;
+	}
+
+	.pagination .page-item .page-link:hover {
+		background-color: green;
+		color: white !important;
+	}
 </style>
 
 <div class="container-fluid">
@@ -232,12 +242,12 @@
                 }
             </div>
 
-            <!-- Pagination -->
+            <!-- Phân trang -->
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
-                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "") m-2">
                         <a class="page-link text-black" aria-label="Previous" @onclick="() => ChangePage(currentPage - 1)">
-                            <span aria-hidden="true">&laquo;</span>
+							<span aria-hidden="true"><i class="bi bi-caret-left-fill"></i></span>
                         </a>
                     </li>
                     @for (var i = currentPage - 2; i <= currentPage + 2; i++)
@@ -245,16 +255,16 @@
 						int j = i;
 						if (i > 0 && i <= totalPages)
                         {
-                            <li class="page-item @(currentPage == i ? "active" : "")">
+                            <li class="page-item @(currentPage == i ? "selected" : "") m-2">
                                 <a class="page-link text-black" @onclick="() => ChangePage(j)">
                                     <span>@i</span>
                                 </a>
                             </li>
                         }
                     }
-                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                    <li class="page-item @(currentPage == totalPages ? "disabled" : "") m-2">
                         <a class="page-link text-black" aria-label="Next" @onclick="() => ChangePage(currentPage + 1)">
-                            <span aria-hidden="true">&raquo;</span>
+							<span aria-hidden="true"><i class="bi bi-caret-right-fill"></i></span>
                         </a>
                     </li>
                 </ul>

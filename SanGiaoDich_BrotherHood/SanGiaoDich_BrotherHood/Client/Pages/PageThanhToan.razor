@@ -40,17 +40,36 @@
                 }
             }
             addresses = await http.GetFromJsonAsync<List<AddressDetail>>($"api/AddressDetail/{account.UserName}");
-            if (addresses != null && addresses.Count > 0)
-            {
-                var firstAddress = addresses.First();
-                bill.DeliveryAddress = $"{firstAddress.AdditionalDetail}, {firstAddress.Wardcommune}, {firstAddress.District}, {firstAddress.ProvinceCity}";
-            }
+            ShowInfo();
+
         }
         catch (Exception ex)
         {
             await jsruntime.InvokeVoidAsync("alert", $"Đã xảy ra lỗi khi tải dữ liệu: {ex.Message}");
         }
     }
+
+    private void ShowInfo()
+    {
+        try
+        {
+            if (addresses != null && addresses.Count > 0)
+            {
+                var firstAddress = addresses.First();
+                bill.DeliveryAddress = $"{firstAddress.AdditionalDetail}, {firstAddress.Wardcommune}, {firstAddress.District}, {firstAddress.ProvinceCity}";
+            }
+            bill.FullName = account?.FullName;
+            bill.Email = account?.Email;
+            bill.PhoneNumber = account?.PhoneNumber;
+        }
+        catch (Exception)
+        {
+            
+            throw;
+        }
+
+    }
+
     private async Task CheckLogined()
     {
         var token = await jsruntime.InvokeAsync<string>("localStorage.getItem", "token");

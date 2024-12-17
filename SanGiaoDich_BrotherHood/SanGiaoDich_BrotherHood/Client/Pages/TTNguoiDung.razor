@@ -134,7 +134,7 @@ else if (userAccount != null)
 					<!-- Số điện thoại -->
 					<div class="mb-3 col-md-6">
 						<label for="modalPhone" class="form-label">Số điện thoại</label>
-						<input type="text" class="form-control @(fieldErrors.ContainsKey("Phone") ? "is-invalid" : "")" id="modalPhone" @bind="infoAccountDto.Phone" />
+						<input type="text" class="form-control @(fieldErrors.ContainsKey("Phone") ? "is-invalid" : "")" id="modalPhone" @bind="infoAccountDto.PhoneNumber" />
 						@if (fieldErrors.ContainsKey("Phone"))
 						{
 							<small class="text-danger">@fieldErrors["Phone"]</small>
