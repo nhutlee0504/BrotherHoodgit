@@ -361,9 +361,9 @@
             <!-- Sản Phẩm Trong Danh Mục -->
             @foreach (var product in products
            .Where(p => p.IDCategory == category.Key && p.Status == "Đã duyệt")
-           .OrderByDescending(p => p.ProrityLevel == "Ưu tiên")
-           .ThenBy(p => p.Name)
-           .Take(4)) // Giới hạn 4 sản phẩm mỗi danh mục
+           .OrderByDescending(p => p.ProrityLevel == "Ưu tiên")  // Ưu tiên các sản phẩm có "Ưu tiên"
+           .ThenBy(p => p.CreatedDate)
+           .Take(4))  // Lấy 4 sản phẩm đầu tiên
             {
                 <div class="col-sm-3 col-6 mb-4 d-flex">
                     <a href="@($"/ChiTietSanPham/{product.IDProduct}")"
@@ -405,7 +405,7 @@
                                     @(categories.ContainsKey(product.IDCategory) ? categories[product.IDCategory] : "Không xác định")
                                 </div>
                                 <div class="col-md-6 col-6 d-flex justify-content-end" style="color:blue; font-weight:bolder; text-decoration-line:underline">
-                                    @product.StartDate?.ToString("dd/MM/yyyy")
+                                    @product.StartDate?.ToString("dd/MM/yyyy HH:mm:ss")
                                 </div>
                             </div>
                         </div>
