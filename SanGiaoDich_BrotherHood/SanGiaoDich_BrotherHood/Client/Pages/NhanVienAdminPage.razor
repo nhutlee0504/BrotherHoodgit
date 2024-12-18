@@ -25,7 +25,7 @@
         }
 
         .d-flex.align-items-center button {
-            background-color: #28a745;
+            background-color: royalblue; /* Màu xanh dương */
             color: white;
             border: none;
             padding: 8px 16px;
@@ -35,79 +35,48 @@
         }
 
             .d-flex.align-items-center button.btn-primary {
-                background-color: #007bff;
+                background-color: royalblue; /* Màu xanh dương */
             }
-
-                .d-flex.align-items-center button.btn-primary:hover {
-                    background-color: #0056b3;
-                }
-
-            .d-flex.align-items-center button:hover {
-                background-color: #218838;
-                color: #fff;
-            }
-
-    /* Bảng không viền và hàng đầu trong suốt */
-    .table-striped-custom {
-        border-collapse: collapse; /* Gộp các đường viền thành một */
-        width: 100%;
+    /* Tùy chỉnh bảng: màu nền xen kẽ */
+    .table-striped-custom tbody tr:nth-child(odd) {
+        background-color: #f8f9fa; /* Màu xám nhạt */
     }
 
-        .table-striped-custom th {
-            background-color: transparent; /* Hàng đầu không có màu nền */
-            color: #000; /* Màu chữ đen */
-            text-align: center;
-            padding: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            border: none; /* Xóa viền hàng đầu */
-        }
-
-        .table-striped-custom td {
-            padding: 10px;
-            text-align: left;
-            font-size: 15px;
-            border: none; /* Xóa viền trong bảng */
-        }
-
-        /* Màu xen kẽ cho bảng */
-        .table-striped-custom tbody tr:nth-child(odd) {
-            background-color: #f3f3f3; /* Xám nhạt */
-        }
-
-        .table-striped-custom tbody tr:nth-child(even) {
-            background-color: #ffffff; /* Trắng */
-        }
-    /* Loại bỏ bóng bảng */
-    .table-striped-custom {
-        box-shadow: none;
-    }
-    /* Phân trang */
-    .pagination {
-        margin-top: 20px;
-        justify-content: center;
+    .table-striped-custom tbody tr:nth-child(even) {
+        background-color: #ffffff; /* Màu trắng */
     }
 
-        .pagination .page-link {
-            color: #007bff;
-            font-weight: 500;
-            padding: 8px 12px;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-            text-decoration: none;
-        }
+    .table-striped-custom th {
+        background-color: #343a40; /* Nền màu đen xám */
+        color: #ffffff; /* Chữ trắng */
+    }
 
-            .pagination .page-link:hover {
-                background-color: #007bff;
-                color: #fff;
-            }
+    .table-striped-custom td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+        vertical-align: middle; /* Canh giữa theo chiều dọc */
+    }
 
-        .pagination .page-item.active .page-link {
-            background-color: #28a745;
-            color: #fff;
-            border: none;
-        }
+    /* Nút phân trang màu xanh lá */
+    .pagination .page-link {
+        color: #28a745; /* Màu chữ xanh lá */
+        border: none; /* Bỏ đường viền */
+        border-radius: 0; /* Bo góc vuông */
+        text-decoration: underline; /* Gạch chân */
+        text-decoration-color: #28a745; /* Gạch chân màu xanh lá */
+    }
 
+    .pagination .page-item.active .page-link {
+        background-color: #28a745; /* Nền xanh lá cho trang hiện tại */
+        color: #fff; /* Màu chữ trắng */
+        border: none;
+    }
+
+    .pagination .page-item .page-link:focus,
+    .pagination .page-item .page-link:hover {
+        color: #218838; /* Xanh lá đậm khi hover */
+        text-decoration-color: #218838;
+    }
     /* Modal */
     .modal-content {
         border-radius: 8px;
@@ -162,25 +131,6 @@
         padding: 8px 15px;
         transition: background-color 0.3s ease;
     }
-
-    .btn-secondary {
-        background-color: #6c757d;
-        color: #fff;
-    }
-
-    .btn-primary {
-        background-color: #007bff;
-        color: #fff;
-    }
-
-    .btn-secondary:hover {
-        background-color: #5a6268;
-    }
-
-    .btn-primary:hover {
-        background-color: #0056b3;
-    }
-
 </style>
 <h3>Quản lý nhân viên</h3>
 
@@ -204,13 +154,15 @@ else if (!filteredEmployees.Any())
 else
 {
     <!-- Danh sách nhân viên -->
-    <table class="table table-striped-custom table-bordered">
+    <table class="table table-hover table-striped-custom align-middle text-center">
         <thead>
             <tr>
                 <th>Tên đăng nhập</th>
                 <th>Họ và tên</th>
                 <th>Email</th>
                 <th>Số điện thoại</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
             </tr>
         </thead>
         <tbody>
@@ -221,6 +173,18 @@ else
                     <td>@employee.FullName</td>
                     <td>@employee.Email</td>
                     <td>@employee.PhoneNumber</td>
+                    <td>@(employee.IsDelete == true ? "Bị cấm" : "Hoạt động")</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-2">Chỉnh sửa</button>
+                        @if (employee.IsDelete == true)
+                        {
+                            <button class="btn btn-sm btn-success" @onclick="() => OnUnBanAccount(employee.UserName)">Mở khóa</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-sm btn-danger" @onclick="() => OnBanAccount(employee.UserName)">Khóa</button>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>
@@ -340,6 +304,7 @@ else
         public string Role { get; set; } // Quyền
         public string Password { get; set; }
         public string ConformPassword { get; set; } // Xác nhận mật khẩu
+        public bool IsDelete { get; set; }
     }
     public class RegisterDto
     {
@@ -438,7 +403,47 @@ else
             ShowModal("Lỗi", $"Không thể thêm nhân viên: {ex.Message}");
         }
     }
+    private async Task OnBanAccount(string username)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync($"api/Admin/BanAccount?username={username}", username);
+            if (response.IsSuccessStatusCode)
+            {
+                ShowModal("Thành công", $"Tài khoản {username} đã bị cấm.");
+                await LoadEmployees();
+            }
+            else
+            {
+                ShowModal("Lỗi", "Không thể cấm tài khoản này.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowModal("Lỗi", ex.Message);
+        }
+    }
 
+    private async Task OnUnBanAccount(string username)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync($"api/Admin/UnBanAccount?username={username}", username);
+            if (response.IsSuccessStatusCode)
+            {
+                ShowModal("Thành công", $"Tài khoản {username} đã được mở khóa.");
+                await LoadEmployees();
+            }
+            else
+            {
+                ShowModal("Lỗi", "Không thể mở khóa tài khoản này.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowModal("Lỗi", ex.Message);
+        }
+    }
 
     private void ShowModal(string title, string message)
     {

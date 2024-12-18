@@ -3,7 +3,48 @@
 @layout AdminLayout
 @inject HttpClient httpClient
 @inject NavigationManager NavigationManager
+<style>
+    /* Tùy chỉnh bảng: màu nền xen kẽ */
+    .table-striped-custom tbody tr:nth-child(odd) {
+        background-color: #f8f9fa; /* Màu xám nhạt */
+    }
 
+    .table-striped-custom tbody tr:nth-child(even) {
+        background-color: #ffffff; /* Màu trắng */
+    }
+
+    .table-striped-custom th {
+        background-color: #343a40; /* Nền màu đen xám */
+        color: #ffffff; /* Chữ trắng */
+    }
+
+    .table-striped-custom td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+        vertical-align: middle; /* Canh giữa theo chiều dọc */
+    }
+
+    /* Nút phân trang màu xanh lá */
+    .pagination .page-link {
+        color: #28a745; /* Màu chữ xanh lá */
+        border: none; /* Bỏ đường viền */
+        border-radius: 0; /* Bo góc vuông */
+        text-decoration: underline; /* Gạch chân */
+        text-decoration-color: #28a745; /* Gạch chân màu xanh lá */
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #28a745; /* Nền xanh lá cho trang hiện tại */
+        color: #fff; /* Màu chữ trắng */
+        border: none;
+    }
+
+    .pagination .page-item .page-link:focus,
+    .pagination .page-item .page-link:hover {
+        color: #218838; /* Xanh lá đậm khi hover */
+        text-decoration-color: #218838;
+    }
+</style>
 <div class="container py-4">
     <h3 class="mb-4 text-center text-primary">Danh Sách Hóa Đơn</h3>
 
@@ -44,10 +85,10 @@
     else
     {
         <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
+            <table class="table table-hover table-striped-custom align-middle text-center">
                 <thead class="table-primary">
                     <tr>
-                        <th>#</th>
+                        <th>ID</th>
                         <th>Họ và tên</th>
                         <th>Số điện thoại</th>
                         <th>Địa chỉ giao hàng</th>
@@ -59,7 +100,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var bill in bills)
+                    @foreach (var bill in PagedBills)
                     {
                         <tr>
                             <td>@bill.IDBill</td>
@@ -82,12 +123,35 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Phân trang -->
+        <nav aria-label="Pagination" class="d-flex justify-content-center mt-4">
+            <ul class="pagination">
+                <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => ChangePage(CurrentPage - 1)" aria-label="Previous">Trang trước</button>
+                </li>
+                @for (int i = 1; i <= TotalPages; i++)
+                {
+                    <li class="page-item @(CurrentPage == i ? "active" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(i)">@i</button>
+                    </li>
+                }
+                <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => ChangePage(CurrentPage + 1)" aria-label="Next">Trang sau</button>
+                </li>
+            </ul>
+        </nav>
     }
 </div>
 
 @code {
     private List<Bill> bills;
     private List<Bill> allBills;
+    private int CurrentPage = 1;
+    private int ItemsPerPage = 10;
+    private int TotalPages => (int)Math.Ceiling(bills.Count / (double)ItemsPerPage);
+    private List<Bill> PagedBills => bills.Skip((CurrentPage - 1) * ItemsPerPage).Take(ItemsPerPage).ToList();
+
     private string searchFullName;
     private int? searchIDBill;
 
@@ -95,9 +159,8 @@
     {
         try
         {
-            // Lấy tất cả hóa đơn khi trang được khởi tạo
             allBills = await httpClient.GetFromJsonAsync<List<Bill>>("api/Bill/GetBill");
-            bills = new List<Bill>(allBills); // Hiển thị tất cả hóa đơn khi chưa tìm kiếm
+            bills = new List<Bill>(allBills);
         }
         catch (Exception ex)
         {
@@ -108,6 +171,7 @@
 
     private async Task SearchBills()
     {
+        CurrentPage = 1; // Reset to first page
         try
         {
             if (!string.IsNullOrWhiteSpace(searchFullName))
@@ -128,6 +192,14 @@
         {
             Console.WriteLine("Lỗi khi tìm kiếm hóa đơn: " + ex.Message);
             bills = new List<Bill>();
+        }
+    }
+
+    private void ChangePage(int pageNumber)
+    {
+        if (pageNumber > 0 && pageNumber <= TotalPages)
+        {
+            CurrentPage = pageNumber;
         }
     }
 
