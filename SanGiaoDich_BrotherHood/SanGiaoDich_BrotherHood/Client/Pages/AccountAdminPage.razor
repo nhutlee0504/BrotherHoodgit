@@ -2,14 +2,82 @@
 @layout AdminLayout
 @inject HttpClient httpClient
 @using SanGiaoDich_BrotherHood.Shared.Models
-@inject NavigationManager NavigationManager
+<style>
+    /* Tùy chỉnh tìm kiếm (input + nút gần nhau) */
+    .search-container {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* Khoảng cách giữa input và nút */
+        margin-bottom: 20px;
+    }
 
-<h3>Quản lý người dùng</h3>
+        .search-container input {
+            width: 250px;
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+            padding: 5px 10px;
+        }
 
-<div class="mb-3 d-flex">
-    <input @bind="searchKeyword" class="form-control me-2" placeholder="Tìm kiếm người dùng..." />
-    <button class="btn btn-primary" @onclick="OnSearchKeywordChanged">Tìm kiếm</button>
+        .search-container button {
+            white-space: nowrap;
+            background-color: #28a745; /* Màu xanh lá */
+            color: #ffffff; /* Chữ trắng */
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+        }
+
+            .search-container button:hover {
+                background-color: #218838; /* Xanh lá đậm khi hover */
+            }
+
+    /* Tùy chỉnh bảng: màu nền xen kẽ */
+    .table-striped-custom tbody tr:nth-child(odd) {
+        background-color: #f8f9fa; /* Màu xám nhạt */
+    }
+
+    .table-striped-custom tbody tr:nth-child(even) {
+        background-color: #ffffff; /* Màu trắng */
+    }
+
+    .table-striped-custom th {
+        background-color: #343a40; /* Nền màu đen xám */
+        color: #ffffff; /* Chữ trắng */
+    }
+
+    .table-striped-custom td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+        vertical-align: middle; /* Canh giữa theo chiều dọc */
+    }
+
+    /* Nút phân trang màu xanh lá */
+    .pagination .page-link {
+        color: #28a745; /* Màu chữ xanh lá */
+        border: none; /* Bỏ đường viền */
+        border-radius: 0; /* Bo góc vuông */
+        text-decoration: underline; /* Gạch chân */
+        text-decoration-color: #28a745; /* Gạch chân màu xanh lá */
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #28a745; /* Nền xanh lá cho trang hiện tại */
+        color: #fff; /* Màu chữ trắng */
+        border: none;
+    }
+
+    .pagination .page-item .page-link:focus,
+    .pagination .page-item .page-link:hover {
+        color: #218838; /* Xanh lá đậm khi hover */
+        text-decoration-color: #218838;
+    }
+</style>
+<h3 class="mt-4 mb-4 text-center">Quản lý người dùng</h3>
+<div class="search-container">
+    <input @bind="searchKeyword" class="form-control" placeholder="Tìm kiếm người dùng..." />
+    <button class="btn btn-success" @onclick="OnSearchKeywordChanged">Tìm kiếm</button>
 </div>
+
 
 @if (isModalVisible)
 {
@@ -25,13 +93,12 @@
                     @modalMessage
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-primary" @onclick="CloseModal">Đóng</button>
+                    <button class="btn btn-secondary" @onclick="CloseModal">Đóng</button>
                 </div>
             </div>
         </div>
     </div>
 }
-
 
 @if (filteredUsers == null)
 {
@@ -43,52 +110,74 @@ else if (!filteredUsers.Any())
 }
 else
 {
-    <table class="table table-bordered">
-        <thead>
-            <tr class="text-center">
-                <th>Tên đăng nhập</th>
-                <th>Họ và tên</th>
-                <th>Email</th>
-                <th>Số điện thoại</th>
-                <th>Quyền</th> <!-- Thêm cột -->
-                <th>Trạng thái</th>
-                <th>Hành động</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var user in filteredUsers)
-            {
+    <div class="table-responsive">
+        <table class="table table-hover table-striped-custom align-middle text-center">
+            <thead class="table-dark">
                 <tr>
-                    <td>@user.UserName</td>
-                    <td>@user.FullName</td>
-                    <td>@user.Email</td>
-                    <td class="text-center">@user.PhoneNumber</td>
-                    <td>@user.Role</td> <!-- Hiển thị quyền -->
-                    <td>@(user.IsDelete == true ? "Bị cấm" : "Hoạt động")</td>
-                    <td class="text-center">
-                        <button class="btn btn-primary me-2">Chỉnh sửa</button>
-                        @if (user.IsDelete == true)
-                        {
-                            <button class="btn btn-success" @onclick="() => OnUnBanAccount(user.UserName)">Mở khóa</button>
-                        }
-                        else
-                        {
-                            <button class="btn btn-danger" @onclick="() => OnBanAccount(user.UserName)">Cấm</button>
-                        }
-                    </td>
+                    <th>Tên đăng nhập</th>
+                    <th>Họ và tên</th>
+                    <th>Email</th>
+                    <th>Số điện thoại</th>
+                    <th>Quyền</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
                 </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in PagedUsers)
+                {
+                    <tr>
+                        <td>@user.UserName</td>
+                        <td>@user.FullName</td>
+                        <td>@user.Email</td>
+                        <td>@user.PhoneNumber</td>
+                        <td>@user.Role</td>
+                        <td>@(user.IsDelete == true ? "Bị cấm" : "Hoạt động")</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-2">Chỉnh sửa</button>
+                            @if (user.IsDelete == true)
+                            {
+                                <button class="btn btn-sm btn-success" @onclick="() => OnUnBanAccount(user.UserName)">Mở khóa</button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-sm btn-danger" @onclick="() => OnBanAccount(user.UserName)">Khóa</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="Phân trang">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <button class="page-link" @onclick="PreviousPage">Trang trước</button>
+            </li>
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <button class="page-link" @onclick="() => GoToPage(i)">@i</button>
+                </li>
             }
-        </tbody>
-    </table>
-
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <button class="page-link" @onclick="NextPage">Trang sau</button>
+            </li>
+        </ul>
+    </nav>
 }
-
 @code {
-    private List<Account> users;
-    private List<Account> filteredUsers;
-    private string searchKeyword = string.Empty;
+    private List<Account> users = new();
+    private List<Account> filteredUsers = new();
+    private List<Account> PagedUsers => filteredUsers.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
 
-    // Biến cho modal
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int totalPages => (int)Math.Ceiling((double)filteredUsers.Count / pageSize);
+
+    private string searchKeyword = string.Empty;
     private bool isModalVisible = false;
     private string modalTitle;
     private string modalMessage;
@@ -104,6 +193,7 @@ else
         {
             users = await httpClient.GetFromJsonAsync<List<Account>>("api/user/GetAccounts");
             filteredUsers = users;
+            currentPage = 1;
         }
         catch (Exception ex)
         {
@@ -126,6 +216,8 @@ else
                 (u.PhoneNumber?.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ?? false)
             ).ToList();
         }
+
+        currentPage = 1; // Reset về trang đầu
     }
 
     private async Task OnBanAccount(string username)
@@ -136,17 +228,16 @@ else
             if (response.IsSuccessStatusCode)
             {
                 ShowModal("Thành công", $"Tài khoản {username} đã bị cấm.");
-                await OnInitializedAsync();
+                await LoadUsers();
             }
             else
             {
-                var errorMessage = await response.Content.ReadAsStringAsync();
-                ShowModal("Lỗi", $"Không thể cấm tài khoản: {errorMessage}");
+                ShowModal("Lỗi", "Không thể cấm tài khoản này.");
             }
         }
         catch (Exception ex)
         {
-            ShowModal("Lỗi hệ thống", ex.Message);
+            ShowModal("Lỗi", ex.Message);
         }
     }
 
@@ -158,17 +249,16 @@ else
             if (response.IsSuccessStatusCode)
             {
                 ShowModal("Thành công", $"Tài khoản {username} đã được mở khóa.");
-                await OnInitializedAsync();
+                await LoadUsers();
             }
             else
             {
-                var errorMessage = await response.Content.ReadAsStringAsync();
-                ShowModal("Lỗi", $"Không thể mở khóa tài khoản: {errorMessage}");
+                ShowModal("Lỗi", "Không thể mở khóa tài khoản này.");
             }
         }
         catch (Exception ex)
         {
-            ShowModal("Lỗi hệ thống", ex.Message);
+            ShowModal("Lỗi", ex.Message);
         }
     }
 
@@ -183,8 +273,22 @@ else
     private void CloseModal()
     {
         isModalVisible = false;
-        StateHasChanged();
-        LoadUsers(); // Cập nhật danh sách sau khi đóng modal
+    }
+
+    private void NextPage()
+    {
+        if (currentPage < totalPages)
+            currentPage++;
+    }
+
+    private void PreviousPage()
+    {
+        if (currentPage > 1)
+            currentPage--;
+    }
+
+    private void GoToPage(int page)
+    {
+        currentPage = page;
     }
 }
-
