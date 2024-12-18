@@ -1,10 +1,12 @@
 ﻿
 using Microsoft.AspNetCore.Http;
+using SanGiaoDich_BrotherHood.Client.Pages;
 using SanGiaoDich_BrotherHood.Server.Dto;
 using SanGiaoDich_BrotherHood.Shared.Models;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace SanGiaoDich_BrotherHood.Server.Services
@@ -20,7 +22,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public Task<Product> UpdateProductById(int id, ProductDto product);
         public Task<Product> AcceptProduct(int idproduct);
         public Task<Product> CancleProduct(int idproduct);
-        public Task <Product> DeleteProductById(int id);
+        public Task<Product> DeleteProductById(int id);
         public Task<Product> UpdateProrityLevel(int id);
         public Task<IEnumerable<dynamic>> GetStatisticsByStatusAsync();
         Task<decimal> GetTotalRevenueAsync();
@@ -28,6 +30,10 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         Task<decimal> GetRevenueByWeekAsync(DateTime startDate);
         Task<decimal> GetRevenueByMonthAsync(int month, int year);
         Task<byte[]> ExportProductsToExcelAsync();
+        Task<int> GetApprovedPostsByMonthAsync(int month, int year);
+
+        // Phương thức xuất báo cáo bài đăng sang Excel
+        Task<MemoryStream> ExportAllStatisticsToExcelAsync();
 
     }
 }

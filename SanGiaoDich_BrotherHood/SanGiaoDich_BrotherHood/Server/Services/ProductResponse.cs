@@ -52,16 +52,13 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
 
             int deductionAmount;
-            int date;
             if (product.ProrityLevel == "Ưu tiên")
             {
-                deductionAmount = 10000; // Mức trừ cho sản phẩm ưu tiên
-                date = 30;
+                deductionAmount = 50000; // Mức trừ cho sản phẩm ưu tiên
             }
             else if (product.ProrityLevel == "Phổ thông")
             {
-                deductionAmount = 5000; // Mức trừ cho sản phẩm phổ thông
-                date = 7;
+                deductionAmount = 25000; // Mức trừ cho sản phẩm phổ thông
             }
             else
             {
@@ -83,15 +80,13 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 Name = product.Name,
                 Quantity = product.Quantity,
                 Price = product.Price,
-                PriceUp = deductionAmount,
                 Description = product.Description,
                 IDCategory = product.CategoryId,
-                Status = "Đã duyệt",
+                Status = "Đang chờ duyệt",
                 ProrityLevel = product.ProrityLevel,
                 CreatedDate = DateTime.Now,
                 UpdatedDate = DateTime.Now,
                 StartDate = DateTime.Now,
-                EndDate = DateTime.Now.AddDays(date),
                 UserName = user.UserName,
                 AccountAccept = "Admin"
 
@@ -102,69 +97,15 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
             return newProd;
         }
-        public async Task<IEnumerable<Product>> GetAllProductsAsync() // Lấy tất cả sản phẩm
+        public async Task<IEnumerable<Product>> GetAllProductsAsync()//Lấy tất cả sản phẩm
         {
             var getP = await _context.Products.ToListAsync();
-
-            if (getP == null || !getP.Any())
+            if (getP == null)
             {
                 throw new NotImplementedException("Không có sản phẩm hoặc không tìm thấy sản phẩm của bạn");
             }
-
-            foreach (var product in getP)
-            {
-                if (product.EndDate == DateTime.Now)
-                {
-                    // Tìm người dùng đăng sản phẩm
-                    var user = await _context.Accounts.FindAsync(product.UserName);
-                    var pu = 0;
-                    var p = product.ProrityLevel;
-                    if(p == "Phổ thông")
-                    {
-                        pu = 5000;
-                    }
-                    else
-                    {
-                        pu = 10000;
-                    }
-
-                    if (user == null)
-                    {
-                        continue; // Nếu không tìm thấy người dùng, bỏ qua sản phẩm này
-                    }
-
-                    // Kiểm tra số dư của người dùng
-                    if (user.PreSystem >= pu)
-                    {
-                        // Trừ tiền và gia hạn bài đăng
-                        user.PreSystem -= pu;
-                        product.PriceUp += pu;
-                        if(product.ProrityLevel == "Phổ thông")
-                        {
-                            product.EndDate = DateTime.Now.AddDays(7); // Gia hạn thêm 1 tháng (có thể tùy chỉnh)
-                        }
-                        else
-                        {
-                            product.EndDate = DateTime.Now.AddDays(30);
-                        }
-
-                        _context.Accounts.Update(user);
-                        _context.Products.Update(product);
-                    }
-                    else
-                    {
-                        // Cập nhật trạng thái bài đăng về "Hết hạn"
-                        product.Status = "Hết hạn";
-                        _context.Products.Update(product);
-                    }
-                }
-            }
-
-            await _context.SaveChangesAsync();
-
             return getP;
         }
-
 
         public async Task<IEnumerable<Product>> GetProductsAccount()//Lấy tất cả danh sách sản phẩm của người đăng nhập
         {
@@ -286,11 +227,11 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             decimal refundAmount = 0;
             if (existingProduct.ProrityLevel == "Phổ thông")
             {
-                refundAmount = 5000 * 0.95m;
+                refundAmount = 25000 * 0.95m;
             }
             else if (existingProduct.ProrityLevel == "Ưu tiên")
             {
-                refundAmount = 10000 * 0.95m;
+                refundAmount = 50000 * 0.95m;
             }
             else
             {
@@ -488,47 +429,159 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
         public async Task<byte[]> ExportProductsToExcelAsync()
         {
-            // Lấy danh sách sản phẩm từ database
+            // Giả sử bạn đã có danh sách sản phẩm
             var products = await GetAllProductsAsync();
 
-            // Sử dụng EPPlus để tạo file Excel
             using (var package = new ExcelPackage())
             {
                 var worksheet = package.Workbook.Worksheets.Add("Products");
 
                 // Tiêu đề cột
-                worksheet.Cells[1, 1].Value = "Tên sản phẩm";
-                worksheet.Cells[1, 2].Value = "Giá";
-                worksheet.Cells[1, 3].Value = "Số lượng";
-                worksheet.Cells[1, 4].Value = "Ngày tạo";
+                worksheet.Cells[1, 1].Value = "ID";
+                worksheet.Cells[1, 2].Value = "Tên Sản Phẩm";
+                worksheet.Cells[1, 3].Value = "Giá";
+                worksheet.Cells[1, 4].Value = "Số Lượng";
 
-                // Thêm dữ liệu sản phẩm
-                int row = 2;
+                int row = 2; // Bắt đầu từ dòng thứ 2 (sau tiêu đề)
                 foreach (var product in products)
                 {
-                    worksheet.Cells[row, 1].Value = product.Name;
-                    worksheet.Cells[row, 2].Value = product.Price;
-                    worksheet.Cells[row, 3].Value = product.Quantity;
-
-                    // Đảm bảo định dạng ngày tháng cho Excel
-                    worksheet.Cells[row, 4].Value = product.CreatedDate.HasValue
-                        ? product.CreatedDate.Value.ToString("yyyy-MM-dd HH:mm:ss")
-                        : string.Empty; // Hoặc giá trị mặc định nào đó
-
+                    worksheet.Cells[row, 1].Value = product.IDProduct;
+                    worksheet.Cells[row, 2].Value = product.Name;
+                    worksheet.Cells[row, 3].Value = product.Price;
+                    worksheet.Cells[row, 4].Value = product.Quantity;
                     row++;
                 }
 
-                // Tự động điều chỉnh kích thước cột
-                worksheet.Cells.AutoFitColumns();
+                worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
 
-                // Lưu dữ liệu vào bộ nhớ và chuyển thành mảng byte
                 using (var stream = new MemoryStream())
                 {
-                    package.SaveAs(stream);
-                    return stream.ToArray(); // Trả về mảng byte từ MemoryStream
+                    await package.SaveAsAsync(stream);
+                    return stream.ToArray(); // Trả về mảng byte
                 }
             }
         }
-    }
 
+        public async Task<int> GetApprovedPostsByMonthAsync(int month, int year)
+        {
+            return await _context.Products
+                .Where(p => p.Status == "Đã duyệt" &&
+                            p.CreatedDate.HasValue &&
+                            p.CreatedDate.Value.Month == month &&
+                            p.CreatedDate.Value.Year == year)
+                .CountAsync();
+        }
+
+
+        // Phương thức xuất thống kê bài đăng sang Excel
+        public async Task<MemoryStream> ExportAllStatisticsToExcelAsync()
+        {
+            var statistics = await GetApprovedPostsStatisticsAsync();
+            var dailyStats = await GetDailyStatisticsAsync();
+            var monthlyAndYearlyStats = await GetMonthlyAndYearlyStatisticsAsync();
+
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Statistics");
+
+                // Tiêu đề cột
+                worksheet.Cells[1, 1].Value = "Loại Thống Kê";
+                worksheet.Cells[1, 2].Value = "Số Lượng";
+
+                // Xuất thống kê hàng ngày
+                int row = 2;  // Bắt đầu từ dòng 2 để không ghi đè lên tiêu đề
+                worksheet.Cells[row, 1].Value = "Số Bài Đăng Hôm Nay";
+                worksheet.Cells[row, 2].Value = dailyStats;
+                row++;
+
+                // Xuất thống kê tháng và năm (chỉ bài đăng "Đã duyệt")
+                worksheet.Cells[row, 1].Value = $"Số Bài Đăng Đã Duyệt Tháng {monthlyAndYearlyStats.Item3} và Năm {monthlyAndYearlyStats.Item4}";
+                worksheet.Cells[row, 2].Value = monthlyAndYearlyStats.Item1;  // Số bài đăng trong tháng với trạng thái "Đã duyệt"
+                row++;
+
+                // Xuất các thống kê khác (tổng số bài đăng theo trạng thái)
+                foreach (var stat in statistics)
+                {
+                    worksheet.Cells[row, 1].Value = stat.Key;
+                    worksheet.Cells[row, 2].Value = stat.Value;
+                    row++;
+                }
+
+                // Tự động điều chỉnh cột
+                worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+
+                // Tạo MemoryStream để xuất Excel
+                var memoryStream = new MemoryStream();
+                await package.SaveAsAsync(memoryStream);
+                memoryStream.Position = 0;
+
+                return memoryStream;
+            }
+        }
+
+
+
+        // Phương thức lấy thống kê bài đăng theo trạng thái
+        private async Task<Dictionary<string, int>> GetApprovedPostsStatisticsAsync()
+        {
+            var statuses = new List<string>
+            {
+                "Tổng số bài đăng",  // Tổng số bài đăng
+                "Đã xóa",            // Trạng thái "Deleted"
+                "Đã duyệt",           // Trạng thái "Approved"
+                "Đã hủy",             // Trạng thái "Cancelled"
+                "Đang chờ duyệt",     // Trạng thái "Pending"
+                "Đã bán"              // Trạng thái "Sold"
+            };
+
+            // Tạo từ điển để lưu trữ kết quả thống kê
+            var statistics = new Dictionary<string, int>();
+
+            // Lấy tổng số bài đăng
+            statistics["Tổng số bài đăng"] = await _context.Products.CountAsync();
+
+            // Lấy số lượng bài đăng cho mỗi trạng thái
+            foreach (var status in statuses.Skip(1))  // Bỏ qua trạng thái "Tổng số bài đăng" vì đã lấy riêng
+            {
+                var count = await _context.Products.CountAsync(p => p.Status != null && p.Status.Trim().ToUpper() == status.ToUpper());
+                statistics[status] = count;
+            }
+
+            return statistics;
+        }
+
+        // Phương thức lấy thống kê bài đăng hôm nay
+        private async Task<int> GetDailyStatisticsAsync()
+        {
+            var today = DateTime.Today;
+
+            // Lấy số lượng bài đăng hôm nay
+            var count = await _context.Products.CountAsync(p => p.CreatedDate.Value.Date == today);
+
+            return count;
+        }
+
+        private async Task<Tuple<int, int, int, int>> GetMonthlyAndYearlyStatisticsAsync()
+        {
+            var today = DateTime.Today;
+            var startOfMonth = new DateTime(today.Year, today.Month, 1);
+            var startOfYear = new DateTime(today.Year, 1, 1);
+
+            // Lấy số lượng bài đăng trong tháng với trạng thái "Đã duyệt"
+            var monthlyCount = await _context.Products.CountAsync(p => p.CreatedDate.HasValue
+                && p.CreatedDate.Value.Date >= startOfMonth
+                && p.CreatedDate.Value.Date <= today
+                && p.Status != null && p.Status.Trim().ToUpper() == "ĐÃ DUYỆT"); // Lọc theo trạng thái "Đã duyệt"
+
+            // Lấy số lượng bài đăng trong năm với trạng thái "Đã duyệt"
+            var yearlyCount = await _context.Products.CountAsync(p => p.CreatedDate.HasValue
+                && p.CreatedDate.Value.Date >= startOfYear
+                && p.CreatedDate.Value.Date <= today
+                && p.Status != null && p.Status.Trim().ToUpper() == "ĐÃ DUYỆT"); // Lọc theo trạng thái "Đã duyệt"
+
+            // Trả về tuple: (số bài đăng trong tháng, số bài đăng trong năm, tháng hiện tại, năm hiện tại)
+            return Tuple.Create(monthlyCount, yearlyCount, today.Month, today.Year);
+        }
+
+    }
 }
