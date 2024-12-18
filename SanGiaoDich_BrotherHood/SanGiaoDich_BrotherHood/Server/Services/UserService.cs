@@ -86,17 +86,21 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 		.FirstOrDefaultAsync(u => EF.Functions.Collate(u.UserName, "Latin1_General_BIN") == loginDto.UserName);
 			if (userInfo == null || !VerifyPassword(loginDto.Password, userInfo.Password))
             {
-                throw new UnauthorizedAccessException("Tên đăng nhập hoặc mật khẩu không đúng.");
+                throw new UnauthorizedAccessException("Tên đăng nhập hoặc mật khẩu không đúng");
             }
             if (userInfo.IsDelete == true)
             {
-                throw new UnauthorizedAccessException("Tài khoản này đã bị khóa vô thời hạn.");
+                throw new UnauthorizedAccessException("Tài khoản này đã bị khóa vô thời hạn");
             }
             if (userInfo.TimeBanned.HasValue && userInfo.TimeBanned > DateTime.UtcNow)
             {
                 var remainingDays = (userInfo.TimeBanned.Value - DateTime.UtcNow).TotalDays;
                 throw new UnauthorizedAccessException($"Tài khoản này đã bị khóa. Số ngày còn lại: {Math.Ceiling(remainingDays)}.");
             }
+            if(userInfo.Role == "Chủ" || userInfo.Role == "Nhân viên")
+            {
+				throw new UnauthorizedAccessException("Không có quyền truy cập");
+			}
             var token = GenerateJwtToken(userInfo);
 
             return token;

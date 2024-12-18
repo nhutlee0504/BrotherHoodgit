@@ -257,13 +257,7 @@
         try
         {
             products = await httpClient.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
-            productImages = new Dictionary<int, List<string>>();
             products = products.Where(p => p.Status != "Đã xóa").ToList();
-            foreach (var product in products)
-            {
-                var images = await httpClient.GetFromJsonAsync<List<ImageProduct>>($"api/ImageProduct/GetImageProduct?id={product.IDProduct}");
-                productImages[product.IDProduct] = images?.Select(img => img.Image).ToList() ?? new List<string>();
-            }
         }
         catch (Exception ex)
         {
