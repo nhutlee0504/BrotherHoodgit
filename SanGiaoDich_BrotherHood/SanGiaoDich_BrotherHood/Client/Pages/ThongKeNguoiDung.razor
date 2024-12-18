@@ -8,6 +8,11 @@
 <!-- Phần tiêu đề -->
 <h3 class="text-center my-4">Thống Kê Người Dùng</h3>
 
+<!-- Nút xuất file Excel -->
+<button class="btn btn-success rounded-pill py-2 px-3" @onclick="ExportToExcel">
+    <i class="fas fa-file-excel"></i> Xuất Excel
+</button>
+
 @if (userStatistics == null)
 {
     <div class="text-center">
@@ -47,12 +52,6 @@ else
                 </div>
             </div>
         </div>
-
-
-        <!-- Nút xuất file Excel -->
-        <button class="btn btn-success rounded-pill py-2 px-3" @onclick="ExportToExcel">
-            <i class="fas fa-file-excel"></i> Xuất Excel
-        </button>
     </div>
 }
 

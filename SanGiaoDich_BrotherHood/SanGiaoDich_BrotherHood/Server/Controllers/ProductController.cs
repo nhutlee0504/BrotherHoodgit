@@ -12,6 +12,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using OfficeOpenXml;
 using SanGiaoDich_BrotherHood.Server.Data;
+using static SanGiaoDich_BrotherHood.Client.Pages.ThongKeBaiDang;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -410,6 +411,37 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             {
                 return StatusCode(500, new { Error = $"Lỗi khi thống kê bài đăng: {ex.Message}" });
             }
+        }
+
+        [HttpGet("ApprovedPostsByMonth/{month}/{year}")]
+        public async Task<IActionResult> GetApprovedPostsByMonth(int month, int year)
+        {
+            try
+            {
+                var approvedPosts = await prod.GetApprovedPostsByMonthAsync(month, year);
+                return Ok(new List<MonthlyStatistic> {
+            new MonthlyStatistic
+            {
+                Month = month,
+                Year = year,
+                ApprovedPosts = approvedPosts
+            }
+        });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Error = $"Lỗi khi thống kê bài đăng theo tháng: {ex.Message}" });
+            }
+        }
+
+        [HttpGet("export-post-statistics")]
+        public async Task<IActionResult> ExportPostStatistics()
+        {
+            var memoryStream = await prod.ExportAllStatisticsToExcelAsync();
+
+            return File(memoryStream,
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "PostStatistics.xlsx");
         }
     }
 }

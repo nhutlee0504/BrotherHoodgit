@@ -538,14 +538,13 @@
             <!-- Nút thanh toán -->
             @if (!string.IsNullOrEmpty(errorMessage))
             {
-                @if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <div class="alert alert-danger" role="alert">
-                        @errorMessage
-                    </div>
-                }
+                <div class="alert alert-danger d-flex align-items-center mt-2" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> <!-- Icon cảnh báo -->
+                    <span>@errorMessage</span>
+                </div>
             }
-            <div class="text-end mt-3">
+
+            <div class="text-end mt-3 mb-5">
                 <button class="btn btn-success" @onclick="ProcessPayment">
                     <i class="bi bi-check-circle-fill"></i> Thanh toán
                 </button>

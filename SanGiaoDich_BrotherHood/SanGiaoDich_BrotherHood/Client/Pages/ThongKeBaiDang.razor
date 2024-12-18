@@ -3,19 +3,28 @@
 @using SanGiaoDich_BrotherHood.Shared.Models
 @using System.Net.Http.Json
 @using System.Collections.Generic
+@inject IJSRuntime JSRuntime
+
+@using BlazorDownloadFile
+@using System.Text.Json
+@inject IBlazorDownloadFileService DownloadFileService
 
 @inject HttpClient Http
 
 @code {
     private List<StatisticDto> statistics = new List<StatisticDto>();
+    private List<MonthlyStatistic> monthlyStatistics = new List<MonthlyStatistic>();
     private string errorMessage;
     private int postsTodayCount = 0;
+    private int selectedMonth = DateTime.Now.Month; // Mặc định chọn tháng hiện tại
+    private int selectedYear = DateTime.Now.Year; // Mặc định chọn năm hiện tại
+    private bool isLoadingMonthlyStats = true;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Lấy dữ liệu thống kê từ API
+            // Lấy thống kê bài đăng theo trạng thái
             var response = await Http.GetFromJsonAsync<List<StatisticDto>>("api/Product/StatisticsByStatus");
 
             if (response != null)
@@ -33,7 +42,8 @@
                 "Đã xóa",
                 "Đã duyệt",
                 "Đã hủy",
-                "Đang chờ xác nhận",
+                "Đang chờ duyệt",
+                "Đã bán",
             };
 
             statistics = statistics
@@ -41,7 +51,7 @@
                 .OrderBy(s => allStatuses.IndexOf(s.Status)) // Sắp xếp theo thứ tự trong allStatuses
                 .ToList();
 
-            // Đảm bảo danh sách luôn có đúng 5 giá trị
+            // Đảm bảo danh sách luôn có đúng 6 giá trị
             foreach (var status in allStatuses)
             {
                 if (!statistics.Any(s => s.Status == status))
@@ -53,10 +63,62 @@
             // Lấy số bài đăng "Đã duyệt" trong ngày
             var approvedPostsTodayResponse = await Http.GetFromJsonAsync<ApprovedPostsTodayResponse>("api/Product/ApprovedPostsToday");
             postsTodayCount = approvedPostsTodayResponse?.Count ?? 0;
+
+            // Lấy thống kê bài đăng theo tháng
+            await LoadMonthlyStatistics(selectedMonth, selectedYear);
         }
         catch (Exception ex)
         {
             errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
+        }
+    }
+
+    private async Task LoadMonthlyStatistics(int month, int year)
+    {
+        isLoadingMonthlyStats = true;
+        try
+        {
+            Console.WriteLine($"Gọi API với tháng: {month}, năm: {year}");
+            var response = await Http.GetFromJsonAsync<List<MonthlyStatistic>>($"api/Product/ApprovedPostsByMonth/{month}/{year}");
+
+            if (response != null)
+            {
+                monthlyStatistics = response;
+            }
+            else
+            {
+                monthlyStatistics = new List<MonthlyStatistic>();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Không thể tải thống kê: {ex.Message}";
+        }
+        finally
+        {
+            isLoadingMonthlyStats = false;
+        }
+    }
+
+
+    private async Task ExportToExcel()
+    {
+        var response = await Http.GetAsync("api/product/export-post-statistics");
+        if (response.IsSuccessStatusCode)
+        {
+            var fileBytes = await response.Content.ReadAsByteArrayAsync();
+            var fileName = "PostStatistics.xlsx";
+
+            // Sử dụng phương thức đúng với ba tham số
+            await DownloadFileService.DownloadFile(fileName, fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+            // Thông báo thành công
+            Console.WriteLine("Tải file Excel thành công.");
+        }
+        else
+        {
+            // Thông báo lỗi khi tải file
+            Console.WriteLine("Lỗi khi tải file Excel");
         }
     }
 
@@ -72,6 +134,13 @@
         public int Count { get; set; }
     }
 
+    public class MonthlyStatistic
+    {
+        public int Month { get; set; }
+        public int Year { get; set; }
+        public int ApprovedPosts { get; set; }
+    }
+
     private string GetCardColor(string status)
     {
         return status switch
@@ -80,10 +149,12 @@
             "Đã xóa" => "bg-secondary text-white",
             "Đã duyệt" => "bg-success text-white",
             "Đã hủy" => "bg-danger text-white",
-            "Đang chờ xác nhận" => "bg-info text-white",
+            "Đang chờ duyệt" => "bg-info text-white",
+            "Đã bán" => "bg-warning text-dark",
             _ => "bg-light text-dark",
         };
     }
+
 
     private string GetIconClass(string status)
     {
@@ -93,7 +164,8 @@
             "Đã xóa" => "fas fa-trash-alt",
             "Đã duyệt" => "fas fa-check-circle",
             "Đã hủy" => "fas fa-times-circle",
-            "Đang chờ xác nhận" => "fas fa-hourglass-half",
+            "Đang chờ duyệt" => "fas fa-hourglass-half",
+            "Đã bán" => "fas fa-shopping-cart",
             _ => "fas fa-info-circle",
         };
     }
@@ -101,53 +173,139 @@
 }
 
 <div class="container mt-5">
-    <h1 class="text-center mb-4 text-primary">Thống Kê Bài Đăng</h1>
+    <h1 class="text-center mb-4 text-primary">Tổng Quan Thống Kê Bài Đăng</h1>
 
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        @if (statistics.Count > 0)
-        {
-            @foreach (var stat in statistics)
-            {
-                <div class="col">
-                    <div class="card shadow-sm h-100 @GetCardColor(stat.Status)">
-                        <div class="card-body d-flex flex-column align-items-center">
-                            <div class="icon mb-3">
-                                <i class="@GetIconClass(stat.Status) fa-2x"></i>
+    <!-- Thêm nút Export Excel -->
+    <div class="text-center mb-4">
+        <button class="btn btn-success" @onclick="ExportToExcel">
+            <i class="fas fa-download"></i> Xuất Excel
+        </button>
+    </div>
+
+    <!-- Tab navigation -->
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="home-tab" data-bs-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Tổng Quan Thống Kê</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="approved-posts-tab" data-bs-toggle="tab" href="#approved-posts" role="tab" aria-controls="approved-posts" aria-selected="false">Thống Kê Theo Ngày</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="monthly-statistics-tab" data-bs-toggle="tab" href="#monthly-statistics" role="tab" aria-controls="monthly-statistics" aria-selected="false">Thống Kê Theo Tháng Và Năm</a>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-4" id="myTabContent">
+        <!-- Tổng Quan Thống Kê -->
+        <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                @if (statistics.Count > 0)
+                {
+                    @foreach (var stat in statistics)
+                    {
+                        <div class="col">
+                            <div class="card shadow-sm h-100 @GetCardColor(stat.Status)">
+                                <div class="card-body d-flex flex-column align-items-center">
+                                    <div class="icon mb-3">
+                                        <i class="@GetIconClass(stat.Status) fa-2x"></i>
+                                    </div>
+                                    <h5 class="card-title text-center">@stat.Status</h5>
+                                    <p class="fs-3 fw-bold text-center">@stat.Count</p>
+                                </div>
                             </div>
-                            <h5 class="card-title text-center">@stat.Status</h5>
-                            <p class="fs-3 fw-bold text-center">@stat.Count</p>
+                        </div>
+                    }
+                }
+                else if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="col-12">
+                        <div class="alert alert-danger text-center">@errorMessage</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="col-12 text-center text-muted">
+                        <p>Không có dữ liệu để hiển thị.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Thống Kê Bài Đăng Đã Duyệt -->
+        <div class="tab-pane fade" id="approved-posts" role="tabpanel" aria-labelledby="approved-posts-tab">
+            <div class="row justify-content-center">
+                <div class="col-md-6" style="width: 100%;">
+                    <div class="card text-center shadow-lg">
+                        <div class="card-header bg-success text-white">
+                            <h3>Thống Kê Bài Đăng Đã Duyệt Theo Ngày</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="display-4 fw-bold">@postsTodayCount</p>
+                        </div>
+                        <div class="card-footer text-muted">
+                            Cập nhật lúc: @DateTime.Now.ToString("HH:mm:ss")
                         </div>
                     </div>
                 </div>
-            }
-        }
-        else if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <div class="col-12">
-                <div class="alert alert-danger text-center">@errorMessage</div>
             </div>
-        }
-        else
-        {
-            <div class="col-12 text-center text-muted">
-                <p>Không có dữ liệu để hiển thị.</p>
-            </div>
-        }
-    </div>
-</div>
+        </div>
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6" style="width: 100%;">
-            <div class="card text-center shadow-lg">
-                <div class="card-header bg-success text-white">
-                    <h3>Số Bài Đăng Trong Ngày</h3>
+        <!-- Thống Kê Bài Đăng Theo Tháng Và Năm -->
+        <div class="tab-pane fade" id="monthly-statistics" role="tabpanel" aria-labelledby="monthly-statistics-tab">
+            <!-- Card chứa phần chọn tháng và năm -->
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-8" style="width: 100%;">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white text-center">
+                            <h5>Chọn Tháng và Năm</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-center">
+                                <div class="input-group me-3">
+                                    <span class="input-group-text">Tháng</span>
+                                    <input type="number" min="1" max="12" class="form-control" @bind="selectedMonth" />
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text">Năm</span>
+                                    <input type="number" min="2000" max="@DateTime.Now.Year" class="form-control" @bind="selectedYear" />
+                                </div>
+                                <button class="btn btn-primary ms-3" @onclick="() => LoadMonthlyStatistics(selectedMonth, selectedYear)">
+                                    <i class="fas fa-sync"></i> Cập Nhật
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <p class="display-4 fw-bold">@postsTodayCount</p>
-                </div>
-                <div class="card-footer text-muted">
-                    Cập nhật lúc: @DateTime.Now.ToString("HH:mm:ss")
+            </div>
+
+            <!-- Card chứa thống kê bài đăng theo tháng và năm -->
+            <div class="row justify-content-center">
+                <div class="col-md-8" style="width: 100%;">
+                    <div class="card shadow-lg border-primary">
+                        <div class="card-header text-center bg-success text-white">
+                            <h3>Thống Kê Bài Đăng Tháng @selectedMonth, @selectedYear</h3>
+                        </div>
+                        <div class="card-body">
+                            @if (isLoadingMonthlyStats)
+                            {
+                                <p class="text-center text-muted">Đang tải...</p>
+                            }
+                            else if (monthlyStatistics.Count == 0)
+                            {
+                                <p class="text-center text-muted">Không có dữ liệu cho tháng này.</p>
+                            }
+                            else
+                            {
+                                @foreach (var stat in monthlyStatistics)
+                                {
+                                    <div class="text-center">
+                                        <h5>Số bài đăng đã duyệt:</h5>
+                                        <p class="fs-3 text-success" style="font-size: 10px;">@stat.ApprovedPosts</p>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -155,6 +313,10 @@
 </div>
 
 <style>
+    .icon {
+        color: #fff;
+    }
+
     .card {
         cursor: pointer;
         transition: transform 0.2s ease-in-out;
@@ -166,7 +328,58 @@
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
-    .icon {
-        color: #fff;
+    .card-body {
+        min-height: 120px;
     }
+
+    .input-group .form-control {
+        width: 120px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+
+    .input-group-text {
+        min-width: 60px;
+    }
+
+    .card-header h3 {
+        font-size: 1.5rem;
+    }
+
+    .card-body h5 {
+        font-size: 1.25rem;
+        font-weight: bold;
+    }
+
+    .card-body p {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+
+    .card-footer {
+        background-color: #f8f9fa;
+    }
+
+    .card-body .fs-3 {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+
+    .card {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease-in-out;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
 </style>

@@ -315,3 +315,40 @@
     .alert.hide {
         opacity: 0;
     }
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Khoảng cách giữa icon và nội dung */
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #842029;
+    border-color: #f5c2c7;
+}
+
+    .alert-danger .bi-exclamation-triangle-fill {
+        font-size: 1.5rem; /* Kích thước icon */
+        color: #842029; /* Màu icon phù hợp với thông báo */
+    }
+
+/* Hiệu ứng khi hiển thị thông báo */
+.alert {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

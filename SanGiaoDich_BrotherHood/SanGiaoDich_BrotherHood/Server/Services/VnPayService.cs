@@ -29,6 +29,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public async Task<Withdrawal_Infomation> AddWithdrawal(Withdrawal_InfomationDto withdrawal)
         {
             var user = GetUserInfoFromClaims();
+            var fU = await _context.Accounts.FirstOrDefaultAsync(x => x.UserName == user.UserName);
             var newWI = new Withdrawal_Infomation
             {
                 PaymentType = withdrawal.PaymentType,
@@ -41,6 +42,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 UserName = user.UserName,
                 FullName = user.FullName,
             };
+            fU.PreSystem = (fU.PreSystem - (decimal)newWI.Amount);
             await _context.withdrawal_Infomations.AddAsync(newWI);
             await _context.SaveChangesAsync();
             return newWI;
@@ -78,7 +80,12 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
         public async Task<IEnumerable<Withdrawal_Infomation>> GetAllWithdrawals()
         {
-            return await _context.withdrawal_Infomations.ToListAsync();
+            var getall = await _context.withdrawal_Infomations.ToListAsync();
+            if(getall != null)
+            {
+                return getall;
+            }
+            throw new NotImplementedException();
         }
 
         public PaymentResponseModel PaymentExecute(IQueryCollection collections)
@@ -238,14 +245,36 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
         public async Task<Withdrawal_Infomation> UpdateWithDaral(int id, string status)
         {
-            var FInd = await _context.withdrawal_Infomations.FindAsync(id);
-            if (FInd == null)
+            // Tìm giao dịch rút tiền theo ID
+            var withdrawal = await _context.withdrawal_Infomations.FindAsync(id);
+            if (withdrawal == null)
             {
-                throw new NotImplementedException();
+                throw new KeyNotFoundException("Không tìm thấy giao dịch rút tiền.");
             }
-            FInd.Status = status;
+
+            // Nếu trạng thái là "Đã hủy", cộng tiền lại cho người dùng
+            if (status == "Đã hủy")
+            {
+                // Lấy thông tin người dùng từ UserId của giao dịch
+                var user = await _context.Accounts.FindAsync(withdrawal.UserName);
+                if (user == null)
+                {
+                    throw new KeyNotFoundException("Không tìm thấy thông tin người dùng.");
+                }
+
+                // Cộng lại số tiền đã bị trừ
+                user.PreSystem += (decimal)withdrawal.Amount;
+
+                // Cập nhật thông tin người dùng
+                _context.Accounts.Update(user);
+            }
+
+            // Cập nhật trạng thái của giao dịch
+            withdrawal.Status = status;
             await _context.SaveChangesAsync();
-            return FInd;
+
+            return withdrawal;
         }
+
     }
 }
