@@ -10,6 +10,7 @@
         padding: 0;
         box-sizing: border-box;
     }
+
     .navbar-nav .nav-link {
         color: black;
         text-decoration: none;
@@ -18,9 +19,9 @@
     }
 
         .navbar-nav .nav-link:hover {
-            color: white; 
-            background-color: green; 
-            border-radius: 5px; 
+            color: white;
+            background-color: green;
+            border-radius: 5px;
         }
 
     body {
@@ -33,7 +34,6 @@
         align-items: center;
         background-color: #fff;
         border-bottom: 1px solid #ddd;
-
     }
 
     .logo img {
@@ -114,16 +114,18 @@
 
     ul {
         padding-left: 0;
-        margin: 0; 
-    }
-    ul>li>a{
-        text-decoration:none;
-        color:black;
+        margin: 0;
     }
 
-    ul>li{
-        list-style:none;
-    }
+        ul > li > a {
+            text-decoration: none;
+            color: black;
+        }
+
+        ul > li {
+            list-style: none;
+        }
+
     .social-icons {
         display: flex;
         flex-direction: row;
@@ -139,15 +141,18 @@
             color: #28a745;
             top: 20px;
         }
-        .navbar-toggler-icon{
-            background-image: url('/AnhGiaoDien/menu.png');
-        }
-        .page{
+
+    .navbar-toggler-icon {
+        background-image: url('/AnhGiaoDien/menu.png');
+    }
+
+    .page {
         font-family: 'Playfair Display', serif;
-        }
-        .content{
+    }
+
+    .content {
         font-family: 'Playfair Display', serif;
-        }
+    }
 
     #scrollToTopBtn {
         position: fixed;
@@ -167,14 +172,14 @@
 
     .user-dropdown-toggle {
         display: flex;
-        justify-content: center; 
-        align-items: center; 
+        justify-content: center;
+        align-items: center;
         width: 25px;
-        height: 25px; 
+        height: 25px;
         background: none;
         border: none;
         color: #333;
-        font-size: 1.8em; 
+        font-size: 1.8em;
         padding: 0;
         margin: 0;
         cursor: pointer;
@@ -313,65 +318,6 @@
         cursor: pointer;
     }
 
-
-
-    /* Đảm bảo rằng các lớp CSS cho modal không ảnh hưởng đến các phần tử khác */
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.7); /* Tăng độ đậm của nền mờ */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-    }
-
-    .modal-content {
-        background-color: #f9f9f9; /* Màu nền nhẹ nhàng cho modal */
-        padding: 30px;
-        border-radius: 12px; /* Làm bo tròn góc modal */
-        text-align: center;
-        width: 320px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Thêm bóng đổ nhẹ cho modal */
-        opacity: 0; /* Bắt đầu với opacity 0 */
-        transition: opacity 0.3s ease-out; /* Hiệu ứng mờ dần */
-    }
-
-        .modal-content.modal-show {
-            opacity: 1; /* Modal sẽ mờ dần đến opacity 1 khi hiển thị */
-        }
-
-    .modal-header {
-        color: #28a745; /* Màu xanh lá cho tiêu đề */
-        font-size: 20px;
-        margin-bottom: 15px;
-    }
-
-    .modal-body {
-        color: #333; /* Màu chữ cho nội dung thông báo */
-        font-size: 16px;
-        margin-bottom: 20px;
-    }
-
-    .modal-button {
-        padding: 12px 25px;
-        background-color: #28a745; /* Màu nền nút xanh lá */
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: background-color 0.3s ease, transform 0.3s ease;
-    }
-
-        .modal-button:hover {
-            background-color: #218838; /* Màu nền nút khi hover */
-            transform: scale(1.05); /* Thêm hiệu ứng phóng to nhẹ khi hover */
-        }
-
 </style>
 <div class="page">
     <div class="main">
@@ -452,7 +398,7 @@
                                 {
                                     <div class="dropdown user-dropdown">
                                         <a class="user-dropdown-toggle" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                            @if(accountInfo.ImageAccount == null)
+                                            @if (accountInfo.ImageAccount == null)
                                             {
                                                 <i class="fas fa-user-circle"></i>
 
@@ -479,7 +425,7 @@
                                                                     <a href="/vnpay/naptien" class="btn btn-success text-white btn-sm" id="depositButton">
                                                                         <i class="fas fa-arrow-circle-up"></i> Nạp tiền
                                                                     </a>
-                                                                    <a href="/ruttien" class="btn btn-warning text-white btn-sm" id="withdrawButton">
+                                                                    <a href="/receive-qr" class="btn btn-warning text-white btn-sm" id="withdrawButton">
                                                                         <i class="fas fa-arrow-circle-down"></i> Rút tiền
                                                                     </a>
                                                                 </div>
@@ -586,7 +532,7 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="custom-dropdown-item"  @onclick="() => NavigateToProductDetail(accountInfo.UserName)">
+                                        <a class="custom-dropdown-item" @onclick="() => NavigateToProductDetail(accountInfo.UserName)">
                                             <i class="fas fa-user"></i> Thông tin tài khoản
                                         </a>
                                     </li>
@@ -616,7 +562,7 @@
                         <span>Người dùng</span>
                     </a>
 
-               
+
 
 
 
@@ -628,30 +574,15 @@
 
         <div class="content" ng-app="app">
             @Body
-            @if (showModal)
-            {
-                <div class="modal-overlay">
-                    <div class="modal-content @((showModal) ? "modal-show" : "")">
-                        <div class="modal-header">
-                            <h3>Thông báo</h3>
-                        </div>
-                        <div class="modal-body">
-                            <p>Không có quyền truy cập</p>
-                        </div>
-                        <button class="modal-button" @onclick="CloseModal">Đóng</button>
-                    </div>
-                </div>
-            }
-
         </div>
-       
+
 
         @*Footer*@
         <button id="scrollToTopBtn" class="btn btn-primary" style="display: none;">
             <i class="fas fa-arrow-up"></i> Quay lên
         </button>
-            <footer>
-                 <div class="container-fluid">
+        <footer>
+            <div class="container-fluid">
                 <div class="row">
                     <div class="col-md-3">
                         <div class="group-item text-center">
@@ -705,8 +636,8 @@
                     </div>
                 </div>
             </div>
-            </footer>
-        </div>
+        </footer>
+    </div>
 
 
 </div>
@@ -716,7 +647,6 @@
     private AccountInfoDto accountInfo;
     private bool IsLoggedIn { get; set; } = false; // Biến để theo dõi trạng thái đăng nhập
     private string searchQuery;
-    private bool showModal = false; // Biến để điều khiển việc hiển thị modal
 
     protected override async Task OnInitializedAsync()
     {
@@ -767,10 +697,10 @@
                 accountInfo = await response.Content.ReadFromJsonAsync<AccountInfoDto>();
 
                 // Kiểm tra điều kiện TimeBan và IsDelete
-                if (accountInfo.TimeBan > DateTime.Now || accountInfo.IsDelete || accountInfo.Role == "Chủ" || accountInfo.Role == "Nhân viên")
+                if (accountInfo.TimeBan > DateTime.Now || accountInfo.IsDelete)
                 {
-                    // Nếu bị ban hoặc tài khoản bị xóa, thực hiện logout và hiển thị modal
-                    showModal = true; // Đợi 3 giây trước khi đăng xuất
+                    // Nếu bị ban hoặc tài khoản bị xóa, thực hiện logout
+                    await Logout();
                     return;
                 }
 
@@ -794,6 +724,7 @@
         }
     }
 
+
     private class AccountInfoDto
     {
         public string UserName { get; set; }
@@ -805,7 +736,6 @@
         public bool IsDelete { get; set; }
         public DateTime TimeBan { get; set; }
         public string ImageAccount { get; set; }
-        public string Role { get; set; }
     }
 
     private async Task Logout()
@@ -820,13 +750,6 @@
     private void NavigateToProductDetail(string userName)
     {
         NavigationManager.NavigateTo($"/ThongTinNguoiDung/{userName}", forceLoad: true);
-    }
-
-    // Đóng modal
-    private async Task CloseModal()
-    {
-        showModal = false; // Đóng modal
-        await Logout(); // Đăng xuất người dùng
     }
 }
 <script>

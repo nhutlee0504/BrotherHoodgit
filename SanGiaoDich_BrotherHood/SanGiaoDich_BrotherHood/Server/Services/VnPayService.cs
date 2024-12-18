@@ -26,17 +26,10 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-<<<<<<< HEAD
         public async Task<Withdrawal_Infomation> AddWithdrawal(Withdrawal_InfomationDto withdrawal)
         {
             var user = GetUserInfoFromClaims();
             var newWI = new Withdrawal_Infomation
-=======
-        public async Task<Withdrawal_information> AddWithdrawal(Withdrawal_informationDto withdrawal)
-        {
-            var user = GetUserInfoFromClaims();
-            var newWI = new Withdrawal_information
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
             {
                 PaymentType = withdrawal.PaymentType,
                 Amount = withdrawal.Amount,
@@ -48,11 +41,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 UserName = user.UserName,
                 FullName = user.FullName,
             };
-<<<<<<< HEAD
             await _context.withdrawal_Infomations.AddAsync(newWI);
-=======
-            await _context.withdrawal_Information.AddAsync(newWI);
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
             await _context.SaveChangesAsync();
             return newWI;
         }
@@ -87,15 +76,9 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
         }
 
-<<<<<<< HEAD
         public async Task<IEnumerable<Withdrawal_Infomation>> GetAllWithdrawals()
         {
             return await _context.withdrawal_Infomations.ToListAsync();
-=======
-        public async Task<IEnumerable<Withdrawal_information>> GetAllWithdrawals()
-        {
-            return await _context.withdrawal_Information.ToListAsync();
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
         }
 
         public PaymentResponseModel PaymentExecute(IQueryCollection collections)
@@ -253,15 +236,9 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             throw new UnauthorizedAccessException("Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.");
         }
 
-<<<<<<< HEAD
         public async Task<Withdrawal_Infomation> UpdateWithDaral(int id, string status)
         {
             var FInd = await _context.withdrawal_Infomations.FindAsync(id);
-=======
-        public async Task<Withdrawal_information> UpdateWithDaral(int id, string status)
-        {
-            var FInd = await _context.withdrawal_Information.FindAsync(id);
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
             if (FInd == null)
             {
                 throw new NotImplementedException();

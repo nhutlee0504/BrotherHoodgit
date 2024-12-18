@@ -1,8 +1,5 @@
 ﻿@using SanGiaoDich_BrotherHood.Shared.Dto
-<<<<<<< HEAD
-=======
 @using Microsoft.AspNetCore.Components.Forms
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
 @inject NavigationManager NavigationManager
 @inject HttpClient http
 @inject IJSRuntime jsruntime
@@ -84,11 +81,7 @@ else
                                     <td>@item.CreatedDate.ToString("dd/MM/yyyy")</td>
                                     <td>@item.Bank</td>
                                     <td>
-<<<<<<< HEAD
                                         @item.Status
-=======
-                                      @item.Status
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
                                     </td>
                                     <td>@item.AccountNumber</td>
                                 </tr>
@@ -106,23 +99,14 @@ else
 }
 
 @code {
-<<<<<<< HEAD
     private Withdrawal_InfomationDto Withdrawal = new Withdrawal_InfomationDto
-=======
-    private Withdrawal_informationDto Withdrawal = new Withdrawal_informationDto
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
         {
             PaymentType = "Rút tiền",
             Status = "Chưa thanh toán",
         };
 
-<<<<<<< HEAD
     private List<Withdrawal_InfomationDto> Withdrawals = new();
 
-=======
-    private List<Withdrawal_informationDto> Withdrawals = new();
-        
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
     private List<string> BankList = new()
     {
         "Ngân hàng TMCP Ngoại thương Việt Nam (Vietcombank)",
@@ -158,11 +142,7 @@ else
                 return;
             }
 
-<<<<<<< HEAD
             var withdrawalRequest = new Withdrawal_InfomationDto
-=======
-            var withdrawalRequest = new Withdrawal_informationDto
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
                 {
                     Amount = Withdrawal.Amount,
                     Bank = Withdrawal.Bank,
@@ -187,21 +167,12 @@ else
                             To = accountInfo.Email,
                             Subject = "Yêu cầu rút tiền đã được ghi nhận",
                             Body = $"Xin chào {accountInfo.FullName},\n\n" +
-<<<<<<< HEAD
                                        $"Yêu cầu rút tiền của bạn đã được ghi nhận với thông tin như sau:\n\n" +
                                        $"- Số tiền: {withdrawalRequest.Amount.ToString("N0")} VND\n" +
                                        $"- Ngân hàng: {withdrawalRequest.Bank}\n" +
                                        $"- Số tài khoản: {withdrawalRequest.AccountNumber}\n\n" +
                                        "Chúng tôi sẽ xử lý yêu cầu của bạn trong thời gian sớm nhất.\n\n" +
                                        "Trân trọng,\nĐội ngũ BrotherHood"
-=======
-                                   $"Yêu cầu rút tiền của bạn đã được ghi nhận với thông tin như sau:\n\n" +
-                                   $"- Số tiền: {withdrawalRequest.Amount.ToString("N0")} VND\n" +
-                                   $"- Ngân hàng: {withdrawalRequest.Bank}\n" +
-                                   $"- Số tài khoản: {withdrawalRequest.AccountNumber}\n\n" +
-                                   "Chúng tôi sẽ xử lý yêu cầu của bạn trong thời gian sớm nhất.\n\n" +
-                                   "Trân trọng,\nĐội ngũ BrotherHood"
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
                         };
 
                     await SendEmail(emailRequest);
@@ -240,11 +211,7 @@ else
     {
         try
         {
-<<<<<<< HEAD
             var allWithdrawals = await http.GetFromJsonAsync<List<Withdrawal_InfomationDto>>("api/payment/withdrawals");
-=======
-            var allWithdrawals = await http.GetFromJsonAsync<List<Withdrawal_informationDto>>("api/payment/withdrawals");
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
             Withdrawals = allWithdrawals?.Where(w => w.UserName == accountInfo.UserName).ToList();
         }
         catch (Exception ex)

@@ -96,11 +96,7 @@ else
 }
 
 @code {
-<<<<<<< HEAD
     private List<Withdrawal_Infomation> Withdrawals = new();
-=======
-    private List<Withdrawal_information> Withdrawals = new();
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
     private string ErrorMessage;
     private bool IsLoggedIn { get; set; } = true;
 
@@ -149,11 +145,7 @@ else
     {
         try
         {
-<<<<<<< HEAD
             var response = await http.PutAsJsonAsync<Withdrawal_Infomation>($"api/payment/update-withdrawal/{id}/{status}", null);
-=======
-            var response = await http.PutAsJsonAsync<Withdrawal_information>($"api/payment/update-withdrawal/{id}/{status}", null);
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
 
             if (response.IsSuccessStatusCode)
             {
@@ -175,11 +167,7 @@ else
     {
         try
         {
-<<<<<<< HEAD
             Withdrawals = await http.GetFromJsonAsync<List<Withdrawal_Infomation>>("api/payment/withdrawals");
-=======
-            Withdrawals = await http.GetFromJsonAsync<List<Withdrawal_information>>("api/payment/withdrawals");
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
         }
         catch (Exception ex)
         {
@@ -264,15 +252,9 @@ else
                 To = email,
                 Subject = "Thông báo về yêu cầu rút tiền",
                 Body = $"Xin chào,\n\n" +
-<<<<<<< HEAD
                            $"Chúng tôi xin thông báo rằng yêu cầu rút tiền của bạn đã được {status}.\n\n" +
                            "Vui lòng kiểm tra lại thông tin tài khoản và các chi tiết liên quan. Nếu có bất kỳ thắc mắc nào, xin vui lòng liên hệ với chúng tôi.\n\n" +
                            "Trân trọng,\nĐội ngũ hỗ trợ"
-=======
-                       $"Chúng tôi xin thông báo rằng yêu cầu rút tiền của bạn đã được {status}.\n\n" +
-                       "Vui lòng kiểm tra lại thông tin tài khoản và các chi tiết liên quan. Nếu có bất kỳ thắc mắc nào, xin vui lòng liên hệ với chúng tôi.\n\n" +
-                       "Trân trọng,\nĐội ngũ hỗ trợ"
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
             };
 
         await SendEmail(emailContent);
@@ -291,17 +273,10 @@ else
                 To = email,
                 Subject = "Thông báo về yêu cầu rút tiền",
                 Body = $"Xin chào,\n\n" +
-<<<<<<< HEAD
                            $"Chúng tôi xin thông báo rằng yêu cầu rút tiền của bạn đã được {status}.\n" +
                            $"Lý do: {reason}\n\n" +
                            "Vui lòng kiểm tra lại thông tin tài khoản và các chi tiết liên quan. Nếu có bất kỳ thắc mắc nào, xin vui lòng liên hệ với chúng tôi.\n\n" +
                            "Trân trọng,\nĐội ngũ hỗ trợ"
-=======
-                       $"Chúng tôi xin thông báo rằng yêu cầu rút tiền của bạn đã được {status}.\n" +
-                       $"Lý do: {reason}\n\n" +
-                       "Vui lòng kiểm tra lại thông tin tài khoản và các chi tiết liên quan. Nếu có bất kỳ thắc mắc nào, xin vui lòng liên hệ với chúng tôi.\n\n" +
-                       "Trân trọng,\nĐội ngũ hỗ trợ"
->>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
             };
 
         await SendEmail(emailContent);
