@@ -25,11 +25,13 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public Task<Product> DeleteProductById(int id);
         public Task<Product> UpdateProrityLevel(int id);
         public Task<IEnumerable<dynamic>> GetStatisticsByStatusAsync();
+
         Task<decimal> GetTotalRevenueAsync();
         Task<decimal> GetRevenueByDateAsync(DateTime date);
-        Task<decimal> GetRevenueByWeekAsync(DateTime startDate);
         Task<decimal> GetRevenueByMonthAsync(int month, int year);
-        Task<byte[]> ExportProductsToExcelAsync();
+        Task<decimal> GetRevenueByYearAsync(int year);
+        Task<MemoryStream> ExportRevenueStatisticsToExcelAsync(DateTime date);
+
         Task<int> GetApprovedPostsByMonthAsync(int month, int year);
 
         // Phương thức xuất báo cáo bài đăng sang Excel
