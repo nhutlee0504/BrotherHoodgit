@@ -43,7 +43,7 @@
     .btn-search,
     .btn-primary {
         padding: 12px 20px;
-        background-color: #4CAF50;
+        background-color: royalblue; /* Màu xanh dương */
         color: white;
         border: none;
         border-radius: 8px;
@@ -54,38 +54,28 @@
 
         .btn-search:hover,
         .btn-primary:hover {
-            background-color: #45a049;
+            background-color: #1e90ff; /* Xanh dương nhạt khi hover */
         }
 
-    /* Table Styles */
-    .table-posts {
-        width: 100%;
-        border-collapse: collapse;
-        background-color: #fff;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /* Tùy chỉnh bảng: màu nền xen kẽ */
+    .table-striped-custom tbody tr:nth-child(odd) {
+        background-color: #f8f9fa; /* Màu xám nhạt */
     }
 
-        .table-posts th {
-            padding: 16px;
-            background-color: #4CAF50;
-            color: white;
-            text-align: left;
-            font-size: 1rem;
-            text-transform: uppercase;
-        }
+    .table-striped-custom tbody tr:nth-child(even) {
+        background-color: #ffffff; /* Màu trắng */
+    }
 
-        .table-posts td {
-            padding: 16px;
-            border-bottom: 1px solid #ddd;
-            font-size: 1rem;
-            text-align: center;
-        }
+    .table-striped-custom th {
+        background-color: #343a40; /* Nền màu đen xám */
+        color: #ffffff; /* Chữ trắng */
+    }
 
-        .table-posts tr:hover {
-            background-color: #f9f9f9;
-        }
+    .table-striped-custom td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+        vertical-align: middle; /* Canh giữa theo chiều dọc */
+    }
 
     /* Các nút hành động */
     .action-buttons {
@@ -102,44 +92,25 @@
         background-color: #f44336;
     }
 
-    /* Cập nhật các kiểu cho nút phân trang */
+    /* Nút phân trang màu xanh lá */
     .pagination .page-link {
-        display: block;
-        padding: 12px 18px;
-        color: #4CAF50; /* Màu chữ sẽ giữ nguyên hoặc có thể đổi màu theo ý */
-        font-size: 1rem;
-        position: relative;
-        border: none; /* Loại bỏ đường viền */
-        background-color: transparent; /* Loại bỏ màu nền */
-        cursor: pointer;
+        color: #28a745; /* Màu chữ xanh lá */
+        border: none; /* Bỏ đường viền */
+        border-radius: 0; /* Bo góc vuông */
+        text-decoration: underline; /* Gạch chân */
+        text-decoration-color: #28a745; /* Gạch chân màu xanh lá */
     }
 
-    .pagination .page-item.disabled .page-link {
-        color: #ccc; /* Để hiển thị màu khi trang bị vô hiệu hóa */
+    .pagination .page-item.active .page-link {
+        background-color: #28a745; /* Nền xanh lá cho trang hiện tại */
+        color: #fff; /* Màu chữ trắng */
+        border: none;
     }
 
-    .pagination .active .page-link {
-        color: #4CAF50; /* Màu của trang hiện tại vẫn giữ như trước */
-    }
-
-    .pagination .page-link::after {
-        content: "";
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: -4px;
-        height: 3px;
-        background-color: #4CAF50;
-        border-radius: 2px;
-        visibility: hidden; /* Ẩn underline */
-    }
-
-    .pagination .active .page-link::after {
-        visibility: visible;
-    }
-
-    .pagination .page-item {
-        margin: 0; /* Loại bỏ khoảng cách bên ngoài */
+    .pagination .page-item .page-link:focus,
+    .pagination .page-item .page-link:hover {
+        color: #218838; /* Xanh lá đậm khi hover */
+        text-decoration-color: #218838;
     }
 </style>
 <div class="search-filter-container">
@@ -174,7 +145,7 @@
     </div>
 
 </div>
-<table class="table table-striped d-none d-sm-table">
+<table class="table table-hover table-striped-custom align-middle text-center">
     <thead>
         <tr class="text-center">
             <th>Tên sản phẩm</th>
@@ -243,6 +214,7 @@
     private Product product1 = new Product();
     private string searchQuery = string.Empty;
     private string errorMessage = string.Empty;
+    private List<Product> allProducts = new List<Product>(); // Danh sách gốc
 
     private int currentPage = 1;
     private int pageSize = 10; // Số sản phẩm trên mỗi trang
@@ -256,20 +228,13 @@
     {
         try
         {
-            products = await httpClient.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
-            productImages = new Dictionary<int, List<string>>();
-            products = products.Where(p => p.Status != "Đã xóa").ToList();
-            foreach (var product in products)
-            {
-                var images = await httpClient.GetFromJsonAsync<List<ImageProduct>>($"api/ImageProduct/GetImageProduct?id={product.IDProduct}");
-                productImages[product.IDProduct] = images?.Select(img => img.Image).ToList() ?? new List<string>();
-            }
+            allProducts = await httpClient.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
+            products = allProducts; // Hiển thị tất cả sản phẩm ban đầu
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error fetching products or images: {ex.Message}");
+            Console.WriteLine($"Error fetching products: {ex.Message}");
         }
-
     }
     private async Task Search()
     {

@@ -3,7 +3,7 @@
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
 
-<h3 class="text-center my-4">Thống Kê Doanh Thu</h3>
+<h3 class="text-center my-4 text-primary">Thống Kê Doanh Thu</h3>
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
@@ -28,8 +28,8 @@ else
     <div class="container">
         <!-- Doanh thu tổng -->
         <div class="row my-4">
-            <div class="col-md-12">
-                <div class="card text-white bg-success mb-3 shadow-lg">
+            <div class="col-md-4 mb-4">
+                <div class="card text-white bg-success shadow-lg">
                     <div class="card-body text-center">
                         <h5 class="card-title">Tổng Doanh Thu</h5>
                         <p class="card-text fs-4 fw-bold">@totalRevenue.Value.ToString("C")</p>
@@ -41,7 +41,7 @@ else
         <!-- Chọn khoảng thời gian -->
         <div class="row my-4">
             <div class="col-md-12">
-                <h4>Chọn Thống Kê</h4>
+                <h4 class="text-secondary">Chọn Thống Kê</h4>
 
                 <div class="form-group">
                     <label for="datePicker">Ngày</label>
@@ -64,12 +64,14 @@ else
         </div>
 
         <!-- Nút Xuất Excel -->
-        <button class="btn btn-success mb-3" @onclick="ExportToExcel">Xuất Excel</button>
+        <button class="btn btn-success rounded-pill py-2 px-3" @onclick="ExportToExcel">
+            <i class="fas fa-file-excel"></i> Xuất Excel
+        </button>
 
         <!-- Danh sách sản phẩm -->
         <div class="row my-4">
             <div class="col-md-12">
-                <h4>Danh Sách Sản Phẩm</h4>
+                <h4 class="text-secondary">Danh Sách Sản Phẩm</h4>
                 @if (products == null)
                 {
                     <p class="text-center">Đang tải dữ liệu sản phẩm...</p>
@@ -80,7 +82,7 @@ else
                 }
                 else
                 {
-                    <table class="table table-hover table-bordered">
+                    <table class="table table-striped table-bordered">
                         <thead class="table-light">
                             <tr class="text-center">
                                 <th>ID</th>
@@ -93,7 +95,7 @@ else
                         <tbody>
                             @foreach (var product in products.Where(x => x.Status == "Đã duyệt"))
                             {
-                                <tr class="align-middle">
+                                <tr>
                                     <td class="text-center">@product.IDProduct</td>
                                     <td>@product.Name</td>
                                     <td class="text-center">@product.Quantity</td>
@@ -167,27 +169,14 @@ else
     {
         if (!string.IsNullOrEmpty(selectedWeek))
         {
-            try
-            {
-                var weekParts = selectedWeek.Split('-');
-                if (weekParts.Length == 2 && int.TryParse(weekParts[0], out var year) && int.TryParse(weekParts[1], out var weekNumber))
-                {
-                    var startOfWeek = FirstDateOfWeekISO8601(year, weekNumber);
-                    await GetRevenueByPeriod("Week", startOfWeek.ToString("yyyy-MM-dd"));
-                }
-                else
-                {
-                    errorMessage = "Định dạng tuần không hợp lệ.";
-                }
-            }
-            catch (Exception ex)
-            {
-                errorMessage = "Lỗi khi xử lý tuần.";
-                Console.WriteLine($"Lỗi khi xử lý tuần: {ex.Message}");
-            }
+            var weekParts = selectedWeek.Split('-');
+            var year = int.Parse(weekParts[0]);
+            var weekNumber = int.Parse(weekParts[1]);
+
+            var startOfWeek = FirstDateOfWeekISO8601(year, weekNumber);
+            await GetRevenueByPeriod("Week", startOfWeek.ToString("yyyy-MM-dd"));
         }
     }
-
 
     private async Task GetRevenueByMonth()
     {
@@ -253,17 +242,12 @@ else
 
     private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
     {
-        if (weekOfYear < 1 || weekOfYear > 53) // Kiểm tra số tuần hợp lệ
-        {
-            throw new ArgumentOutOfRangeException("weekOfYear", "Số tuần không hợp lệ");
-        }
         var jan1 = new DateTime(year, 1, 1);
         var daysOffset = (int)DayOfWeek.Monday - (int)jan1.DayOfWeek;
         if (daysOffset < 0) daysOffset += 7;
         var firstMonday = jan1.AddDays(daysOffset);
         return firstMonday.AddDays((weekOfYear - 1) * 7);
     }
-
 
     public class Product
     {

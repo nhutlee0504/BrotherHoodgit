@@ -6,84 +6,89 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
-<h3>Cập nhật sản phẩm</h3>
+<h3 class="text-center text-success mb-4">Cập nhật sản phẩm</h3>
 
 <div class="container">
-    <!-- Tên sản phẩm -->
+    <!-- Hình ảnh sản phẩm (đưa lên đầu và cho phép mở modal phóng to ảnh) -->
     <div class="form-group mb-3">
-        <label for="ProductName">Tên sản phẩm:</label>
-        <input type="text" @bind="ProductName" class="form-control" placeholder="Nhập tên sản phẩm" id="ProductName" />
+        <label>Hình ảnh sản phẩm:</label>
+        <div class="d-flex flex-wrap mb-3">
+            @if (images != null && images.Any())
+            {
+                @foreach (var image in images)
+                {
+                    <div class="image-item m-2" style="position: relative;">
+                        <img src="@image.Image" alt="Ảnh sản phẩm" class="rounded image-thumbnail" style="width: 150px; height: 150px; object-fit: cover;" @onclick="() => OpenImageModal(image.Image)" />
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="text-muted">Không có hình ảnh cho sản phẩm này.</p>
+            }
+        </div>
     </div>
 
-    <!-- Giá sản phẩm -->
+    <!-- Tên sản phẩm (không cho phép chỉnh sửa) -->
+    <div class="form-group mb-3">
+        <label for="ProductName">Tên sản phẩm:</label>
+        <input type="text" class="form-control" placeholder="Tên sản phẩm" id="ProductName" value="@ProductName" disabled />
+    </div>
+
+    <!-- Giá sản phẩm (cho phép chỉnh sửa) -->
     <div class="form-group mb-3">
         <label for="ProductPrice">Giá sản phẩm:</label>
         <input type="number" @bind="ProductPrice" class="form-control" placeholder="Nhập giá sản phẩm" id="ProductPrice" />
     </div>
 
-    <!-- Số lượng sản phẩm -->
-    <div class="form-group mb-3">
-        <label for="ProductQuantity">Số lượng sản phẩm:</label>
-        <input type="number" @bind="ProductQuantity" class="form-control" placeholder="Nhập số lượng sản phẩm" id="ProductQuantity" />
-    </div>
-
-    <!-- Loại sản phẩm -->
+    <!-- Loại sản phẩm (cho phép chỉnh sửa và chọn sẵn loại của sản phẩm) -->
+    <!-- Loại sản phẩm (cho phép chỉnh sửa và chọn sẵn loại của sản phẩm) -->
     <div class="form-group mb-3">
         <label for="ProductCategory">Loại sản phẩm:</label>
         <select @bind="ProductCategoryId" class="form-control" id="ProductCategory">
             <option value="">Chọn loại sản phẩm</option>
             @foreach (var category in categories)
             {
-                <option value="@category.IDCategory">
+                <option value="@category.IDCategory"
+                        selected="@((category.IDCategory == ProductCategoryId) ? "selected" : null)">
                     @category.NameCate
                 </option>
             }
         </select>
     </div>
 
-
-    <!-- Mô tả sản phẩm -->
+    <!-- Mô tả sản phẩm (vô hiệu hóa) -->
     <div class="form-group mb-3">
         <label for="ProductDescription">Mô tả sản phẩm:</label>
-        <textarea @bind="Description" class="form-control" id="ProductDescription" rows="4"></textarea>
+        <textarea class="form-control" id="ProductDescription" rows="4" value="@Description" disabled></textarea>
     </div>
-
-    <!-- Hình ảnh sản phẩm -->
-    <div class="form-group mb-3">
-        <label>Hình ảnh sản phẩm:</label>
-        <div class="d-flex flex-wrap">
-            @if (images != null && images.Any())
-            {
-                @foreach (var image in images)
-                {
-                    <div class="image-item m-2" style="position: relative;">
-                        <img src="/AnhSanPham/@image.Image" alt="Ảnh sản phẩm" style="width: 100px; height: 100px; object-fit: cover;" />
-                    </div>
-                }
-            }
-            else
-            {
-                <p>Không có hình ảnh cho sản phẩm này.</p>
-            }
-        </div>
-    </div>
-
-    <!-- Chọn ảnh mới từ file -->
-    <div class="form-group">
-        <label for="newImageFile">Chọn ảnh mới:</label>
-        <input type="file" id="newImageFile" @onchange="OnFileSelected" class="form-control" />
-    </div>
-
-    <button @onclick="UpdateImage" class="btn btn-primary">Cập nhật hình ảnh</button>
 
     <!-- Nút cập nhật sản phẩm -->
-    <button @onclick="UpdateProduct" class="btn btn-success">Cập nhật sản phẩm</button>
+    <div class="text-center mt-4">
+        <button @onclick="UpdateProduct" class="btn btn-success btn-lg">Cập nhật sản phẩm</button>
+    </div>
 
 </div>
 
+<!-- Modal để phóng to ảnh -->
+@if (!string.IsNullOrEmpty(SelectedImage))
+{
+    <div class="modal" tabindex="-1" style="display: block;" @onclick="CloseImageModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                </div>
+                <div class="modal-body">
+                    <img src="@SelectedImage" class="img-fluid" alt="Ảnh phóng to" />
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @if (!string.IsNullOrEmpty(errorMessage))
 {
-    <div class="alert alert-danger">@errorMessage</div>
+    <div class="alert alert-danger mt-4">@errorMessage</div>
 }
 
 @code {
@@ -96,7 +101,7 @@
     private string errorMessage { get; set; }
     private List<ImageProduct> images;
     private List<Category> categories = new List<Category>();
-    private IBrowserFile selectedFile;   // Lưu trữ ảnh mới chọn
+    private string SelectedImage { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -110,7 +115,7 @@
                 ProductName = product.Name;
                 ProductPrice = product.Price;
                 ProductQuantity = product.Quantity;
-                ProductCategoryId = product.Category?.IDCategory ?? 0; // Lấy loại sản phẩm của sản phẩm đã chọn
+                ProductCategoryId = product.IDCategory;
                 Description = product.Description;
                 images = await GetImagesByProductId(product.IDProduct);
             }
@@ -124,7 +129,6 @@
             errorMessage = $"Lỗi khi tải thông tin sản phẩm: {ex.Message}";
         }
     }
-
 
     private async Task<Product> GetProductById(int id)
     {
@@ -186,52 +190,13 @@
         }
     }
 
-    private void OnFileSelected(ChangeEventArgs e)
+    private void OpenImageModal(string imageUrl)
     {
-        // Lấy giá trị của file từ input file
-        var fileInput = e.Value as IEnumerable<IBrowserFile>;
-        var file = fileInput?.FirstOrDefault();
-
-        if (file != null)
-        {
-            // Gán giá trị file cho selectedFile
-            selectedFile = file;
-        }
-        else
-        {
-            // Thông báo lỗi nếu không có file nào được chọn
-            errorMessage = "Vui lòng chọn ảnh mới.";
-        }
+        SelectedImage = imageUrl;
     }
 
-    private async Task UpdateImage()
+    private void CloseImageModal()
     {
-        // Kiểm tra nếu có ảnh mới được chọn
-        if (selectedFile != null)
-        {
-            // Tạo formData để gửi file
-            var formData = new MultipartFormDataContent();
-            var fileContent = new StreamContent(selectedFile.OpenReadStream());
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
-            formData.Add(fileContent, "file", selectedFile.Name);
-
-            // Gửi request cập nhật hình ảnh
-            var response = await HttpClient.PutAsync($"api/ImageProduct/UpdateImage/{ProductId}", formData);
-
-            if (response.IsSuccessStatusCode)
-            {
-                // Cập nhật thành công, làm mới lại danh sách hình ảnh
-                images = await GetImagesByProductId(ProductId);
-            }
-            else
-            {
-                errorMessage = "Cập nhật hình ảnh thất bại.";
-            }
-        }
-        else
-        {
-            errorMessage = "Vui lòng chọn ảnh mới.";
-        }
+        SelectedImage = null;
     }
 }
-

@@ -167,13 +167,13 @@
 						}
 					</ul>
 				</div>
-@*                 <!-- Giá Tiền -->
-                <h5 class="mt-2 text-success">Giá tiền</h5>
-                <div class="d-flex align-items-center mb-3">
-                    <input type="text" class="form-control me-2" placeholder="Thấp" @bind="lowPrice">
-                    <input type="text" class="form-control me-2" placeholder="Cao" @bind="highPrice">
-                    <button class="btn btn-success" @onclick="FilterByPrice">Lọc</button>
-                </div> *@
+				@*                 <!-- Giá Tiền -->
+				<h5 class="mt-2 text-success">Giá tiền</h5>
+				<div class="d-flex align-items-center mb-3">
+				<input type="text" class="form-control me-2" placeholder="Thấp" @bind="lowPrice">
+				<input type="text" class="form-control me-2" placeholder="Cao" @bind="highPrice">
+				<button class="btn btn-success" @onclick="FilterByPrice">Lọc</button>
+				</div> *@
 				<!-- Gợi ý giá -->
 				<h6 class="text-muted">Gợi ý mức giá:</h6>
 				<div class="mb-3">
@@ -207,71 +207,71 @@
 				</button>
 			</div>
 		</div>
-        <!-- Product Grid -->
-        <div class="col-lg-9">
-            <div class="row">
-                @if (pagedProducts != null)
-                {
-                    foreach (var product in pagedProducts)
-                    {
-                        <div class="col-lg-4 col-6 col-md-6 mb-4 prod">
-                            <div class="card h-100 shadow-sm" style="border-radius: 15px;">
-                                <a href="@($"/ChiTietSanPham/{product.IDProduct}")">
-                                    <img src="@GetImage(product.IDProduct)" class="card-img-top" alt="@product.Name" style="height: 200px; object-fit: cover; border-radius: 15px 15px 0 0;">
-                                </a>
-                                <div class="card-body d-flex flex-column">
-                                    <h5 class="card-title">@product.Name</h5>
-                                    <p class="card-text text-danger"><strong>@product.Price.ToString("N0") VND</strong></p>
-                                    <div class="d-flex justify-content-between mt-auto">
-                                        <p class="card-text">Cần Thơ</p>
-                                        <p class="card-text text-muted">@product.StartDate?.ToString("dd/MM/yyyy")</p>
-                                    </div>
-                                    <button @onclick="() => AddToCart(product.IDProduct)" class="btn btn-success mt-3 w-100" style="border-radius: 15px;">
-                                        <i class="fas fa-shopping-cart"></i> Thêm vào giỏ
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                }
-                else
-                {
-                    <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                }
-            </div>
+		<!-- Product Grid -->
+		<div class="col-lg-9">
+			<div class="row">
+				@if (pagedProducts != null)
+				{
+					foreach (var product in pagedProducts)
+					{
+						<div class="col-lg-4 col-6 col-md-6 mb-4 prod">
+							<div class="card h-100 shadow-sm" style="border-radius: 15px;">
+								<a href="@($"/ChiTietSanPham/{product.IDProduct}")">
+									<img src="@GetImage(product.IDProduct)" class="card-img-top" alt="@product.Name" style="height: 200px; object-fit: cover; border-radius: 15px 15px 0 0;">
+								</a>
+								<div class="card-body d-flex flex-column">
+									<h5 class="card-title">@product.Name</h5>
+									<p class="card-text text-danger"><strong>@product.Price.ToString("N0") VND</strong></p>
+									<div class="d-flex justify-content-between mt-auto">
+										<p class="card-text">Cần Thơ</p>
+										<p class="card-text text-muted">@product.StartDate?.ToString("dd/MM/yyyy")</p>
+									</div>
+									<button @onclick="() => AddToCart(product.IDProduct)" class="btn btn-success mt-3 w-100" style="border-radius: 15px;">
+										<i class="fas fa-shopping-cart"></i> Thêm vào giỏ
+									</button>
+								</div>
+							</div>
+						</div>
+					}
+				}
+				else
+				{
+					<div class="spinner-border" role="status">
+						<span class="visually-hidden">Loading...</span>
+					</div>
+				}
+			</div>
 
-            <!-- Phân trang -->
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item @(currentPage == 1 ? "disabled" : "") m-2">
-                        <a class="page-link text-black" aria-label="Previous" @onclick="() => ChangePage(currentPage - 1)">
+			<!-- Phân trang -->
+			<nav aria-label="Page navigation">
+				<ul class="pagination justify-content-center">
+					<li class="page-item @(currentPage == 1 ? "disabled" : "") m-2">
+						<a class="page-link text-black" aria-label="Previous" @onclick="() => ChangePage(currentPage - 1)">
 							<span aria-hidden="true"><i class="bi bi-caret-left-fill"></i></span>
-                        </a>
-                    </li>
-                    @for (var i = currentPage - 2; i <= currentPage + 2; i++)
-                    {
+						</a>
+					</li>
+					@for (var i = currentPage - 2; i <= currentPage + 2; i++)
+					{
 						int j = i;
 						if (i > 0 && i <= totalPages)
-                        {
-                            <li class="page-item @(currentPage == i ? "selected" : "") m-2">
-                                <a class="page-link text-black" @onclick="() => ChangePage(j)">
-                                    <span>@i</span>
-                                </a>
-                            </li>
-                        }
-                    }
-                    <li class="page-item @(currentPage == totalPages ? "disabled" : "") m-2">
-                        <a class="page-link text-black" aria-label="Next" @onclick="() => ChangePage(currentPage + 1)">
+						{
+							<li class="page-item @(currentPage == i ? "selected" : "") m-2">
+								<a class="page-link text-black" @onclick="() => ChangePage(j)">
+									<span>@i</span>
+								</a>
+							</li>
+						}
+					}
+					<li class="page-item @(currentPage == totalPages ? "disabled" : "") m-2">
+						<a class="page-link text-black" aria-label="Next" @onclick="() => ChangePage(currentPage + 1)">
 							<span aria-hidden="true"><i class="bi bi-caret-right-fill"></i></span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
+						</a>
+					</li>
+				</ul>
+			</nav>
 
-        </div>
-    </div>
+		</div>
+	</div>
 </div>
 @code {
 	private string modalMessage = string.Empty;

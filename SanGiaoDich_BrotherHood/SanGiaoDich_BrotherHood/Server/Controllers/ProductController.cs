@@ -386,5 +386,30 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 
             return Ok(new { Message = "Đã xóa mềm sản phẩm thành công." });
         }
+
+        [HttpGet("ApprovedPostsToday")]
+        public async Task<IActionResult> GetApprovedPostsToday()
+        {
+            try
+            {
+                var today = DateTime.Today;
+
+                // Lấy tất cả các bài đăng/sản phẩm
+                var posts = await prod.GetAllProductsAsync();
+
+                // Lọc bài đăng "Đã duyệt" và ngày tạo là hôm nay
+                var approvedPostsToday = posts
+                    .Where(p => p.CreatedDate.HasValue
+                                && p.CreatedDate.Value.Date == today
+                                && p.Status == "Đã duyệt")
+                    .Count();
+
+                return Ok(new { Count = approvedPostsToday });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Error = $"Lỗi khi thống kê bài đăng: {ex.Message}" });
+            }
+        }
     }
 }

@@ -171,7 +171,7 @@
                                 </button>
                                 @if (bill.Status == "Chờ xác nhận")
                                 {
-                                    <button class="btn btn-danger" @onclick="() => CancelBill(bill.IDBill)">
+                                    <button class="btn btn-danger mr-3" @onclick="() => CancelBill(bill.IDBill)">
                                         <i class="bi bi-x-circle"></i> Hủy xác nhận
                                     </button>
                                 }
@@ -269,7 +269,7 @@
                             <div class="card-footer">
                                 @if (bill.Status == "Chờ xác nhận")
                                 {
-                                    <button class="btn btn-success" @onclick="() => AcceptBill(bill.IDBill)">
+                                    <button class="btn btn-success me-3" @onclick="() => AcceptBill(bill.IDBill)">
                                         <i class="bi bi-check-circle"></i> Xác nhận
                                     </button>
                                     <button class="btn btn-danger" @onclick="() => CancelBill(bill.IDBill)">
@@ -278,7 +278,7 @@
                                 }
                                 @if (bill.Status == "Đã xác nhận")
                                 {
-                                    <button class="btn btn-warning" @onclick="() => CompleteBill(bill.IDBill)">
+                                    <button class="btn btn-warning me-3" @onclick="() => CompleteBill(bill.IDBill)">
                                         <i class="bi bi-check-circle"></i> Hoàn thành
                                     </button>
                                 }
