@@ -103,87 +103,87 @@ else if (userAccount != null)
 	</div>
 
 	<div class="modal fade" id="staticBackdrop2" tabindex="-1" aria-labelledby="staticBackdropLabel2" aria-hidden="true">
-	<div class="modal-dialog modal-xl">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title" id="staticBackdropLabel">Chỉnh sửa thông tin tài khoản</h5>
-				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-			</div>
-			<div class="modal-body">
-				<div class="row">
-					<!-- Họ và tên -->
-					<div class="mb-3 col-md-6">
-						<label for="modalFullName" class="form-label">Họ và tên</label>
-						<input type="text" class="form-control @(fieldErrors.ContainsKey("FullName") ? "is-invalid" : "")" id="modalFullName" @bind="infoAccountDto.FullName" disabled />
-						@if (fieldErrors.ContainsKey("FullName"))
-						{
-							<small class="text-danger">@fieldErrors["FullName"]</small>
-						}
-					</div>
+		<div class="modal-dialog modal-xl">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="staticBackdropLabel">Chỉnh sửa thông tin tài khoản</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div class="row">
+						<!-- Họ và tên -->
+						<div class="mb-3 col-md-6">
+							<label for="modalFullName" class="form-label">Họ và tên</label>
+							<input type="text" class="form-control @(fieldErrors.ContainsKey("FullName") ? "is-invalid" : "")" id="modalFullName" @bind="infoAccountDto.FullName" disabled />
+							@if (fieldErrors.ContainsKey("FullName"))
+							{
+								<small class="text-danger">@fieldErrors["FullName"]</small>
+							}
+						</div>
 
-					<!-- Email -->
-					<div class="mb-3 col-md-6">
-						<label for="modalEmail" class="form-label">Email</label>
-						<input type="email" class="form-control @(fieldErrors.ContainsKey("Email") ? "is-invalid" : "")" id="modalEmail" @bind="infoAccountDto.Email" disabled />
-						@if (fieldErrors.ContainsKey("Email"))
-						{
-							<small class="text-danger">@fieldErrors["Email"]</small>
-						}
-					</div>
+						<!-- Email -->
+						<div class="mb-3 col-md-6">
+							<label for="modalEmail" class="form-label">Email</label>
+							<input type="email" class="form-control @(fieldErrors.ContainsKey("Email") ? "is-invalid" : "")" id="modalEmail" @bind="infoAccountDto.Email" disabled />
+							@if (fieldErrors.ContainsKey("Email"))
+							{
+								<small class="text-danger">@fieldErrors["Email"]</small>
+							}
+						</div>
 
-					<!-- Số điện thoại -->
-					<div class="mb-3 col-md-6">
-						<label for="modalPhone" class="form-label">Số điện thoại</label>
-						<input type="text" class="form-control @(fieldErrors.ContainsKey("Phone") ? "is-invalid" : "")" id="modalPhone" @bind="infoAccountDto.Phone" />
-						@if (fieldErrors.ContainsKey("Phone"))
-						{
-							<small class="text-danger">@fieldErrors["Phone"]</small>
-						}
-					</div>
+						<!-- Số điện thoại -->
+						<div class="mb-3 col-md-6">
+							<label for="modalPhone" class="form-label">Số điện thoại</label>
+							<input type="text" class="form-control @(fieldErrors.ContainsKey("Phone") ? "is-invalid" : "")" id="modalPhone" @bind="infoAccountDto.PhoneNumber" />
+							@if (fieldErrors.ContainsKey("Phone"))
+							{
+								<small class="text-danger">@fieldErrors["Phone"]</small>
+							}
+						</div>
 
-					<!-- Giới tính -->
-					<div class="mb-3 col-md-6">
-						<label for="modalGender" class="form-label">Giới tính</label>
-						<select class="form-select @(fieldErrors.ContainsKey("Gender") ? "is-invalid" : "")" id="modalGender" @bind="infoAccountDto.Gender" disabled>
-							<option value="">Chọn giới tính</option>
-							<option value="NAM">Nam</option>
-							<option value="NỮ">Nữ</option>
-							<option value="Khác">Khác</option>
-						</select>
-						@if (fieldErrors.ContainsKey("Gender"))
-						{
-							<small class="text-danger">@fieldErrors["Gender"]</small>
-						}
-					</div>
+						<!-- Giới tính -->
+						<div class="mb-3 col-md-6">
+							<label for="modalGender" class="form-label">Giới tính</label>
+							<select class="form-select @(fieldErrors.ContainsKey("Gender") ? "is-invalid" : "")" id="modalGender" @bind="infoAccountDto.Gender" disabled>
+								<option value="">Chọn giới tính</option>
+								<option value="NAM">Nam</option>
+								<option value="NỮ">Nữ</option>
+								<option value="Khác">Khác</option>
+							</select>
+							@if (fieldErrors.ContainsKey("Gender"))
+							{
+								<small class="text-danger">@fieldErrors["Gender"]</small>
+							}
+						</div>
 
-					<!-- Ngày sinh -->
-					<div class="mb-3 col-md-6">
-						<label for="modalDob" class="form-label">Ngày sinh</label>
-						<input type="text" class="form-control @(fieldErrors.ContainsKey("Dob") ? "is-invalid" : "")" id="modalDob" @bind="infoAccountDto.Dob" disabled />
-						@if (fieldErrors.ContainsKey("Dob"))
-						{
-							<small class="text-danger">@fieldErrors["Dob"]</small>
-						}
-					</div>
+						<!-- Ngày sinh -->
+						<div class="mb-3 col-md-6">
+							<label for="modalDob" class="form-label">Ngày sinh</label>
+							<input type="text" class="form-control @(fieldErrors.ContainsKey("Dob") ? "is-invalid" : "")" id="modalDob" @bind="infoAccountDto.Dob" disabled />
+							@if (fieldErrors.ContainsKey("Dob"))
+							{
+								<small class="text-danger">@fieldErrors["Dob"]</small>
+							}
+						</div>
 
-					<!-- Giới thiệu -->
-					<div class="mb-3 col-md-6">
-						<label for="modalIntroduct" class="form-label">Giới thiệu</label>
-						<textarea class="form-control @(fieldErrors.ContainsKey("Introduce") ? "is-invalid" : "")" id="modalIntroduct" rows="3" @bind="infoAccountDto.Introduce"></textarea>
-						@if (fieldErrors.ContainsKey("Introduce"))
-						{
-							<small class="text-danger">@fieldErrors["Introduce"]</small>
-						}
+						<!-- Giới thiệu -->
+						<div class="mb-3 col-md-6">
+							<label for="modalIntroduct" class="form-label">Giới thiệu</label>
+							<textarea class="form-control @(fieldErrors.ContainsKey("Introduce") ? "is-invalid" : "")" id="modalIntroduct" rows="3" @bind="infoAccountDto.Introduce"></textarea>
+							@if (fieldErrors.ContainsKey("Introduce"))
+							{
+								<small class="text-danger">@fieldErrors["Introduce"]</small>
+							}
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="custom-btn custom-btn-secondary" data-bs-dismiss="modal">Đóng</button>
-				<button type="button" class="custom-btn custom-btn-primary" @onclick="UpdateAccountInfo2">Lưu thay đổi</button>
+				<div class="modal-footer">
+					<button type="button" class="custom-btn custom-btn-secondary" data-bs-dismiss="modal">Đóng</button>
+					<button type="button" class="custom-btn custom-btn-primary" @onclick="UpdateAccountInfo2">Lưu thay đổi</button>
+				</div>
 			</div>
 		</div>
 	</div>
-</div>
 
 
 	<div class="container mt-4">
@@ -292,7 +292,7 @@ else if (userAccount != null)
 						<p><i class="fa fa-shopping-cart"></i> Tổng số đơn hàng đã mua: @totalBuyCompletedBills</p>
 						<p><i class="fa-solid fa-shopping-bag"></i> Tổng số đơn hàng đã bán: @totalSellCompletedBills</p>
 						<p>
-							Mức độ uy tín:
+							Mức độ uy tín: @averageRating
 							@for (int i = 0; i < averageRating; i++)
 							{
 								<span class="fa fa-star checked"></span>
@@ -314,10 +314,21 @@ else if (userAccount != null)
 				<div class="d-flex justify-content-center">
 					<ul class="nav nav-tabs mb-3">
 						<li class="nav-item">
-							<a class="nav-link @(activeTab == "posts" ? "active" : "")" href="javascript:void(0)"
-							   @onclick="SwitchTabToPosts">
-								<i class="fas fa-pencil-alt"></i> Bài đăng của bạn
-							</a>
+							@if(userAccount != null)
+							{
+								<a class="nav-link @(activeTab == "posts" ? "active" : "")" href="javascript:void(0)"
+								   @onclick="SwitchTabToPosts">
+									<i class="fas fa-pencil-alt"></i> Bài đăng của  @ToTitleCase(@userAccount.FullName)
+								</a>
+							}
+							else
+							{
+								<a class="nav-link @(activeTab == "posts" ? "active" : "")" href="javascript:void(0)"
+								   @onclick="SwitchTabToPosts">
+									<i class="fas fa-pencil-alt"></i> Bài đăng của bạn
+								</a>
+							}
+							
 						</li>
 						<li class="nav-item">
 							<a class="nav-link @(activeTab == "favorites" ? "active" : "")" href="javascript:void(0)"
@@ -488,7 +499,8 @@ else if (userAccount != null)
 					else
 					{
 						<p class="text-muted">Danh sách yêu thích trống.</p>
-					}			}
+					}
+				}
 			</div>
 		</div>
 

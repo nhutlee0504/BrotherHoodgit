@@ -388,8 +388,33 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         [HttpGet("UserStatistics")]
         public async Task<IActionResult> GetUserStatistics()
         {
-            var statistics = await _user.GetUserStatisticsAsync();
-            return Ok(statistics);
+            try
+            {
+                // Gọi phương thức thống kê từ service
+                var statistics = await _user.GetUserStatisticsAsync();
+
+                // Trả về kết quả thống kê
+                return Ok(statistics);
+            }
+            catch (Exception ex)
+            {
+                // Xử lý lỗi và trả về thông báo lỗi
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = $"Lỗi khi lấy thống kê người dùng: {ex.Message}" });
+            }
+        }
+
+        [HttpGet("ExportUserStatisticsExcel")]
+        public async Task<IActionResult> ExportUserStatisticsExcel()
+        {
+            try
+            {
+                var excelData = await _user.ExportUserStatisticsToExcelAsync();
+                return File(excelData, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "UserStatistics.xlsx");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Lỗi khi xuất file Excel: " + ex.Message });
+            }
         }
 
     }

@@ -82,7 +82,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 Price = product.Price,
                 Description = product.Description,
                 IDCategory = product.CategoryId,
-                Status = "Đã duyệt",
+                Status = "Đang chờ duyệt",
                 ProrityLevel = product.ProrityLevel,
                 CreatedDate = DateTime.Now,
                 UpdatedDate = DateTime.Now,
@@ -133,8 +133,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 Price = p.Price,
                 UserName = p.UserName,
                 Status = p.Status,
-                ProrityLevel = p.ProrityLevel,
-                Quantity = p.Quantity,
                 StartDate = p.StartDate,
                 imageProducts = p.imageProducts ?? new List<ImageProduct>(), // Đảm bảo không null
                 IDCategory = p.IDCategory // Lấy thông tin danh mục
@@ -165,32 +163,15 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public async Task<Product> GetProductById(int id) // Xem chi tiết sản phẩm
         {
             var product = await _context.Products
-                .Include(p => p.imageProducts) // Bao gồm thông tin hình ảnh
-                .Include(p => p.Category) // Bao gồm thông tin danh mục
-                .FirstOrDefaultAsync(p => p.IDProduct == id);
+                .FirstOrDefaultAsync(x => x.IDProduct == id);
 
             if (product == null)
             {
                 throw new NotImplementedException("Không tìm thấy sản phẩm tương ứng");
             }
 
-            // Trả về sản phẩm với thông tin đã được bao gồm
-            return new Product
-            {
-                IDProduct = product.IDProduct,
-                Name = product.Name,
-                Price = product.Price,
-                UserName = product.UserName,
-                Status = product.Status,
-                StartDate = product.StartDate,
-                imageProducts = product.imageProducts ?? new List<ImageProduct>(), // Đảm bảo không null
-                IDCategory = product.IDCategory,
-                Description = product.Description,
-                ProrityLevel = product.ProrityLevel,
-                Quantity = product.Quantity,
-            };
+            return product;
         }
-
 
         public async Task<IEnumerable<Product>> GetProductByName(string name)//Tìm sản phẩm theo tên
         {
@@ -280,6 +261,10 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 throw new InvalidOperationException("Không có sản phẩm nào để thống kê.");
             }
 
+            // Tính tổng số bài đăng
+            var totalPosts = products.Count();
+
+            // Thống kê theo trạng thái
             var statistics = products
                 .GroupBy(p => p.Status)
                 .Select(group => new
@@ -289,8 +274,16 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 })
                 .ToList();
 
+            // Thêm tổng số bài đăng vào đầu danh sách thống kê
+            statistics.Insert(0, new
+            {
+                Status = "Tổng số bài đăng",
+                Count = totalPosts
+            });
+
             return statistics;
         }
+
 
         //Phương thức ngooài
 
@@ -380,16 +373,14 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             return prodFind;
         }
 
-        // Lấy tổng doanh thu
         public async Task<decimal> GetTotalRevenueAsync()
         {
             var totalRevenue = await _context.Products
-                .Where(p => p.Status == "Đã duyệt")
-                .SumAsync(p => p.PriceUp);  // Cộng giá đã tăng (PriceUp) thay vì Price
+                                              .Where(p => p.Status == "Đã duyệt")
+                                              .SumAsync(p => p.Price); // Tổng doanh thu = giá * số lượng
             return totalRevenue;
         }
 
-        // Lấy doanh thu theo tuần
         public async Task<decimal> GetRevenueByWeekAsync(DateTime startDate)
         {
             // Xác định ngày bắt đầu và ngày kết thúc của tuần
@@ -399,12 +390,11 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             // Kiểm tra nếu không có đơn hàng trong tuần
             var revenue = await _context.Products
                 .Where(order => order.CreatedDate >= startOfWeek && order.CreatedDate < endOfWeek)
-                .SumAsync(order => (decimal?)order.PriceUp) ?? 0; // Cộng giá đã tăng (PriceUp)
+                .SumAsync(order => (decimal?)order.Price) ?? 0; // Nếu không có giá trị thì trả về 0
 
             return revenue;
         }
 
-        // Lấy doanh thu theo tháng
         public async Task<decimal> GetRevenueByMonthAsync(int month, int year)
         {
             // Kiểm tra dữ liệu đầu vào hợp lệ
@@ -418,12 +408,11 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             // Kiểm tra nếu không có đơn hàng trong tháng
             var revenue = await _context.Products
                 .Where(order => order.CreatedDate >= startOfMonth && order.CreatedDate < endOfMonth)
-                .SumAsync(order => (decimal?)order.PriceUp) ?? 0; // Cộng giá đã tăng (PriceUp)
+                .SumAsync(order => (decimal?)order.Price) ?? 0; // Nếu không có giá trị thì trả về 0
 
             return revenue;
         }
 
-        // Lấy doanh thu theo ngày
         public async Task<decimal> GetRevenueByDateAsync(DateTime date)
         {
             // Xác định ngày bắt đầu và ngày kết thúc của ngày
@@ -433,7 +422,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             // Kiểm tra nếu không có đơn hàng trong ngày
             var revenue = await _context.Products
                 .Where(order => order.CreatedDate >= startOfDay && order.CreatedDate < endOfDay && order.Status.Contains("Đã duyệt"))
-                .SumAsync(order => (decimal?)order.PriceUp) ?? 0; // Cộng giá đã tăng (PriceUp)
+                .SumAsync(order => (decimal?)order.Price) ?? 0; // Nếu không có giá trị thì trả về 0
 
             return revenue;
         }
@@ -481,9 +470,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 }
             }
         }
-
-
-
     }
 
 }

@@ -7,133 +7,164 @@
 @inject HttpClient httpclient
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
+
 <style>
-    .info-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 20px 0;
-        font-size: 16px;
+    .card-container {
+        margin: 20px auto;
+        max-width: 900px;
     }
 
-        .info-table th,
-        .info-table td {
-            border: 1px solid #ddd;
-            padding: 15px;
-            text-align: left;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
+    .product-card {
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+        background-color: #fff;
+    }
+
+    .product-card-header {
+        background-color: #28a745;
+        color: white;
+        padding: 15px;
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 0; /* Loại bỏ margin dưới để tránh khoảng trống */
+    }
+
+    .product-card-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Hai cột cho các thông tin dưới */
+        gap: 20px;
+        padding: 20px;
+        margin-top: 0; /* Loại bỏ khoảng trống trên */
+    }
+
+        .product-card-body h5 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 10px;
         }
 
-        .info-table th {
-            background-color: #28a745;
-            color: white;
+        .product-card-body .price {
+            color: #28a745;
+            font-size: 20px;
             font-weight: bold;
         }
 
-        .info-table tbody tr:nth-child(even) {
-            background-color: #f9f9f9;
+    .product-images {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px; /* Đảm bảo cách đều các hình ảnh */
+        flex-wrap: wrap;
+        grid-column: span 2; /* Hình ảnh chiếm toàn bộ dòng */
+    }
+
+        .product-images img {
+            max-width: 120px;
+            max-height: 120px;
+            border-radius: 8px;
+            object-fit: cover;
         }
 
-        .info-table tbody tr:hover {
-            background-color: #f1f1f1;
-        }
-
-        .info-table td {
-            vertical-align: middle;
-        }
-
-    .info-avatar img {
-        width: 100px;
-        height: 100px;
+    .avatar {
+        width: 80px;
+        height: 80px;
         border-radius: 50%;
         object-fit: cover;
     }
 
-    /* Điều chỉnh hình ảnh để chúng không bị kéo dãn và khoảng cách hợp lý */
-    .product-images img {
-        max-width: 80px; /* Giảm kích thước ảnh */
-        height: auto;
-        border-radius: 10px;
-        margin-right: 10px;
-        margin-bottom: 10px; /* Khoảng cách dưới các ảnh */
-    }
-
-    .product-images {
+    .seller-info {
         display: flex;
-        justify-content: flex-start;
-        flex-wrap: wrap;
-        gap: 10px; /* Khoảng cách giữa các ảnh */
-    }
-
-    .info-avatar {
-        display: flex;
-        justify-content: center;
         align-items: center;
-        margin-right: 10px;
+        gap: 10px;
     }
 
-    /* Nút liên hệ ở dưới cùng */
-    .contact-btns button {
-        width: 100%;
-        margin-bottom: 10px;
+    .contact-btns {
+        margin-top: 20px;
+    }
+
+        .contact-btns button {
+            width: 100%;
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+            padding: 12px;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+            .contact-btns button:hover {
+                background-color: #218838;
+            }
+
+    /* Các cột thông tin */
+    .info-col {
+        width: 100%; /* Mỗi cột chiếm một nửa không gian trong 2 cột */
+    }
+
+    /* Đảm bảo hàng thứ 2 chiếm đầy chiều rộng */
+    .product-info-fullwidth {
+        grid-column: span 2; /* Mở rộng sang 2 cột */
+        display: flex;
+        justify-content: space-between;
     }
 </style>
 
-<div class="container">
-    <table class="info-table">
-        <thead>
-            <tr>
-                <th colspan="2" class="text-center">Thông tin chi tiết sản phẩm</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <th>Hình ảnh</th>
-                <td>
-                    <div class="product-images">
-                        @if (images != null && images.Any())
-                        {
-                            <img src="@images.First().Image" class="img-fluid" alt="Ảnh chính">
-                            @foreach (var item in images.Skip(1))
-                            {
-                                <img src="@item.Image" class="img-fluid" alt="Ảnh phụ">
-                            }
-                        }
-                        else
-                        {
-                            <div>Không có hình ảnh.</div>
-                        }
+<div class="container card-container">
+    <div class="product-card">
+        <div class="product-card-header">
+            Thông tin chi tiết sản phẩm
+        </div>
+        <div class="product-card-body">
+            <!-- Hình ảnh sản phẩm -->
+            <div class="product-images">
+                @if (images != null && images.Any())
+                {
+                    <img src="@images.First().Image" class="img-fluid" alt="Ảnh chính">
+                    @foreach (var item in images.Skip(1))
+                    {
+                        <img src="@item.Image" class="img-fluid" alt="Ảnh phụ">
+                    }
+                }
+                else
+                {
+                    <div>Không có hình ảnh.</div>
+                }
+            </div>
+
+            <!-- Tên sản phẩm và Giá - Cùng một hàng -->
+            <div class="info-col">
+                <h5>Tên sản phẩm:</h5>
+                <p>@product?.Name</p>
+            </div>
+
+            <div class="info-col">
+                <h5>Giá:</h5>
+                <p class="price">@product?.Price.ToString("N0") VND</p>
+            </div>
+
+            <!-- Ngày đăng và Thông tin người bán - Cùng một hàng -->
+            <div class="product-info-fullwidth">
+                <div class="info-col">
+                    <h5>Ngày đăng:</h5>
+                    <p>@(product?.StartDate?.ToString("dd/MM/yyyy") ?? "Chưa xác định")</p>
+                </div>
+
+                <div class="info-col">
+                    <h5>Thông tin người bán:</h5>
+                    <div class="seller-info">
+                        <img src="@user?.ImageAccount" alt="Người bán" class="avatar">
+                        <div>
+                            <div><strong>@user?.FullName</strong></div>
+                            <div><i class="bi bi-telephone-forward"></i> Số điện thoại: @user?.PhoneNumber</div>
+                        </div>
                     </div>
-                </td>
-            </tr>
-            <tr>
-                <th>Tên sản phẩm</th>
-                <td>@product?.Name</td>
-            </tr>
-            <tr>
-                <th>Giá</th>
-                <td><span class="text-success">@product?.Price.ToString("N0") VND</span></td>
-            </tr>
-            <tr>
-                <th>Loại sản phẩm</th>
-                <td>@categoryName</td>
-            </tr>
-            <tr>
-                <th>Ngày đăng</th>
-                <td>@(product?.StartDate?.ToString("dd/MM/yyyy") ?? "Chưa xác định")</td>
-            </tr>
-            <tr>
-                <th>Thông tin người bán</th>
-                <td>
-                    <div class="info-avatar">
-                        <img src="@user?.ImageAccount" alt="Người bán">
-                    </div>
-                    <div><strong>@user?.FullName</strong></div>
-                    <div><i class="bi bi-telephone-forward"></i> Số điện thoại: @user?.PhoneNumber</div>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @code {
