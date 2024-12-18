@@ -33,18 +33,6 @@
     margin-left: 0.25rem;
 }
 
-.page-item {
-    list-style-type: none;
-}
-
-.page-link {
-    display: inline-block;
-    text-align: center;
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    border-radius: 0.375rem;
-}
 
 .bg-green-600 {
     background-color: #2f855a;
@@ -74,4 +62,63 @@
 .disabled .page-link {
     pointer-events: none;
     opacity: 0.6;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+    background-color: white;
+}
+
+.page-item {
+    margin: 0 8px;
+}
+
+.page-link {
+    display: inline-block;
+    padding: 10px 15px;
+    background-color: white;
+    color: #28a745; /* Màu chữ xanh lá */
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+}
+
+    .page-link:hover {
+        color: #218838; /* Màu xanh lá đậm khi hover */
+        transform: scale(1.1); /* Tăng kích thước nhẹ khi hover */
+    }
+
+.page-item.active .page-link {
+    color: #28a745; /* Chữ màu xanh lá khi active */
+    border-bottom: 2px solid #28a745; /* Viền dưới khi active */
+    background-color: white;
+    animation: pageActive 0.3s ease-out; /* Hiệu ứng animation khi active */
+}
+
+.page-item.disabled .page-link {
+    color: #b0b0b0; /* Màu chữ xám khi disabled */
+    cursor: not-allowed;
+}
+
+.page-link span {
+    display: inline-block;
+    padding: 0 5px;
+}
+
+/* Thêm animation cho trang active */
+@keyframes pageActive {
+    0% {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }

@@ -22,7 +22,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public Task<Product> UpdateProductById(int id, ProductDto product);
         public Task<Product> AcceptProduct(int idproduct);
         public Task<Product> CancleProduct(int idproduct);
-        public Task <Product> DeleteProductById(int id);
+        public Task<Product> DeleteProductById(int id);
         public Task<Product> UpdateProrityLevel(int id);
         public Task<IEnumerable<dynamic>> GetStatisticsByStatusAsync();
         Task<decimal> GetTotalRevenueAsync();

@@ -95,40 +95,23 @@
     }
 
         #ChatBox .sidebar {
-            position: absolute;
+            position: fixed; /* Thay thế `absolute` bằng `fixed` để giữ sidebar cố định */
             width: 100%;
             height: 100%;
             z-index: 10;
-            transform: translateX(-100%);
-        }
-
-        #ChatBox.sidebar-visible .sidebar {
-            transform: translateX(0);
+            transform: none; /* Xóa transform */
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2); /* Tạo bóng cho sidebar */
         }
 
         #ChatBox .chat-frame {
             flex-grow: 1;
-        }
-
-        /* Hiển thị nút toggle-sidebar khi sidebar bị ẩn */
-        #ChatBox:not(.sidebar-visible) .toggle-sidebar {
-            display: block; /* Hiển thị nút toggle-sidebar */
-        }
-
-        /* Ẩn nút toggle-sidebar khi sidebar hiển thị */
-        #ChatBox.sidebar-visible .toggle-sidebar {
-            display: none;
+            margin-top: 70px; /* Để tránh che khuất bởi sidebar */
         }
 
     .toggle-sidebar {
-        position: absolute;
-        top: 10px; /* Căn chỉnh khoảng cách từ trên xuống */
-        right: 10px; /* Căn chỉnh khoảng cách từ phải qua */
-        background: none;
-        border: none;
-        color: #007bff;
-        font-size: 1.5rem;
-        cursor: pointer;
-        display: none; /* Mặc định ẩn nút */
+        display: none; /* Ẩn nút toggle sidebar khi không cần thiết */
     }
 }

@@ -5,8 +5,7 @@
 @inject IJSRuntime JSRuntime
 
 <style>
-     .content {
-        background-image: url('/AnhGiaoDien/Rectangle 5 (2).png');
+    .content {
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
@@ -14,7 +13,7 @@
     }
 
     .input-group-text {
-        background-color:white;
+        background-color: white;
         color: green;
         border-top-left-radius: 10px;
         border-bottom-left-radius: 10px;
@@ -74,7 +73,14 @@
     .btn-google {
         background-color: white;
         border-color: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Đổ bóng nhẹ */
+        transition: box-shadow 0.3s ease-in-out; /* Hiệu ứng chuyển tiếp khi hover */
     }
+
+        .btn-google:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Đổ bóng khi hover */
+        }
+
 
     .btn-facebook {
         background-color: #1877F2;
@@ -129,7 +135,7 @@
             left: 0;
             width: 100%;
             height: 2px;
-            background-color: #28a745; 
+            background-color: #28a745;
             transform: scaleX(0);
             transform-origin: bottom right;
             transition: transform 0.3s ease-out;
@@ -138,104 +144,108 @@
         .form-label:hover::after {
             transform: scaleX(1);
             transform-origin: bottom left;
-            background-color: #28a745; 
+            background-color: #28a745;
         }
+    /* Giảm margin-top của card */
+    .card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Giảm margin-top trong card-body */
+    .card-body {
+        padding: 30px;
+        margin-top: 10px; /* Giảm margin-top */
+    }
 
 </style>
+<link href="/css/Login.css" rel="stylesheet"/>
+<div class="container-fluid">
+    <ul class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="#">Đăng nhập</a></li>
+    </ul>
+</div>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-1"></div>
+        <div class="col-md-10 col-12">
+            <div class="card mb-3">
+                <div class="row g-0 align-items-center">
+                    <!-- Hình ảnh -->
+                    <div class="col-md-6 col-12 order-1 justify-content-center d-flex">
+                        <img src="/AnhGiaoDien/z5820586883713_6606cb514fbc06e7ea06515f9003b130.jpg"
+                             class="img-fluid img-login"
+                             alt="Logo">
+                    </div>
 
-<div class="container">
-    <div class="row justify-content-center mt-5 mb-5">
-        <div class="col-md-6">
-            <div class="form-container p-4 rounded bg-white shadow-sm">
-                <h3 class="text-success text-center mb-4" style="font-weight:bolder">Đăng nhập</h3>
-
-                <EditForm Model="@this" OnValidSubmit="HandleLogin">
-                    <DataAnnotationsValidator />
-
-
-                    <div class="mb-3">
-                        <label for="UserName" class="form-label">Tên tài khoản</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-user"></i></span>
-                            <InputText id="UserName" class="form-control rounded-start" @bind-Value="UserName" placeholder="Nhập tên tài khoản" />
-
+                    <!-- Form đăng nhập -->
+                    <div class="col-md-6 order-md-2 order-2">
+                        <div class="card-body">
+                            @if (!string.IsNullOrEmpty(SuccessMessage))
+                            {
+                                <div class="alert alert-success" role="alert">
+                                    @SuccessMessage
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(ErrorMessage))
+                            {
+                                <div class="alert alert-danger" role="alert">
+                                    @ErrorMessage
+                                </div>
+                            }
+                            <h3 class="text-success text-center mb-4" style="font-weight: bolder;">Đăng nhập</h3>
+                            <EditForm Model="@this" OnValidSubmit="HandleLogin">
+                                <DataAnnotationsValidator />
+                                <div class="mb-3">
+                                    <label for="UserName" class="form-label">Tên tài khoản</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <InputText id="UserName" class="form-control rounded-start"
+                                                   @bind-Value="UserName"
+                                                   placeholder="Nhập tên tài khoản" />
+                                    </div>
+                                    <ValidationMessage For="@(() => UserName)" />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="Password" class="form-label">Mật khẩu</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <InputText id="Password" type="password"
+                                                   class="form-control rounded-start"
+                                                   @bind-Value="Password"
+                                                   placeholder="Nhập mật khẩu" />
+                                    </div>
+                                    <ValidationMessage For="@(() => Password)" />
+                                </div>
+                                <button type="submit" class="btn btn-success btn-block w-100 rounded-start">Đăng nhập</button>
+                                <div class="text-right mt-3">
+                                    <a href="forgotPass" class="text-primary">Quên mật khẩu?</a>
+                                </div>
+                                <div class="text-center mt-3">
+                                    Bạn chưa có tài khoản?
+                                    <a class="text-primary" href="Register">Đăng ký tài khoản</a>
+                                </div>
+                            </EditForm>
                         </div>
-                        <ValidationMessage For="@(() => UserName)" />
-                    </div>
-                    <div class="mb-3">
-                        <label for="Password" class="form-label">Mật khẩu</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                            <InputText id="Password" type="password" class="form-control rounded-start" @bind-Value="Password" placeholder="Nhập mật khẩu" />
+                        <div class="mt-1 text-center mb-4">
+                            <strong>Hoặc đăng nhập bằng</strong>
+                            <div class="mt-3">
+                                <a @onclick="LoginWithGoogle" class="btn  btn-google mx-auto rounded-pill" style="max-width: 400px;">
+                                    <img src="https://developers.google.com/identity/images/g-logo.png"
+                                         alt="Google logo" class="me-2" style="height: 20px;" />
+                                    Đăng nhập với Google
+                                </a>
+                            </div>
                         </div>
-                        <ValidationMessage For="@(() => Password)" />
                     </div>
-                    <button type="submit" class="btn btn-success btn-block w-100 rounded-start">Đăng nhập</button>
-                    <div class="text-right mt-3">
-                        <a href="forgotPass" class="text-primary">Quên mật khẩu?</a>
-                    </div>
-                    <div class="text-center mt-3">
-                        Bạn chưa có tài khoản? <a class="text-primary" href="Register">Đăng ký tài khoản</a><br />
-                    </div>
-                </EditForm>
-            </div>
-
-
-            <div class="mt-4 text-center">
-                <strong>Hoặc đăng nhập bằng</strong>
-                <div class="mt-3">
-                    <a @onclick="LoginWithGoogle" class="btn btn-google mx-auto rounded-pill" style="max-width: 400px;">
-                        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" class="me-2" style="height: 20px;" />
-                        Đăng nhập với Google
-                    </a>
-                </div>
-                <div class="mt-3">
-                    <a @onclick="LoginWithFacebook" class="btn btn-facebook rounded-pill mx-auto" style="max-width: 400px; color: white;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook logo" class="me-2" style="height: 20px;" />
-                        Đăng nhập với Facebook
-                    </a>
                 </div>
             </div>
-
         </div>
+        <div class="col-md-1"></div>
     </div>
 </div>
 
-<!-- Modal for Success Message -->
-<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-success" id="successModalLabel">Thành công</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                @SuccessMessage
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-success" data-bs-dismiss="modal">Đóng</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal for Error Message -->
-<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-danger" id="errorModalLabel">Lỗi</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                @ErrorMessage
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Đóng</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 @code {
     [Required(ErrorMessage = "Vui lòng nhập tên tài khoản")]
@@ -282,10 +292,6 @@
                 Token = await response.Content.ReadAsStringAsync();
                 SuccessMessage = "Đăng nhập thành công!";
                 ErrorMessage = null;
-
-                var modalInstance = await JSRuntime.InvokeAsync<IJSObjectReference>("bootstrap.Modal.getOrCreateInstance", "#successModal");
-                await modalInstance.InvokeVoidAsync("show");
-
                 await JSRuntime.InvokeVoidAsync("localStorage.setItem", "token", Token);
                 HttpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
                 NavigationManager.NavigateTo("/", forceLoad: true);
@@ -294,17 +300,11 @@
             {
                 var errorMessage = await response.Content.ReadAsStringAsync();
                 ErrorMessage = errorMessage;
-
-                var modalInstance = await JSRuntime.InvokeAsync<IJSObjectReference>("bootstrap.Modal.getOrCreateInstance", "#errorModal");
-                await modalInstance.InvokeVoidAsync("show");
             }
         }
         catch (Exception ex)
         {
             ErrorMessage = "Có lỗi xảy ra: " + ex.Message;
-
-            var modalInstance = await JSRuntime.InvokeAsync<IJSObjectReference>("bootstrap.Modal.getOrCreateInstance", "#errorModal");
-            await modalInstance.InvokeVoidAsync("show");
         }
     }
 

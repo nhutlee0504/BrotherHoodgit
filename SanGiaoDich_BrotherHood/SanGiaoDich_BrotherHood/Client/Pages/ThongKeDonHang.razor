@@ -1,9 +1,16 @@
 ﻿@page "/Admin/ThongKeDonHang"
 @layout AdminLayout
 @inject HttpClient Http
+@inject IBlazorDownloadFileService DownloadFileService
+@using BlazorDownloadFile
 @using SanGiaoDich_BrotherHood.Shared.Models
 
-<h3 class="text-center mb-3" style="font-weight: bold;">Thống kê đơn hàng</h3>
+<h3 class="text-center mb-4">Thống kê đơn hàng</h3>
+
+<!-- Nút xuất Excel -->
+<div class="d-flex justify-content-center mt-4 mb-5">
+    <button class="btn btn-success" @onclick="ExportToExcel">Xuất Excel</button>
+</div>
 
 <div class="container d-flex justify-content-center align-items-center min-vh-100">
     @if (statistics == null)
@@ -17,33 +24,33 @@
         <div class="row w-100 justify-content-center">
             <!-- Card: Tổng số đơn hàng -->
             <div class="col-12 col-md-4 mb-4 d-flex justify-content-center">
-                <div class="card text-white bg-primary w-100 shadow-lg rounded-lg card-hover" style="font-size: 1.2rem; padding: 30px;">
+                <div class="card text-white bg-primary w-100 shadow-lg rounded-lg">
                     <div class="card-body text-center">
                         <i class="fas fa-box-open fa-3x mb-3"></i>
-                        <h5 class="card-title" style="font-size: 1.6rem; font-weight: 600;">Tổng số đơn hàng</h5>
-                        <p class="card-text" style="font-size: 2.2rem; font-weight: 600;">@statistics.TotalOrders</p>
+                        <h5 class="card-title">Tổng số đơn hàng</h5>
+                        <p class="card-text fs-2 fw-bold">@statistics.TotalOrders</p>
                     </div>
                 </div>
             </div>
 
             <!-- Card: Đã hủy -->
             <div class="col-12 col-md-4 mb-4 d-flex justify-content-center">
-                <div class="card text-white bg-danger w-100 shadow-lg rounded-lg card-hover" style="font-size: 1.2rem; padding: 30px;">
+                <div class="card text-white bg-danger w-100 shadow-lg rounded-lg">
                     <div class="card-body text-center">
                         <i class="fas fa-times-circle fa-3x mb-3"></i>
-                        <h5 class="card-title" style="font-size: 1.6rem; font-weight: 600;">Đã hủy</h5>
-                        <p class="card-text" style="font-size: 2.2rem; font-weight: 600;">@statistics.CanceledOrders</p>
+                        <h5 class="card-title">Đã hủy</h5>
+                        <p class="card-text fs-2 fw-bold">@statistics.CanceledOrders</p>
                     </div>
                 </div>
             </div>
 
             <!-- Card: Đã duyệt -->
             <div class="col-12 col-md-4 mb-4 d-flex justify-content-center">
-                <div class="card text-white bg-success w-100 shadow-lg rounded-lg card-hover" style="font-size: 1.2rem; padding: 30px;">
+                <div class="card text-white bg-success w-100 shadow-lg rounded-lg">
                     <div class="card-body text-center">
                         <i class="fas fa-check-circle fa-3x mb-3"></i>
-                        <h5 class="card-title" style="font-size: 1.6rem; font-weight: 600;">Đã duyệt</h5>
-                        <p class="card-text" style="font-size: 2.2rem; font-weight: 600;">@statistics.CompletedOrders</p>
+                        <h5 class="card-title">Đã duyệt</h5>
+                        <p class="card-text fs-2 fw-bold">@statistics.CompletedOrders</p>
                     </div>
                 </div>
             </div>
@@ -63,6 +70,24 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Lỗi khi tải thống kê đơn hàng: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        var response = await Http.GetAsync("api/Bill/ExportOrderStatisticsExcel");
+        if (response.IsSuccessStatusCode)
+        {
+            var fileBytes = await response.Content.ReadAsByteArrayAsync();
+            var fileName = "OrderStatistics.xlsx";
+
+            await DownloadFileService.DownloadFile(fileName, fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+            Console.WriteLine("Tải file Excel thành công.");
+        }
+        else
+        {
+            Console.WriteLine("Lỗi khi tải file Excel");
         }
     }
 
@@ -102,22 +127,19 @@
         }
 
         .card-body h5 {
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             font-weight: 600;
         }
 
         .card-body p {
-            font-size: 2.2rem;
-            font-weight: 600;
+            font-size: 2rem;
+            font-weight: 700;
         }
 
     .card {
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .card-body .fs-3 {
-        font-size: 2rem;
-        font-weight: bold;
+        padding: 25px;
+        margin-bottom: 15px;
     }
 
     .card-header {
@@ -142,22 +164,23 @@
         background-color: #28a745 !important;
     }
 
-    /* Thêm padding cho các thẻ */
-    .card {
-        padding: 25px;
-    }
-
-    /* Giảm margin-top của container */
+    /* Cải thiện margin và padding */
     .container {
-        margin-top: -13%;
+        margin-top: -20%;
     }
 
     .spinner-border {
         margin: 20px;
     }
 
-    /* Giảm margin-bottom của tiêu đề */
     h3 {
-        margin-bottom: 20px;
+        margin-bottom: 30px;
     }
+
+    /* Điều chỉnh thêm khoảng cách cho nút */
+    .btn-success {
+        font-size: 1.1rem;
+        padding: 10px 20px;
+    }
+
 </style>

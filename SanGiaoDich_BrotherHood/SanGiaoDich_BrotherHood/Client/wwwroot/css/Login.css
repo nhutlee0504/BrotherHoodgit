@@ -1,0 +1,31 @@
+﻿@media(max-width:992px) {
+    .img-login {
+        width: 100px; /* Kích thước nhỏ hơn khi về mobile */
+        height: 100px; /* Đảm bảo là hình vuông */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .card-body {
+        padding: 15px; /* Giảm padding trong form */
+    }
+
+    .card {
+        max-width: 400px; /* Đặt chiều rộng tối đa */
+        margin: 0 auto; /* Căn giữa form */
+    }
+
+    .img-login {
+        margin-bottom: 15px; /* Tạo khoảng cách giữa logo và form */
+    }
+    .btn-google {
+        max-width: 200px; /* Giới hạn chiều rộng tối đa */
+        font-size: 14px; /* Thu nhỏ chữ để cân đối */
+        padding: 10px; /* Giảm padding */
+    }
+
+        .btn-google img {
+            height: 18px; /* Thu nhỏ logo Google */
+        }
+
+}

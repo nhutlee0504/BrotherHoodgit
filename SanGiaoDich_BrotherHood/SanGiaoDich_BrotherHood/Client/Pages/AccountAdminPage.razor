@@ -20,7 +20,7 @@
 
         .search-container button {
             white-space: nowrap;
-            background-color: #28a745; /* Màu xanh lá */
+            background-color: royalblue; /* Màu xanh dương */
             color: #ffffff; /* Chữ trắng */
             border: none;
             padding: 6px 12px;
@@ -87,7 +87,6 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">@modalTitle</h5>
-                    <button type="button" class="btn-close" @onclick="CloseModal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     @modalMessage
@@ -130,7 +129,7 @@ else
                         <td>@user.FullName</td>
                         <td>@user.Email</td>
                         <td>@user.PhoneNumber</td>
-                        <td>@(user.IsDelete == true ? "Bị khóa" : "Hoạt động")</td>
+                        <td>@(user.IsDelete == true ? "Bị cấm" : "Hoạt động")</td>
                         <td>
                             <button class="btn btn-sm btn-primary me-2">Chỉnh sửa</button>
                             @if (user.IsDelete == true)
@@ -202,7 +201,6 @@ else
         }
     }
 
-
     private void OnSearchKeywordChanged()
     {
         if (string.IsNullOrWhiteSpace(searchKeyword))
@@ -219,7 +217,7 @@ else
             ).ToList();
         }
 
-        currentPage = 1;
+        currentPage = 1; // Reset về trang đầu
     }
 
     private async Task OnBanAccount(string username)
