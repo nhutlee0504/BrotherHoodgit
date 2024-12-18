@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using SanGiaoDich_BrotherHood.Shared.Dto;
 using System;
+using SanGiaoDich_BrotherHood.Server.Data;
+using System.Linq;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -16,9 +18,11 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
     public class BillController : ControllerBase
     {
         private IBill bill;
-        public BillController(IBill bill)
+        private readonly ApplicationDbContext _context;
+        public BillController(IBill bill, ApplicationDbContext context)
         {
             this.bill = bill;
+            _context = context;
         }
 
         [HttpGet("GetBill")]
@@ -92,5 +96,14 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 
             return Ok(bill);
         }
+        [HttpGet("GetBillsByDate")]
+        public IActionResult GetBillsByDate(DateTime startDate, DateTime endDate)
+        {
+            var filteredBills = _context.Bills
+                .Where(b => b.OrderDate.Date >= startDate.Date && b.OrderDate.Date <= endDate.Date)
+                .ToList();
+            return Ok(filteredBills);
+        }
+
     }
 }

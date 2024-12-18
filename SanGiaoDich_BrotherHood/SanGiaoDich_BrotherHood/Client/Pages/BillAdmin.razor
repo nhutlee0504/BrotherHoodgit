@@ -49,19 +49,34 @@
     <h3 class="mb-4 text-center text-primary">Danh Sách Hóa Đơn</h3>
 
     <!-- Tìm kiếm -->
+    <!-- Tìm kiếm -->
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <div class="row gy-3">
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <label for="searchByFullName" class="form-label">Tìm kiếm theo Họ và tên:</label>
                     <input id="searchByFullName" type="text" @bind="searchFullName" class="form-control" placeholder="Nhập họ và tên" />
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-5">
                     <label for="searchByIDBill" class="form-label">Tìm kiếm theo ID Hóa đơn:</label>
                     <input id="searchByIDBill" type="number" @bind="searchIDBill" class="form-control" placeholder="Nhập ID hóa đơn" />
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
                     <button class="btn btn-primary w-100" @onclick="SearchBills">Tìm kiếm</button>
+                </div>
+            </div>
+            <!-- Lọc theo ngày -->
+            <div class="row gy-3 mt-1">
+                <div class="col-md-5">
+                    <label for="startDate" class="form-label">Từ ngày:</label>
+                    <input id="startDate" type="date" @bind="filterStartDate" class="form-control" />
+                </div>
+                <div class="col-md-5">
+                    <label for="endDate" class="form-label">Đến ngày:</label>
+                    <input id="endDate" type="date" @bind="filterEndDate" class="form-control" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" @onclick="FilterBillsByDate">Lọc theo ngày</button>
                 </div>
             </div>
         </div>
@@ -155,6 +170,10 @@
     private string searchFullName;
     private int? searchIDBill;
 
+    // Biến cho lọc ngày
+    private DateTime? filterStartDate;
+    private DateTime? filterEndDate;
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -171,7 +190,7 @@
 
     private async Task SearchBills()
     {
-        CurrentPage = 1; // Reset to first page
+        CurrentPage = 1; // Reset to the first page
         try
         {
             if (!string.IsNullOrWhiteSpace(searchFullName))
@@ -191,6 +210,37 @@
         catch (Exception ex)
         {
             Console.WriteLine("Lỗi khi tìm kiếm hóa đơn: " + ex.Message);
+            bills = new List<Bill>();
+        }
+    }
+
+    private async Task FilterBillsByDate()
+    {
+        CurrentPage = 1; // Reset to the first page
+        try
+        {
+            // Chỉ gọi API nếu ngày hợp lệ
+            if (filterStartDate.HasValue && filterEndDate.HasValue)
+            {
+                bills = await httpClient.GetFromJsonAsync<List<Bill>>(
+                    $"api/Bill/GetBillsByDate?startDate={filterStartDate.Value:yyyy-MM-dd}&endDate={filterEndDate.Value:yyyy-MM-dd}"
+                );
+            }
+            else if (filterStartDate.HasValue || filterEndDate.HasValue)
+            {
+                // Nếu chỉ nhập một trong hai ngày, thực hiện lọc cục bộ
+                bills = allBills.Where(bill =>
+                    (!filterStartDate.HasValue || bill.OrderDate >= filterStartDate.Value) &&
+                    (!filterEndDate.HasValue || bill.OrderDate <= filterEndDate.Value)).ToList();
+            }
+            else
+            {
+                bills = new List<Bill>(allBills);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi khi lọc hóa đơn theo ngày: " + ex.Message);
             bills = new List<Bill>();
         }
     }
@@ -229,4 +279,6 @@
         public decimal Total { get; set; }
         public string Status { get; set; }
     }
+}
+
 }
