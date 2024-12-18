@@ -3,6 +3,11 @@
 @using SanGiaoDich_BrotherHood.Shared.Models
 @using System.Net.Http.Json
 @using System.Collections.Generic
+@inject IJSRuntime JSRuntime
+
+@using BlazorDownloadFile
+@using System.Text.Json
+@inject IBlazorDownloadFileService DownloadFileService
 
 @inject HttpClient Http
 
@@ -95,6 +100,28 @@
         }
     }
 
+
+    private async Task ExportToExcel()
+    {
+        var response = await Http.GetAsync("api/product/export-post-statistics");
+        if (response.IsSuccessStatusCode)
+        {
+            var fileBytes = await response.Content.ReadAsByteArrayAsync();
+            var fileName = "PostStatistics.xlsx";
+
+            // Sử dụng phương thức đúng với ba tham số
+            await DownloadFileService.DownloadFile(fileName, fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+            // Thông báo thành công
+            Console.WriteLine("Tải file Excel thành công.");
+        }
+        else
+        {
+            // Thông báo lỗi khi tải file
+            Console.WriteLine("Lỗi khi tải file Excel");
+        }
+    }
+
     public class StatisticDto
     {
         public string Status { get; set; }
@@ -142,22 +169,29 @@
             _ => "fas fa-info-circle",
         };
     }
-
+   
 }
 
 <div class="container mt-5">
     <h1 class="text-center mb-4 text-primary">Tổng Quan Thống Kê Bài Đăng</h1>
 
+    <!-- Thêm nút Export Excel -->
+    <div class="text-center mb-4">
+        <button class="btn btn-success" @onclick="ExportToExcel">
+            <i class="fas fa-download"></i> Xuất Excel
+        </button>
+    </div>
+
     <!-- Tab navigation -->
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
-            <a class="nav-link active" id="home-tab" data-bs-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Tổng Quan</a>
+            <a class="nav-link active" id="home-tab" data-bs-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Tổng Quan Thống Kê</a>
         </li>
         <li class="nav-item" role="presentation">
-            <a class="nav-link" id="approved-posts-tab" data-bs-toggle="tab" href="#approved-posts" role="tab" aria-controls="approved-posts" aria-selected="false">Bài Đăng Đã Duyệt</a>
+            <a class="nav-link" id="approved-posts-tab" data-bs-toggle="tab" href="#approved-posts" role="tab" aria-controls="approved-posts" aria-selected="false">Thống Kê Theo Ngày</a>
         </li>
         <li class="nav-item" role="presentation">
-            <a class="nav-link" id="monthly-statistics-tab" data-bs-toggle="tab" href="#monthly-statistics" role="tab" aria-controls="monthly-statistics" aria-selected="false">Thống Kê Theo Tháng</a>
+            <a class="nav-link" id="monthly-statistics-tab" data-bs-toggle="tab" href="#monthly-statistics" role="tab" aria-controls="monthly-statistics" aria-selected="false">Thống Kê Theo Tháng Và Năm</a>
         </li>
     </ul>
 
@@ -203,7 +237,7 @@
                 <div class="col-md-6" style="width: 100%;">
                     <div class="card text-center shadow-lg">
                         <div class="card-header bg-success text-white">
-                            <h3>Thống Kê Bài Đăng Đã Duyệt Trong Ngày</h3>
+                            <h3>Thống Kê Bài Đăng Đã Duyệt Theo Ngày</h3>
                         </div>
                         <div class="card-body">
                             <p class="display-4 fw-bold">@postsTodayCount</p>
@@ -244,7 +278,7 @@
                 </div>
             </div>
 
-            <!-- Card chứa thống kê bài đăng theo tháng -->
+            <!-- Card chứa thống kê bài đăng theo tháng và năm -->
             <div class="row justify-content-center">
                 <div class="col-md-8" style="width: 100%;">
                     <div class="card shadow-lg border-primary">
@@ -274,10 +308,7 @@
                     </div>
                 </div>
             </div>
-
         </div>
-
-
     </div>
 </div>
 

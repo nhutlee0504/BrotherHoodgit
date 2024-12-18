@@ -6,6 +6,7 @@ using SanGiaoDich_BrotherHood.Shared.Models;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace SanGiaoDich_BrotherHood.Server.Services
@@ -30,6 +31,9 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         Task<decimal> GetRevenueByMonthAsync(int month, int year);
         Task<byte[]> ExportProductsToExcelAsync();
         Task<int> GetApprovedPostsByMonthAsync(int month, int year);
-        
+
+        // Phương thức xuất báo cáo bài đăng sang Excel
+        Task<MemoryStream> ExportAllStatisticsToExcelAsync();
+
     }
 }

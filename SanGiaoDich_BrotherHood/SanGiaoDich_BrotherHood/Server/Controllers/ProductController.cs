@@ -434,6 +434,14 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             }
         }
 
+        [HttpGet("export-post-statistics")]
+        public async Task<IActionResult> ExportPostStatistics()
+        {
+            var memoryStream = await prod.ExportAllStatisticsToExcelAsync();
 
+            return File(memoryStream,
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "PostStatistics.xlsx");
+        }
     }
 }
