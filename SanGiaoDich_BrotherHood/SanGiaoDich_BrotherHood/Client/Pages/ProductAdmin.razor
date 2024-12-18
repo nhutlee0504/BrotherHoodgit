@@ -92,25 +92,27 @@
         background-color: #f44336;
     }
 
-    /* Nút phân trang màu xanh lá */
-    .pagination .page-link {
-        color: #28a745; /* Màu chữ xanh lá */
-        border: none; /* Bỏ đường viền */
-        border-radius: 0; /* Bo góc vuông */
-        text-decoration: underline; /* Gạch chân */
-        text-decoration-color: #28a745; /* Gạch chân màu xanh lá */
+    .page-item {
+        list-style-type: none;
     }
 
-    .pagination .page-item.active .page-link {
-        background-color: #28a745; /* Nền xanh lá cho trang hiện tại */
-        color: #fff; /* Màu chữ trắng */
-        border: none;
+    .page-link {
+        display: inline-block;
+        text-align: center;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border-radius: 0.375rem;
     }
 
-    .pagination .page-item .page-link:focus,
+    .pagination .page-item.selected .page-link {
+        background-color: #28A745 !important;
+        color: white !important;
+    }
+
     .pagination .page-item .page-link:hover {
-        color: #218838; /* Xanh lá đậm khi hover */
-        text-decoration-color: #218838;
+        background-color: green;
+        color: white !important;
     }
 </style>
 <div class="search-filter-container">
@@ -158,7 +160,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var product in products.Skip((currentPage - 1) * pageSize).Take(pageSize))
+        @foreach (var product in products)
         {
             <tr>
                 <td>@product.Name</td>
@@ -187,22 +189,29 @@
 
     </tbody>
 </table>
-<nav aria-label="Page navigation" class="d-flex justify-content-center mt-3">
-    <ul class="pagination">
-        <li class="page-item @(IsFirstPage ? "disabled" : "")">
-            <a class="page-link" @onclick="PreviousPage">
-                Trang trước
+<!-- Phân trang -->
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        <li class="page-item @(currentPage == 1 ? "disabled" : "") m-2">
+            <a class="page-link text-black" aria-label="Previous" @onclick="() => ChangePage(currentPage - 1)">
+                <span aria-hidden="true"><i class="bi bi-caret-left-fill"></i></span>
             </a>
         </li>
-        @for (int i = 1; i <= totalPages; i++)
+        @for (var i = currentPage - 2; i <= currentPage + 2; i++)
         {
-            <li class="page-item @(currentPage == i ? "active" : "")">
-                <a class="page-link" @onclick="(() => ChangePage(i))">@i</a>
-            </li>
+            int j = i;
+            if (i > 0 && i <= totalPages)
+            {
+                <li class="page-item @(currentPage == i ? "selected" : "") m-2">
+                    <a class="page-link text-black" @onclick="() => ChangePage(j)">
+                        <span>@i</span>
+                    </a>
+                </li>
+            }
         }
-        <li class="page-item @(IsLastPage ? "disabled" : "")">
-            <a class="page-link" @onclick="NextPage">
-                Trang sau
+        <li class="page-item @(currentPage == totalPages ? "disabled" : "") m-2">
+            <a class="page-link text-black" aria-label="Next" @onclick="() => ChangePage(currentPage + 1)">
+                <span aria-hidden="true"><i class="bi bi-caret-right-fill"></i></span>
             </a>
         </li>
     </ul>
@@ -215,11 +224,9 @@
     private string searchQuery = string.Empty;
     private string errorMessage = string.Empty;
     private List<Product> allProducts = new List<Product>(); // Danh sách gốc
-
     private int currentPage = 1;
     private int pageSize = 10; // Số sản phẩm trên mỗi trang
-    private int totalPages => (int)Math.Ceiling((double)(products.Count) / pageSize);
-
+    private int totalPages;
     private DateTime? startDate = null;
     private DateTime? endDate = null;
 
@@ -229,13 +236,27 @@
         try
         {
             allProducts = await httpClient.GetFromJsonAsync<List<Product>>("api/product/GetAllProduct");
-            products = allProducts; // Hiển thị tất cả sản phẩm ban đầu
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error fetching products: {ex.Message}");
         }
+        UpdatePageProducts();
     }
+    private void UpdatePageProducts()
+    {
+        var prods = allProducts.Where(x => x.Status.ToLower().Contains("đã duyệt")).ToList();
+        totalPages = prods.Any() ? (int)Math.Ceiling((double)prods.Count / pageSize) : 1;
+        products = prods.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+    }
+
+
+    private void ChangePage(int page)
+    {
+        currentPage = page;
+        UpdatePageProducts();
+    }
+
     private async Task Search()
     {
         try
@@ -452,13 +473,6 @@
         {
             errorMessage = $"Lỗi khi lọc sản phẩm: {ex.Message}";
             Console.WriteLine(errorMessage);
-        }
-    }
-    private void ChangePage(int pageNumber)
-    {
-        if (pageNumber > 0 && pageNumber <= totalPages)
-        {
-            currentPage = pageNumber;
         }
     }
 }
