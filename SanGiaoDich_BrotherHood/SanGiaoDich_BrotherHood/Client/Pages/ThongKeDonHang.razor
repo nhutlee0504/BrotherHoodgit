@@ -1,0 +1,72 @@
+﻿@page "/Admin/ThongKeDonHang"
+@layout AdminLayout
+@inject HttpClient Http
+@using SanGiaoDich_BrotherHood.Shared.Models
+
+<h3 class="text-center mb-4" style="margin-top: 0; font-weight: bold;">Thống kê đơn hàng</h3>
+
+<div class="container d-flex justify-content-center align-items-center min-vh-100" style="padding-top: 0;">
+    @if (statistics == null)
+    {
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    }
+    else
+    {
+        <div class="row w-100 justify-content-center">
+            <!-- Card: Tổng số đơn hàng -->
+            <div class="col-12 col-md-4 mb-4 d-flex justify-content-center">
+                <div class="card text-white bg-primary w-100 shadow-lg rounded-lg" style="font-size: 1.2rem; padding: 30px;">
+                    <div class="card-body text-center">
+                        <h5 class="card-title" style="font-size: 1.6rem; font-weight: 600;">Tổng số đơn hàng</h5>
+                        <p class="card-text" style="font-size: 2.2rem; font-weight: 600;">@statistics.TotalOrders</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Đã hủy -->
+            <div class="col-12 col-md-4 mb-4 d-flex justify-content-center">
+                <div class="card text-white bg-danger w-100 shadow-lg rounded-lg" style="font-size: 1.2rem; padding: 30px;">
+                    <div class="card-body text-center">
+                        <h5 class="card-title" style="font-size: 1.6rem; font-weight: 600;">Đã hủy</h5>
+                        <p class="card-text" style="font-size: 2.2rem; font-weight: 600;">@statistics.CanceledOrders</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Đã duyệt -->
+            <div class="col-12 col-md-4 mb-4 d-flex justify-content-center">
+                <div class="card text-white bg-success w-100 shadow-lg rounded-lg" style="font-size: 1.2rem; padding: 30px;">
+                    <div class="card-body text-center">
+                        <h5 class="card-title" style="font-size: 1.6rem; font-weight: 600;">Đã duyệt</h5>
+                        <p class="card-text" style="font-size: 2.2rem; font-weight: 600;">@statistics.CompletedOrders</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private BillStatistics statistics;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            statistics = await Http.GetFromJsonAsync<BillStatistics>("api/Bill/statistics");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi khi tải thống kê đơn hàng: {ex.Message}");
+        }
+    }
+
+    public class BillStatistics
+    {
+        public int TotalOrders { get; set; }
+        public int CompletedOrders { get; set; }
+        public int CanceledOrders { get; set; }
+    }
+}

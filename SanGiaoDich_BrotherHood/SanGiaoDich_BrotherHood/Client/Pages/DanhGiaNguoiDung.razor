@@ -51,8 +51,8 @@
                     <div class="rating-container">
                         @for (int i = 5; i >= 1; i--) // Hiển thị số sao từ 5 đến 1
                         {
-
-                            <input type="radio" id="star-@i" name="rating" class="rate" value="@i" @onclick="() => SetRating(4)" />
+                            var mi = i;
+                            <input type="radio" id="star-@i" name="rating" class="rate" value="@i" @onclick="() => SetRating(mi)" />
                         }
                     </div>
                     <img src="@image" alt="Sản phẩm" width="100%" class="rounded mb-3" style="max-width: 200px;" />
@@ -173,7 +173,7 @@ else
     public string Username { get; set; }
     private bool canShowRatingButton = false;
     private string comment = "";
-    private int selectedRating = 4;
+    private int selectedRating = 0;
     private string errorMessage = "";
     private Account userAccount;
     private InfoAccountDto infoAccountDto;
@@ -280,7 +280,9 @@ else
             }
             else
             {
-                errorMessage = "Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.";
+                // Đọc lỗi trả về từ API (nếu có)
+                var errorResponse = await response.Content.ReadAsStringAsync();
+                errorMessage = $"{errorResponse}";
             }
         }
         catch (Exception ex)
@@ -288,6 +290,7 @@ else
             errorMessage = $"Có lỗi xảy ra: {ex.Message}";
         }
     }
+
 
     private double averageRating = 0;
 

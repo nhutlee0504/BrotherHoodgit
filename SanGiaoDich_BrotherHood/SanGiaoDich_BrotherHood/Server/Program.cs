@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BlazorDownloadFile;  // Đảm bảo bạn đã thêm namespace này
+
 
 namespace SanGiaoDich_BrotherHood.Server
 {
@@ -33,6 +35,12 @@ namespace SanGiaoDich_BrotherHood.Server
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                })
+                .ConfigureServices((context, services) =>
+                {
+                    // Đăng ký dịch vụ BlazorDownloadFile
+                    services.AddBlazorDownloadFile();
                 });
+
     }
 }

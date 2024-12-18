@@ -5,6 +5,7 @@ using SanGiaoDich_BrotherHood.Shared.Dto;
 using SanGiaoDich_BrotherHood.Shared.Models;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace SanGiaoDich_BrotherHood.Server.Services
@@ -22,5 +23,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public Task<Account> ChangePassword(string username, InfoAccountDto info);
         public Task<Account> AcceptIDCard(RecognitionDto recognitionDto);
         Task<Dictionary<string, int>> GetUserStatisticsAsync();
+        // Thêm phương thức xuất file Excel cho thống kê người dùng
+        Task<MemoryStream> ExportUserStatisticsToExcelAsync();
     }
 }

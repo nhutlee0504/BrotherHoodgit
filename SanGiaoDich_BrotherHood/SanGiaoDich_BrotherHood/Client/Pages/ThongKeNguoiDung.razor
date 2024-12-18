@@ -1,7 +1,11 @@
 ﻿@page "/Admin/ThongKeNguoiDung"
+@using BlazorDownloadFile
+@using System.Text.Json
 @layout AdminLayout
 @inject HttpClient Http
-
+@inject IBlazorDownloadFileService DownloadFileService
+@inject IJSRuntime JS
+<!-- Phần tiêu đề -->
 <h3 class="text-center my-4">Thống Kê Người Dùng</h3>
 
 @if (userStatistics == null)
@@ -14,134 +18,110 @@
 else
 {
     <div class="container">
-        <!-- Thống kê tổng quan -->
+        <!-- Cột thống kê tổng quan -->
         <div class="row g-4 my-4">
-            <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
-                <div class="card shadow-lg rounded h-100 stats-card">
-                    <div class="card-body text-center">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white text-center shadow rounded-lg h-100">
+                    <div class="card-body">
                         <h5 class="card-title">Tổng Số Người Dùng</h5>
-                        <p class="card-text fs-3 fw-bold text-primary">@userStatistics["TotalUsers"]</p>
+                        <p class="card-text fs-4 fw-bold">@userStatistics["TotalUsers"]</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
-                <div class="card shadow-lg rounded h-100 stats-card">
-                    <div class="card-body text-center">
+
+            <div class="col-md-4">
+                <div class="card bg-success text-white text-center shadow rounded-lg h-100">
+                    <div class="card-body">
                         <h5 class="card-title">Người Dùng Hoạt Động</h5>
-                        <p class="card-text fs-3 fw-bold text-success">@userStatistics["ActiveUsers"]</p>
+                        <p class="card-text fs-4 fw-bold">@userStatistics["ActiveUsers"]</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
-                <div class="card shadow-lg rounded h-100 stats-card">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Người Dùng Đã Bị Xóa</h5>
-                        <p class="card-text fs-3 fw-bold text-danger">@userStatistics["DeletedUsers"]</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3" data-aos="fade-up" data-aos-delay="400">
-                <div class="card shadow-lg rounded h-100 stats-card">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Người Dùng Mới</h5>
-                      
+
+            <div class="col-md-4">
+                <div class="card bg-danger text-white text-center shadow rounded-lg h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Người Dùng Ngừng Hoạt Động</h5>
+                        <p class="card-text fs-4 fw-bold">@userStatistics["InactiveUsers"]</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Thống kê bài viết -->
-        <div class="row g-4 my-4">
-            <div class="col-md-6" data-aos="fade-up" data-aos-delay="500">
-                <div class="card shadow-lg rounded h-100 stats-card">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Bài Viết Tổng</h5>
-                     
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6" data-aos="fade-up" data-aos-delay="600">
-                <div class="card shadow-lg rounded h-100 stats-card">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Người Dùng Đang Chờ Kích Hoạt</h5>
-                       
-                    </div>
-                </div>
-            </div>
-        </div>
+
+        <!-- Nút xuất file Excel -->
+        <button class="btn btn-success rounded-pill py-2 px-3" @onclick="ExportToExcel">
+            <i class="fas fa-file-excel"></i> Xuất Excel
+        </button>
     </div>
 }
 
 <style>
-    /* Cấu hình nền cho card */
-    .stats-card {
-        border: none;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    .card {
+        cursor: pointer;
+        transition: transform 0.2s ease-in-out;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
     }
 
-    .stats-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
-    }
+        .card:hover {
+            transform: scale(1.02);
+        }
 
-    /* Hiệu ứng cho card */
-    .card-title {
-        font-size: 1.5rem;
-        font-weight: bold;
-    }
-
-    .card-text {
-        font-size: 2rem;
-        font-weight: bold;
-    }
-
-    /* Các màu sắc riêng cho từng thông số */
-    .text-primary {
-        color: #007bff !important;
-    }
-
-    .text-success {
-        color: #28a745 !important;
-    }
-
-    .text-danger {
-        color: #dc3545 !important;
-    }
-
-    .text-warning {
-        color: #ffc107 !important;
-    }
-
-    .text-info {
-        color: #17a2b8 !important;
-    }
-
-    .text-secondary {
-        color: #6c757d !important;
-    }
 </style>
 
 @code {
     private Dictionary<string, int> userStatistics;
 
+    // Gọi API để lấy dữ liệu thống kê
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Gọi API để lấy dữ liệu thống kê
+            // Gọi API để lấy dữ liệu thống kê người dùng
             userStatistics = await Http.GetFromJsonAsync<Dictionary<string, int>>("api/user/UserStatistics");
+
+            // Kiểm tra dữ liệu
+            if (userStatistics == null)
+            {
+                Console.WriteLine("Dữ liệu thống kê người dùng không có.");
+            }
+            else
+            {
+                Console.WriteLine($"Dữ liệu thống kê người dùng: {JsonSerializer.Serialize(userStatistics)}");
+            }
         }
         catch (Exception ex)
         {
-            // Xử lý lỗi
+            // Xử lý lỗi khi gọi API
             userStatistics = new Dictionary<string, int>
             {
                 { "TotalUsers", 0 },
                 { "ActiveUsers", 0 },
-                { "DeletedUsers", 0 },
-
+                { "InactiveUsers", 0 }
             };
             Console.WriteLine($"Lỗi khi gọi API: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        var response = await Http.GetAsync("api/user/ExportUserStatisticsExcel");
+        if (response.IsSuccessStatusCode)
+        {
+            var fileBytes = await response.Content.ReadAsByteArrayAsync();
+            var fileName = "UserStatistics.xlsx";
+
+            // Sử dụng phương thức đúng với ba tham số
+            await DownloadFileService.DownloadFile(fileName, fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+            // Thông báo thành công
+            Console.WriteLine("Tải file Excel thành công.");
+        }
+        else
+        {
+            // Thông báo lỗi khi tải file
+            Console.WriteLine("Lỗi khi tải file Excel");
         }
     }
 }

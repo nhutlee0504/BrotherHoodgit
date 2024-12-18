@@ -16,5 +16,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public Task<Bill> AcceptBill(int IdBill);
         public Task<Bill> CancelBill(int IdBill);
         public Task<Bill> DoneBill(int IdBill, string status);
-    }
+		public Task<object> GetOrderStatisticsAsync();
+	}
 }
