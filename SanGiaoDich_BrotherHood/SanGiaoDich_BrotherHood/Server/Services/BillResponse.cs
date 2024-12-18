@@ -145,7 +145,21 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             return billUpdate;
         }
 
-        private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()
+		public async Task<object> GetOrderStatisticsAsync()
+		{
+			var totalOrders = await _context.Bills.CountAsync();
+			var completedOrders = await _context.Bills.CountAsync(b => b.Status == "Hoàn thành");
+			var canceledOrders = await _context.Bills.CountAsync(b => b.Status == "Đã hủy");
+
+			return new
+			{
+				TotalOrders = totalOrders,
+				CompletedOrders = completedOrders,
+				CanceledOrders = canceledOrders
+			};
+		}
+
+		private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()
         {
             var userClaim = _httpContextAccessor.HttpContext?.User;
             if (userClaim != null && userClaim.Identity.IsAuthenticated)

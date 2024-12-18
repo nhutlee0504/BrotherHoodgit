@@ -92,5 +92,12 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 
             return Ok(bill);
         }
-    }
+
+		[HttpGet("statistics")]
+		public async Task<IActionResult> GetOrderStatistics()
+		{
+			var statistics = await bill.GetOrderStatisticsAsync();
+			return Ok(statistics);
+		}
+	}
 }
