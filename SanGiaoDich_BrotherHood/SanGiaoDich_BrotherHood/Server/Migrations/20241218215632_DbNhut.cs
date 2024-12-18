@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace SanGiaoDich_BrotherHood.Server.Migrations
 {
-    public partial class Adddatabase : Migration
+    public partial class DbNhut : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -17,7 +17,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     Email = table.Column<string>(type: "varchar(150)", nullable: true),
                     PhoneNumber = table.Column<string>(type: "varchar(12)", nullable: true),
                     Gender = table.Column<string>(type: "nvarchar(6)", nullable: true),
-                    Birthday = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Birthday = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Role = table.Column<string>(type: "nvarchar(50)", nullable: false),
                     Introduce = table.Column<string>(type: "ntext", nullable: true),
                     ImageAccount = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -26,11 +26,11 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     IsDelete = table.Column<bool>(type: "bit", nullable: true),
                     PreSystem = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     IsActived = table.Column<bool>(type: "bit", nullable: true),
-                    ID = table.Column<int>(type: "int", nullable: false),
-                    Dob = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ID = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Dob = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Home = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Nationality = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Doe = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Doe = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -114,7 +114,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 {
                     IDBill = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    FullName = table.Column<string>(type: "varchar(20)", nullable: true),
+                    FullName = table.Column<string>(type: "nvarchar(20)", nullable: true),
                     PhoneNumber = table.Column<string>(type: "varchar(12)", nullable: true),
                     Email = table.Column<string>(type: "varchar(150)", nullable: true),
                     DeliveryAddress = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -202,6 +202,33 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "withdrawal_Infomations",
+                columns: table => new
+                {
+                    PaymentReqID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PaymentType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AccountNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Amount = table.Column<double>(type: "float", nullable: false),
+                    OrderDescription = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Bank = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FullName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserName = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_withdrawal_Infomations", x => x.PaymentReqID);
+                    table.ForeignKey(
+                        name: "FK_withdrawal_Infomations_Accounts_UserName",
+                        column: x => x.UserName,
+                        principalTable: "Accounts",
+                        principalColumn: "UserName",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Products",
                 columns: table => new
                 {
@@ -220,7 +247,8 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     AccountAccept = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PriceUp = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -520,6 +548,11 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                 name: "IX_Ratings_UserName",
                 table: "Ratings",
                 column: "UserName");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_withdrawal_Infomations_UserName",
+                table: "withdrawal_Infomations",
+                column: "UserName");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -550,6 +583,9 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
 
             migrationBuilder.DropTable(
                 name: "Reports");
+
+            migrationBuilder.DropTable(
+                name: "withdrawal_Infomations");
 
             migrationBuilder.DropTable(
                 name: "Carts");

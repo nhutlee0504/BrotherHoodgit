@@ -98,6 +98,7 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 			await LoadBill();
 			await LoadUserDataAsync();
 			CountCompletedBills();
+			CountCompletedSaleBills();
 
 			try
 			{
@@ -744,9 +745,6 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 		// Đếm số lượng đơn hàng hoàn thành cho mua và bán
 		private void CountCompletedBills()
 		{
-			totalBuyCompletedBills = 0;
-			totalSellCompletedBills = 0;
-
 			foreach (var bill in bills)
 			{
 				if (bill.Status == "Hoàn thành")
@@ -756,16 +754,24 @@ namespace SanGiaoDich_BrotherHood.Client.Pages
 					{
 						totalBuyCompletedBills++;
 					}
-
-					// Kiểm tra đơn hàng bán
-					if (bill.SellerUserName == username)
-					{
-						totalSellCompletedBills++;
-					}
 				}
 			}
 		}
-		private List<RatingDto> userRatings = new List<RatingDto>();
+        private void CountCompletedSaleBills()
+        {
+            foreach (var bill in bills)
+            {
+                if (bill.Status == "Hoàn thành")
+                {
+                    // Kiểm tra đơn hàng mua
+                    if (bill.SellerUserName == username)
+                    {
+                        totalSellCompletedBills++;
+                    }
+                }
+            }
+        }
+        private List<RatingDto> userRatings = new List<RatingDto>();
 
 		private async Task LoadUserDataAsync()
 		{

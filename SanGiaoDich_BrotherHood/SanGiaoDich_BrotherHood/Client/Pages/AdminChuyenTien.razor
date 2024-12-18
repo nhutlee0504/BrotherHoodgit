@@ -96,7 +96,7 @@ else
 }
 
 @code {
-    private List<Withdrawal_Infomation> Withdrawals = new();
+    private List<WithDra_Info> Withdrawals = new();
     private string ErrorMessage;
     private bool IsLoggedIn { get; set; } = true;
 
@@ -145,7 +145,7 @@ else
     {
         try
         {
-            var response = await http.PutAsJsonAsync<Withdrawal_Infomation>($"api/payment/update-withdrawal/{id}/{status}", null);
+            var response = await http.PutAsJsonAsync<WithDra_Info>($"api/payment/update-withdrawal/{id}/{status}", null);
 
             if (response.IsSuccessStatusCode)
             {
@@ -167,7 +167,7 @@ else
     {
         try
         {
-            Withdrawals = await http.GetFromJsonAsync<List<Withdrawal_Infomation>>("api/payment/withdrawals");
+            Withdrawals = await http.GetFromJsonAsync<List<WithDra_Info>>("api/payment/withdrawals");
         }
         catch (Exception ex)
         {

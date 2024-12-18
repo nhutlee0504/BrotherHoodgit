@@ -251,7 +251,7 @@
 						}
 					}
 
-			
+
 				</div>
 
 				<div class="row mt-2">
@@ -315,7 +315,7 @@
 
 
 				<div class="row mt-2">
-					@if(resultMessage != null)
+					@if (resultMessage != null)
 					{
 						<p class="error-message">
 							<i class="fas fa-exclamation-circle"></i> @resultMessage
@@ -323,12 +323,12 @@
 					}
 					else
 					{
-						
+
 					}
-					
+
 
 					<div class="col-md-12 d-flex align-items-center justify-content-center">
-						<InputFile OnChange="HandleFileSelected" id="fileInput"  multiple accept="image/*" />
+						<InputFile OnChange="HandleFileSelected" id="fileInput" multiple accept="image/*" />
 					</div>
 				</div>
 			</div>
@@ -431,8 +431,8 @@
 				<label for="ProductDescription"><i class="fas fa-info-circle"></i> Mô tả sản phẩm chi tiết:</label>
 				<div id="editor"></div>
 
-@* 				<textarea @bind="Description" class="form-control" id="ProductDescription" rows="7" style="display: none;" placeholder="Nhập mô tả chi tiết về sản phẩm..."></textarea>
- *@				@if (!string.IsNullOrWhiteSpace(ProductDescriptionError))
+				@* 				<textarea @bind="Description" class="form-control" id="ProductDescription" rows="7" style="display: none;" placeholder="Nhập mô tả chi tiết về sản phẩm..."></textarea>
+				*@				@if (!string.IsNullOrWhiteSpace(ProductDescriptionError))
 				{
 					<div class="text-danger">@ProductDescriptionError</div>
 				}
@@ -458,24 +458,24 @@
 				}
 			</button>
 
-		@* 	<div class="mt-4 custom-content mb-2">
-				<button class="btn btn-secondary custom-btn" @onclick="CopyContent">
-					<i class="fa fa-copy"></i> Sao chép
-				</button>
+			@* 	<div class="mt-4 custom-content mb-2">
+			<button class="btn btn-secondary custom-btn" @onclick="CopyContent">
+			<i class="fa fa-copy"></i> Sao chép
+			</button>
 
-				@if (FormattedResponse.Any())
-				{
-					<ul>
-						@foreach (var item in FormattedResponse)
-						{
-							<li>@item</li>
-						}
-					</ul>
-				}
-				@if (!string.IsNullOrWhiteSpace(ErrorMessage))
-				{
-					<div class="alert alert-danger">@ErrorMessage</div>
-				}
+			@if (FormattedResponse.Any())
+			{
+			<ul>
+			@foreach (var item in FormattedResponse)
+			{
+			<li>@item</li>
+			}
+			</ul>
+			}
+			@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+			{
+			<div class="alert alert-danger">@ErrorMessage</div>
+			}
 			</div> *@
 
 
@@ -638,7 +638,7 @@
 			var files = e.GetMultipleFiles();
 			if (files.Count == 0)
 			{
-				ImageError = "Vui lòng chọn ít nhất 1 ảnh.";
+				ImageError = "Vui lòng chọn ít nhất 1 ảnh và tối đa 10 ảnh";
 				selectedFiles.Clear();
 				return;
 			}
@@ -686,6 +686,19 @@
 						FileName = file.Name,
 						DataUrl = $"data:{file.ContentType};base64,{base64Image}"
 					});
+
+				for (int i = 0; i < selectedFiles.Count; i++)
+				{
+					if (selectedFiles[i] == null)
+					{
+						selectedFiles[i] = new ImageFile
+							{
+								DataUrl = await GetImageDataUrl(file)
+							};
+						selectedImageCount++;
+						break;
+					}
+				}
 			}
 
 			resultMessage = null;
@@ -1019,123 +1032,123 @@
 	private string apiKey = "AIzaSyAgNPZpXYkrNT1dowBC0JM5wFHPoKxPCfo";
 	private string resultMessage;
 	private const long MaxFileSize = 5 * 1024 * 1024;
-	    private async Task<string> CallGoogleVisionApi(string base64Image)
-    {
-        try
-        {
-            var request = new
-            {
-                requests = new[]
-                {
-                    new
-                    {
-                        image = new { content = base64Image },
-                        features = new[]
-                        {
-                            new { type = "LABEL_DETECTION" },
-                            new { type = "SAFE_SEARCH_DETECTION" }
-                        }
-                    }
-                }
-            };
+	private async Task<string> CallGoogleVisionApi(string base64Image)
+	{
+		try
+		{
+			var request = new
+			{
+				requests = new[]
+				{
+					new
+					{
+						image = new { content = base64Image },
+						features = new[]
+						{
+							new { type = "LABEL_DETECTION" },
+							new { type = "SAFE_SEARCH_DETECTION" }
+						}
+					}
+				}
+			};
 
-            var jsonRequest = JsonSerializer.Serialize(request);
-            var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+			var jsonRequest = JsonSerializer.Serialize(request);
+			var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 			using var httpClient = new HttpClient();
 			var response = await httpClient.PostAsync($"https://vision.googleapis.com/v1/images:annotate?key={apiKey}", content);
-            if (!response.IsSuccessStatusCode)
-            {
-                return $"Lỗi khi gọi API: {response.StatusCode}";
-            }
+			if (!response.IsSuccessStatusCode)
+			{
+				return $"Lỗi khi gọi API: {response.StatusCode}";
+			}
 
-            var jsonResponse = await response.Content.ReadAsStringAsync();
-            return AnalyzeApiResponse(jsonResponse);
-        }
-        catch (Exception ex)
-        {
-            return $"Lỗi: {ex.Message}";
-        }
-    }
+			var jsonResponse = await response.Content.ReadAsStringAsync();
+			return AnalyzeApiResponse(jsonResponse);
+		}
+		catch (Exception ex)
+		{
+			return $"Lỗi: {ex.Message}";
+		}
+	}
 
-    private string AnalyzeApiResponse(string jsonResponse)
-    {
-        try
-        {
-            var result = JsonSerializer.Deserialize<VisionApiResponse>(jsonResponse);
-            if (result?.Responses == null || result.Responses.Length == 0)
-            {
-                return "Không có phản hồi từ API.";
-            }
+	private string AnalyzeApiResponse(string jsonResponse)
+	{
+		try
+		{
+			var result = JsonSerializer.Deserialize<VisionApiResponse>(jsonResponse);
+			if (result?.Responses == null || result.Responses.Length == 0)
+			{
+				return "Không có phản hồi từ API.";
+			}
 
-            var safeSearch = result.Responses[0].SafeSearchAnnotation;
-            var labels = result.Responses[0].LabelAnnotations;
+			var safeSearch = result.Responses[0].SafeSearchAnnotation;
+			var labels = result.Responses[0].LabelAnnotations;
 
-            // Kiểm tra nội dung nhạy cảm
-            if (safeSearch != null && (safeSearch.Adult == "LIKELY" || safeSearch.Adult == "VERY_LIKELY" ||
-                                       safeSearch.Violence == "LIKELY" || safeSearch.Violence == "VERY_LIKELY" ||
-                                       safeSearch.Racy == "LIKELY" || safeSearch.Racy == "VERY_LIKELY"))
-            {
-                return "Ảnh chứa nội dung nhạy cảm và không được phép thêm.";
-            }
+			// Kiểm tra nội dung nhạy cảm
+			if (safeSearch != null && (safeSearch.Adult == "LIKELY" || safeSearch.Adult == "VERY_LIKELY" ||
+												safeSearch.Violence == "LIKELY" || safeSearch.Violence == "VERY_LIKELY" ||
+												safeSearch.Racy == "LIKELY" || safeSearch.Racy == "VERY_LIKELY"))
+			{
+				return "Ảnh chứa nội dung nhạy cảm và không được phép thêm.";
+			}
 
-            if (labels != null)
-            {
-                foreach (var label in labels)
-                {
-                    if (label.Description.Contains("gun", StringComparison.OrdinalIgnoreCase) ||
-                        label.Description.Contains("weapon", StringComparison.OrdinalIgnoreCase) ||
-                        label.Description.Contains("firearm", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return "Ảnh chứa vũ khí và không được phép thêm.";
-                    }
-                }
-            }
+			if (labels != null)
+			{
+				foreach (var label in labels)
+				{
+					if (label.Description.Contains("gun", StringComparison.OrdinalIgnoreCase) ||
+						label.Description.Contains("weapon", StringComparison.OrdinalIgnoreCase) ||
+						label.Description.Contains("firearm", StringComparison.OrdinalIgnoreCase))
+					{
+						return "Ảnh chứa vũ khí và không được phép thêm.";
+					}
+				}
+			}
 
-            return "Ảnh an toàn và đã được chấp nhận.";
-        }
-        catch (Exception ex)
-        {
-            return $"Lỗi khi xử lý JSON: {ex.Message}";
-        }
-    }
+			return "Ảnh an toàn và đã được chấp nhận.";
+		}
+		catch (Exception ex)
+		{
+			return $"Lỗi khi xử lý JSON: {ex.Message}";
+		}
+	}
 
 	private async Task ResetFileInput()
 	{
 		await JSRuntime.InvokeVoidAsync("resetFileInput", "fileInput");
 	}
 
-    public class VisionApiResponse
-    {
-        [JsonPropertyName("responses")]
-        public Response[] Responses { get; set; }
+	public class VisionApiResponse
+	{
+		[JsonPropertyName("responses")]
+		public Response[] Responses { get; set; }
 
-        public class Response
-        {
-            [JsonPropertyName("safeSearchAnnotation")]
-            public SafeSearchAnnotations SafeSearchAnnotation { get; set; }
+		public class Response
+		{
+			[JsonPropertyName("safeSearchAnnotation")]
+			public SafeSearchAnnotations SafeSearchAnnotation { get; set; }
 
-            [JsonPropertyName("labelAnnotations")]
-            public LabelAnnotation[] LabelAnnotations { get; set; }
+			[JsonPropertyName("labelAnnotations")]
+			public LabelAnnotation[] LabelAnnotations { get; set; }
 
-            public class SafeSearchAnnotations
-            {
-                [JsonPropertyName("adult")]
-                public string Adult { get; set; }
+			public class SafeSearchAnnotations
+			{
+				[JsonPropertyName("adult")]
+				public string Adult { get; set; }
 
-                [JsonPropertyName("violence")]
-                public string Violence { get; set; }
+				[JsonPropertyName("violence")]
+				public string Violence { get; set; }
 
-                [JsonPropertyName("racy")]
-                public string Racy { get; set; }
-            }
+				[JsonPropertyName("racy")]
+				public string Racy { get; set; }
+			}
 
-            public class LabelAnnotation
-            {
-                [JsonPropertyName("description")]
-                public string Description { get; set; }
-            }
-        }
-    }
+			public class LabelAnnotation
+			{
+				[JsonPropertyName("description")]
+				public string Description { get; set; }
+			}
+		}
+	}
 }
 <script>
 	function resetFileInput(fileInputId) {
