@@ -261,6 +261,10 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 throw new InvalidOperationException("Không có sản phẩm nào để thống kê.");
             }
 
+            // Tính tổng số bài đăng
+            var totalPosts = products.Count();
+
+            // Thống kê theo trạng thái
             var statistics = products
                 .GroupBy(p => p.Status)
                 .Select(group => new
@@ -270,8 +274,16 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 })
                 .ToList();
 
+            // Thêm tổng số bài đăng vào đầu danh sách thống kê
+            statistics.Insert(0, new
+            {
+                Status = "Tổng số bài đăng",
+                Count = totalPosts
+            });
+
             return statistics;
         }
+
 
         //Phương thức ngooài
 

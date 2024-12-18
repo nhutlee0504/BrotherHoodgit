@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using OfficeOpenXml;
 using SanGiaoDich_BrotherHood.Server.Data;
 using SanGiaoDich_BrotherHood.Shared.Dto;
 using SanGiaoDich_BrotherHood.Shared.Models;
@@ -290,19 +291,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             Regex regex = new Regex(pattern);
             return regex.IsMatch(phone);
         }
-        public async Task<Dictionary<string, int>> GetUserStatisticsAsync()
-        {
-            var totalUsers = await _context.Accounts.CountAsync();
-            var activeUsers = await _context.Accounts.CountAsync(a => a.IsDelete == false || a.IsDelete == null);
-            var deletedUsers = await _context.Accounts.CountAsync(a => a.IsDelete == true);
-
-            return new Dictionary<string, int>
-       {
-           { "TotalUsers", totalUsers },
-           { "ActiveUsers", activeUsers },
-           { "DeletedUsers", deletedUsers }
-       };
-        }
         private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()
         {
             var userClaim = _httpContextAccessor.HttpContext?.User;
@@ -387,5 +375,66 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
             return account;
         }
+
+        public async Task<Dictionary<string, int>> GetUserStatisticsAsync()
+        {
+            try
+            {
+                // Đếm tổng số người dùng
+                int totalUsers = await _context.Accounts.CountAsync();
+
+                // Đếm số người dùng hoạt động
+                int activeUsers = await _context.Accounts.CountAsync(a =>
+                        (a.IsDelete == false || a.IsDelete == null) && a.IsActived == true);
+
+                // Số người dùng ngừng hoạt động
+                int inactiveUsers = totalUsers - activeUsers;
+
+                return new Dictionary<string, int>
+                {
+                    { "TotalUsers", totalUsers },
+                    { "ActiveUsers", activeUsers },
+                    { "InactiveUsers", inactiveUsers }
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi lấy thống kê người dùng: {ex.Message}");
+            }
+        }
+
+        public async Task<MemoryStream> ExportUserStatisticsToExcelAsync()
+        {
+            var statistics = await GetUserStatisticsAsync(); // Gọi phương thức lấy thống kê người dùng
+
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("User Statistics");
+
+                // Tiêu đề cột
+                worksheet.Cells[1, 1].Value = "Loại Người Dùng";
+                worksheet.Cells[1, 2].Value = "Số Lượng";
+
+                // Dữ liệu thống kê
+                worksheet.Cells[2, 1].Value = "Tổng Số Người Dùng";
+                worksheet.Cells[2, 2].Value = statistics["TotalUsers"];
+
+                worksheet.Cells[3, 1].Value = "Người Dùng Hoạt Động";
+                worksheet.Cells[3, 2].Value = statistics["ActiveUsers"];
+
+                worksheet.Cells[4, 1].Value = "Người Dùng Ngừng Hoạt Động";
+                worksheet.Cells[4, 2].Value = statistics["InactiveUsers"];
+
+                // Đảm bảo các ô có định dạng
+                worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+
+                // Trả về file Excel dưới dạng MemoryStream
+                var memoryStream = new MemoryStream();
+                await package.SaveAsAsync(memoryStream);
+                memoryStream.Position = 0;
+                return memoryStream;
+            }
+        }
+
     }
 }

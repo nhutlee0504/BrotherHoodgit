@@ -1,7 +1,16 @@
 ﻿@page "/Admin/ThongKeNguoiDung"
+@using BlazorDownloadFile
+@using System.Text.Json
 @layout AdminLayout
 @inject HttpClient Http
+@inject IBlazorDownloadFileService DownloadFileService
+@inject IJSRuntime JS
 
+<!-- Cập nhật link Chart.js mới nhất -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<!-- Phần tiêu đề -->
 <h3 class="text-center my-4">Thống Kê Người Dùng</h3>
 
 @if (userStatistics == null)
@@ -14,29 +23,49 @@
 else
 {
     <div class="container">
-        <!-- Thống kê tổng quan -->
+        <!-- Cột thống kê tổng quan -->
         <div class="row g-4 my-4">
-            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                <div class="card bg-primary text-white text-center shadow-sm h-100 hover-shadow">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white text-center shadow rounded-lg h-100">
                     <div class="card-body">
                         <h5 class="card-title">Tổng Số Người Dùng</h5>
                         <p class="card-text fs-4 fw-bold">@userStatistics["TotalUsers"]</p>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                <div class="card bg-success text-white text-center shadow-sm h-100 hover-shadow">
+            </div>  
+
+            <div class="col-md-4">
+                <div class="card bg-success text-white text-center shadow rounded-lg h-100">
                     <div class="card-body">
                         <h5 class="card-title">Người Dùng Hoạt Động</h5>
                         <p class="card-text fs-4 fw-bold">@userStatistics["ActiveUsers"]</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
-                <div class="card bg-danger text-white text-center shadow-sm h-100 hover-shadow">
+
+            <div class="col-md-4">
+                <div class="card bg-danger text-white text-center shadow rounded-lg h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Người Dùng Đã Bị Xóa</h5>
-                        <p class="card-text fs-4 fw-bold">@userStatistics["DeletedUsers"]</p>
+                        <h5 class="card-title">Người Dùng Ngừng Hoạt Động</h5>
+                        <p class="card-text fs-4 fw-bold">@userStatistics["InactiveUsers"]</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Nút xuất file Excel -->
+        <button class="btn btn-success rounded-pill py-2 px-3" @onclick="ExportToExcel">
+            <i class="fas fa-file-excel"></i> Xuất Excel
+        </button>
+
+        <!-- Biểu đồ thống kê -->
+        <div class="row g-4 my-4">
+            <div class="col-md-12">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Biểu Đồ Thống Kê Người Dùng</h5>
+                        <canvas id="myChart" width="400" height="400"></canvas>
                     </div>
                 </div>
             </div>
@@ -45,34 +74,131 @@ else
 }
 
 <style>
-    /* Hiệu ứng hover cho card */
-    .hover-shadow:hover {
-        transform: scale(1.05);
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    .card {
+        cursor: pointer;
+        transition: transform 0.2s ease-in-out;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+    }
+
+        .card:hover {
+            transform: scale(1.02);
+        }
+
+    #myChart {
+        width: 100% !important;
+        height: 400px !important;
     }
 </style>
+
+<script>
+    window.createChart = (chartData) => {
+        var ctx = document.getElementById('myChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'bar', // Adjust chart type as needed
+            data: JSON.parse(chartData),
+            options: {
+                plugins: {
+                    tooltip: {
+                        enabled: true, // Enable tooltips
+                        callbacks: {
+                            label: (context) => {
+                                return context.dataset.label + ': ' + context.parsed.y;
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                    },
+                },
+            },
+</script>
 
 @code {
     private Dictionary<string, int> userStatistics;
 
+    // Gọi API để lấy dữ liệu thống kê
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Gọi API để lấy dữ liệu thống kê
+            // Gọi API để lấy dữ liệu thống kê người dùng
             userStatistics = await Http.GetFromJsonAsync<Dictionary<string, int>>("api/user/UserStatistics");
+
+            // Kiểm tra dữ liệu
+            if (userStatistics == null)
+            {
+                Console.WriteLine("Dữ liệu thống kê người dùng không có.");
+            }
+            else
+            {
+                Console.WriteLine($"Dữ liệu thống kê người dùng: {JsonSerializer.Serialize(userStatistics)}");
+            }
         }
         catch (Exception ex)
         {
-            // Xử lý lỗi
+            // Xử lý lỗi khi gọi API
             userStatistics = new Dictionary<string, int>
             {
                 { "TotalUsers", 0 },
                 { "ActiveUsers", 0 },
-                { "DeletedUsers", 0 }
+                { "InactiveUsers", 0 }
             };
             Console.WriteLine($"Lỗi khi gọi API: {ex.Message}");
+        }
+    }
+
+    // Gọi hàm JavaScript để vẽ biểu đồ sau khi render xong
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && userStatistics != null)
+        {
+            var chartData = new
+            {
+                labels = new[] { "Tổng Số Người Dùng", "Người Dùng Hoạt Động", "Người Dùng Ngừng Hoạt Động" },
+                datasets = new[] {
+                    new {
+                        label = "# of Users",
+                        data = new[] { userStatistics["TotalUsers"], userStatistics["ActiveUsers"], userStatistics["InactiveUsers"] },
+                        backgroundColor = new[] { "rgba(54, 162, 235, 0.6)", "rgba(75, 192, 192, 0.6)", "rgba(255, 99, 132, 0.6)" },
+                        borderColor = new[] { "rgba(54, 162, 235, 1)", "rgba(75, 192, 192, 1)", "rgba(255, 99, 132, 1)" },
+                        borderWidth = 1
+                    }
+                }
+            };
+
+            var serializedData = JsonSerializer.Serialize(chartData);
+
+            // Gọi phương thức JavaScript để vẽ biểu đồ
+            await JS.InvokeVoidAsync("createChart", serializedData);
+        }
+        else if (userStatistics == null)
+        {
+            // Log khi dữ liệu chưa được tải
+            Console.WriteLine("Dữ liệu thống kê người dùng chưa được tải.");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        var response = await Http.GetAsync("api/user/ExportUserStatisticsExcel");
+        if (response.IsSuccessStatusCode)
+        {
+            var fileBytes = await response.Content.ReadAsByteArrayAsync();
+            var fileName = "UserStatistics.xlsx";
+
+            // Sử dụng phương thức đúng với ba tham số
+            await DownloadFileService.DownloadFile(fileName, fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+            // Thông báo thành công
+            Console.WriteLine("Tải file Excel thành công.");
+        }
+        else
+        {
+            // Thông báo lỗi khi tải file
+            Console.WriteLine("Lỗi khi tải file Excel");
         }
     }
 }

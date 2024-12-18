@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Routing;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using OfficeOpenXml;
+using static SanGiaoDich_BrotherHood.Client.Pages.ThongKeBaiDang;
+using SanGiaoDich_BrotherHood.Server.Data;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -19,10 +21,12 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
     public class ProductController : ControllerBase
     {
         private IProduct prod;
+        private readonly ApplicationDbContext _context;
 
-        public ProductController(IProduct prods)
+        public ProductController(IProduct prods, ApplicationDbContext context)
         {
             prod = prods;
+            _context = context;
         }
         [AllowAnonymous]
         [HttpGet("GetAllProduct")]
@@ -289,18 +293,18 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 
                 // Create a list to hold the revenue data
                 var revenueData = new List<RevenueExportModel>
-        {
-            new RevenueExportModel
-            {
-                Period = "Doanh Thu Theo Ngày",
-                Revenue = dailyRevenue // Ensure using decimal zero (0m)
-            },
-            new RevenueExportModel
-            {
-                Period = "Doanh Thu Theo Tháng",
-                Revenue = monthlyRevenue // Ensure using decimal zero (0m)
-            }
-        };
+                {
+                    new RevenueExportModel
+                    {
+                        Period = "Doanh Thu Theo Ngày",
+                        Revenue = dailyRevenue // Ensure using decimal zero (0m)
+                    },
+                    new RevenueExportModel
+                    {
+                        Period = "Doanh Thu Theo Tháng",
+                        Revenue = monthlyRevenue // Ensure using decimal zero (0m)
+                    }
+                };
 
                 // Export the data to Excel
                 var excelFile = await ExportRevenueToExcelAsync(revenueData);
@@ -346,6 +350,55 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             public string Period { get; set; }
             public decimal Revenue { get; set; }
         }
+
+        [HttpGet("ApprovedPostsToday")]
+        public async Task<IActionResult> GetApprovedPostsToday()
+        {
+            try
+            {
+                var today = DateTime.Today;
+
+                // Lấy tất cả các bài đăng/sản phẩm
+                var posts = await prod.GetAllProductsAsync();
+
+                // Lọc bài đăng "Đã duyệt" và ngày tạo là hôm nay
+                var approvedPostsToday = posts
+                    .Where(p => p.CreatedDate.HasValue
+                                && p.CreatedDate.Value.Date == today
+                                && p.Status == "Đã duyệt")
+                    .Count();
+
+                return Ok(new { Count = approvedPostsToday });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Error = $"Lỗi khi thống kê bài đăng: {ex.Message}" });
+            }
+        }
+
+        //[HttpGet("StatisticsByMonthYear")]
+        //public async Task<ActionResult<List<StatisticDto>>> GetStatisticsByMonthYear(int year, int month)
+        //{
+        //    try
+        //    {
+        //        var statistics = await _context.Posts
+        //            .Where(p => p.DatePosted.Year == year && p.DatePosted.Month == month)
+        //            .GroupBy(p => p.Status)
+        //            .Select(g => new StatisticDto
+        //            {
+        //                Status = g.Key,
+        //                Count = g.Count()
+        //            })
+        //            .ToListAsync();
+
+        //        return Ok(statistics);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(new { message = $"Error: {ex.Message}" });
+        //    }
+        //}
+
 
     }
 }
