@@ -356,7 +356,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 throw new InvalidOperationException("Người dùng không tồn tại");
             }
 
-            const int upgradeCost = 50000; // Giá nâng cấp lên ưu tiên
+            const int upgradeCost = 10000; // Giá nâng cấp lên ưu tiên
             if (existingUser.PreSystem < upgradeCost)
             {
                 throw new InvalidOperationException("Số dư không đủ để nâng cấp sản phẩm");
@@ -376,23 +376,9 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public async Task<decimal> GetTotalRevenueAsync()
         {
             var totalRevenue = await _context.Products
-                                              .Where(p => p.Status == "Đã duyệt")
-                                              .SumAsync(p => p.Price); // Tổng doanh thu = giá * số lượng
+                                              .Where(p => p.Status == "Đã duyệt" || p.Status == "Đã xóa" || p.Status == "Đang chờ duyệt")
+                                              .SumAsync(p => p.PriceUp); // Tổng doanh thu = giá * số lượng
             return totalRevenue;
-        }
-
-        public async Task<decimal> GetRevenueByWeekAsync(DateTime startDate)
-        {
-            // Xác định ngày bắt đầu và ngày kết thúc của tuần
-            var startOfWeek = startDate.Date;
-            var endOfWeek = startOfWeek.AddDays(7); // Lấy ngày đầu tiên của tuần tiếp theo
-
-            // Kiểm tra nếu không có đơn hàng trong tuần
-            var revenue = await _context.Products
-                .Where(order => order.CreatedDate >= startOfWeek && order.CreatedDate < endOfWeek)
-                .SumAsync(order => (decimal?)order.Price) ?? 0; // Nếu không có giá trị thì trả về 0
-
-            return revenue;
         }
 
         public async Task<decimal> GetRevenueByMonthAsync(int month, int year)
@@ -407,58 +393,66 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
             // Kiểm tra nếu không có đơn hàng trong tháng
             var revenue = await _context.Products
-                .Where(order => order.CreatedDate >= startOfMonth && order.CreatedDate < endOfMonth)
-                .SumAsync(order => (decimal?)order.Price) ?? 0; // Nếu không có giá trị thì trả về 0
+                .Where(order => order.CreatedDate >= startOfMonth
+                            && order.CreatedDate < endOfMonth
+                            && (order.Status == "Đã duyệt" || order.Status == "Đã xóa" || order.Status == "Đang chờ duyệt")) // Lọc theo 3 trạng thái
+                .SumAsync(order => (decimal?)order.PriceUp) ?? 0; // Nếu không có giá trị thì trả về 0
 
             return revenue;
         }
 
         public async Task<decimal> GetRevenueByDateAsync(DateTime date)
         {
-            // Xác định ngày bắt đầu và ngày kết thúc của ngày
-            var startOfDay = date.Date;
-            var endOfDay = startOfDay.AddDays(1); // Lấy ngày tiếp theo để so sánh
+            // Lấy ngày hiện tại
+            var today = DateTime.Today;  // Đổi tên thành 'today' thay vì 'date'
+
+            // Xác định ngày bắt đầu và ngày kết thúc của ngày hiện tại
+            var startOfDay = today.Date; // 00:00:00 của ngày hiện tại
+            var endOfDay = startOfDay.AddDays(1); // 00:00:00 của ngày tiếp theo
 
             // Kiểm tra nếu không có đơn hàng trong ngày
             var revenue = await _context.Products
-                .Where(order => order.CreatedDate >= startOfDay && order.CreatedDate < endOfDay && order.Status.Contains("Đã duyệt"))
-                .SumAsync(order => (decimal?)order.Price) ?? 0; // Nếu không có giá trị thì trả về 0
+                .Where(order => order.CreatedDate >= startOfDay
+                            && order.CreatedDate < endOfDay
+                            && (order.Status == "Đã duyệt" || order.Status == "Đã xóa" || order.Status == "Đang chờ duyệt")) // Lọc theo 3 trạng thái
+                .SumAsync(order => (decimal?)order.PriceUp) ?? 0; // Nếu không có giá trị thì trả về 0
 
             return revenue;
         }
 
-        public async Task<byte[]> ExportProductsToExcelAsync()
+        public async Task<MemoryStream> ExportRevenueStatisticsToExcelAsync(DateTime date)
         {
-            // Giả sử bạn đã có danh sách sản phẩm
-            var products = await GetAllProductsAsync();
+            // Gọi các phương thức để lấy dữ liệu doanh thu
+            var dailyRevenue = await GetRevenueByDateAsync(date); // Doanh thu theo ngày
+            var monthlyRevenue = await GetRevenueByMonthAsync(date.Month, date.Year); // Doanh thu theo tháng
+            var yearlyRevenue = await GetRevenueByYearAsync(date.Year); // Doanh thu theo năm
 
             using (var package = new ExcelPackage())
             {
-                var worksheet = package.Workbook.Worksheets.Add("Products");
+                var worksheet = package.Workbook.Worksheets.Add("Revenue Statistics");
 
                 // Tiêu đề cột
-                worksheet.Cells[1, 1].Value = "ID";
-                worksheet.Cells[1, 2].Value = "Tên Sản Phẩm";
-                worksheet.Cells[1, 3].Value = "Giá";
-                worksheet.Cells[1, 4].Value = "Số Lượng";
+                worksheet.Cells[1, 1].Value = "Loại Thống Kê";
+                worksheet.Cells[1, 2].Value = "Doanh Thu";
 
-                int row = 2; // Bắt đầu từ dòng thứ 2 (sau tiêu đề)
-                foreach (var product in products)
-                {
-                    worksheet.Cells[row, 1].Value = product.IDProduct;
-                    worksheet.Cells[row, 2].Value = product.Name;
-                    worksheet.Cells[row, 3].Value = product.Price;
-                    worksheet.Cells[row, 4].Value = product.Quantity;
-                    row++;
-                }
+                // Dữ liệu thống kê doanh thu
+                worksheet.Cells[2, 1].Value = "Doanh Thu Theo Ngày (" + date.ToString("dd/MM/yyyy") + ")";
+                worksheet.Cells[2, 2].Value = dailyRevenue;
 
+                worksheet.Cells[3, 1].Value = "Doanh Thu Theo Tháng (" + date.ToString("MM/yyyy") + ")";
+                worksheet.Cells[3, 2].Value = monthlyRevenue;
+
+                worksheet.Cells[4, 1].Value = "Doanh Thu Theo Năm (" + date.Year + ")";
+                worksheet.Cells[4, 2].Value = yearlyRevenue;
+
+                // Đảm bảo các ô có định dạng hợp lý
                 worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
 
-                using (var stream = new MemoryStream())
-                {
-                    await package.SaveAsAsync(stream);
-                    return stream.ToArray(); // Trả về mảng byte
-                }
+                // Trả về file Excel dưới dạng MemoryStream
+                var memoryStream = new MemoryStream();
+                await package.SaveAsAsync(memoryStream);
+                memoryStream.Position = 0;
+                return memoryStream;
             }
         }
 
@@ -472,6 +466,22 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 .CountAsync();
         }
 
+        public async Task<decimal> GetRevenueByYearAsync(int year)
+        {
+            // Lấy năm hiện tại
+            int currentYear = DateTime.Now.Year;
+
+            // Lấy ngày bắt đầu và kết thúc của năm hiện tại
+            var startOfYear = new DateTime(currentYear, 1, 1);
+            var endOfYear = new DateTime(currentYear, 12, 31, 23, 59, 59); // Ngày cuối cùng trong năm
+
+            // Tính tổng doanh thu trong năm
+            var revenue = await _context.Products
+                .Where(o => o.CreatedDate >= startOfYear && o.CreatedDate <= endOfYear)
+                .SumAsync(o => (decimal?)o.PriceUp) ?? 0; // Nếu không có doanh thu, trả về 0
+
+            return revenue;
+        }
 
         // Phương thức xuất thống kê bài đăng sang Excel
         public async Task<MemoryStream> ExportAllStatisticsToExcelAsync()
@@ -581,6 +591,12 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
             // Trả về tuple: (số bài đăng trong tháng, số bài đăng trong năm, tháng hiện tại, năm hiện tại)
             return Tuple.Create(monthlyCount, yearlyCount, today.Month, today.Year);
+        }
+
+        public class RevenueExportModel
+        {
+            public string Period { get; set; }
+            public decimal Revenue { get; set; }
         }
 
     }
