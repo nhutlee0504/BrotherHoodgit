@@ -175,6 +175,7 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 			}
 		}
 
+<<<<<<< HEAD
 		[HttpGet("withdrawals")]
 		public async Task<IActionResult> GetAllWithdrawals()
 		{
@@ -215,4 +216,46 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 		}
 
 	}
+=======
+        [HttpGet("withdrawals")]
+        public async Task<IActionResult> GetAllWithdrawals()
+        {
+            var withdrawals = await _vnPayService.GetAllWithdrawals();
+            return Ok(withdrawals);
+        }
+
+        [HttpPost("withdrawals")]
+        public async Task <IActionResult> AddWithdrawal( Withdrawal_informationDto withdrawal)
+        {
+            if (withdrawal == null)
+            {
+                return BadRequest("Thông tin yêu cầu rút tiền không hợp lệ.");
+            }
+
+            var newWithdrawal = await _vnPayService.AddWithdrawal(withdrawal);
+            return Ok(newWithdrawal);
+        }
+        [HttpPut("update-withdrawal/{id}/{status}")]
+        public async Task<IActionResult> UpdateWithdrawal(int id, string status)
+        {
+            try
+            {
+                // Gọi phương thức UpdateWithDaral từ service
+                var updatedWithdrawal = await _vnPayService.UpdateWithDaral(id, status);
+
+                if (updatedWithdrawal == null)
+                {
+                    return NotFound("Đơn rút tiền không tồn tại.");
+                }
+
+                return Ok(new { message = "Cập nhật yêu cầu rút tiền thành công", withdrawal = updatedWithdrawal });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
+            }
+        }
+
+    }
+>>>>>>> 24a7e4152c1260d2c53227d58fdff1a674c01922
 }
