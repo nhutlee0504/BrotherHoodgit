@@ -236,9 +236,63 @@
 
 				<div class="row mt-2">
 					<div class="col-md-12">
-						<span>Xem quy định về <a href="#" data-bs-toggle="modal" data-bs-target="#policyModal"><i class="fas fa-info-circle"></i> Cách chụp ảnh và quay sản phẩm</a></span>
+						<span>
+							Xem quy định về
+							<a role="button" @onclick="OpenPolicyModal" class="policy-link">
+								<i class="fas fa-info-circle"></i> Cách chụp ảnh và quay sản phẩm
+							</a>
+						</span>
 					</div>
 				</div>
+
+				<!-- Modal -->
+				@if (IsPolicyModalVisible)
+				{
+					<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+						<div class="modal-dialog modal-lg">
+							<div class="modal-content">
+								<div class="modal-header">
+									<h5 class="modal-title" id="policyModalLabel">Chính Sách Đăng Ảnh và Bài Viết</h5>
+									<button type="button" class="btn-close" @onclick="ClosePolicyModal" aria-label="Close"></button>
+								</div>
+								<div class="modal-body">
+									<p>
+										<span class="highlight-red">Chúng tôi hiểu rằng điều quan trọng đối với BrotherHood</span> là phải trở thành nơi mà mọi người có thể cảm thấy tự tin để giao tiếp, nhưng chúng tôi cũng biết rằng cần phải xem trọng vai trò của bản thân trong việc ngăn chặn việc lạm dụng dịch vụ của mình. Đó là lý do <span class="highlight-red">BrotherHood phát triển Tiêu chuẩn cộng đồng</span> để cung cấp cho người dùng những nguyên tắc về nội dung được phép và không được phép trên BrotherHood.
+									</p>
+									<h6 class="highlight-blue">Nội dung có khả năng vi phạm Tiêu chuẩn cộng đồng:</h6>
+									<ul>
+										<li class="highlight-yellow">Nội dung được tạo và phân phối bằng tài khoản giả.</li>
+										<li class="highlight-yellow">Nội dung chứa từ/cụm từ đã được xác định là gây thù ghét.</li>
+										<li class="highlight-yellow">Nội dung có thể khiêu khích hoặc tạo điều kiện cho tình trạng bạo lực nghiêm trọng.</li>
+										<li>Hành vi bắt nạt và quấy rối.</li>
+										<li>Spam, hình ảnh phản cảm, hoạt động tình dục và ảnh khỏa thân người lớn.</li>
+										<li>Bài viết mua bán, giao dịch hoặc quảng cáo hàng hóa hoặc dịch vụ bị hạn chế.</li>
+									</ul>
+									<h6 class="highlight-blue">Nội dung trên lằn ranh Tiêu chuẩn cộng đồng:</h6>
+									<ul>
+										<li class="highlight-yellow">Ảnh khỏa thân người lớn và hoạt động tình dục trên lằn ranh.</li>
+										<li>Nội dung bạo lực và phản cảm trên lằn ranh.</li>
+										<li>Hành vi sắp chạm ngưỡng bắt nạt & quấy rối, ngôn từ gây thù ghét và bạo lực & khích nộ.</li>
+										<li class="highlight-yellow">Nội dung đăng trong các nhóm liên quan đến hàng hóa thuộc diện kiểm soát.</li>
+									</ul>
+									<h6 class="highlight-blue">Nguyên tắc đối với bài viết có mức độ lan truyền đáng ngờ:</h6>
+									<p>
+										<span class="highlight-red">Chúng tôi muốn đảm bảo rằng nội dung mọi người thấy trên BrotherHood</span> đến từ nguồn xác thực và không vi phạm chính sách của chúng tôi. Chúng tôi có thể tạm thời hạn chế phân phối bài viết có mức độ phân phối cao đột biến cho đến khi người đăng xác minh danh tính.
+									</p>
+									<h6 class="highlight-blue">Nguyên tắc đối với người nhiều lần vi phạm chính sách:</h6>
+									<p>
+										<span class="highlight-red">Những người nhiều lần vi phạm</span> việc đăng nội dung lên trang cá nhân, Trang hoặc Nhóm sẽ bị xử lý, đặc biệt là các tài khoản được tạo để né tránh chính sách.
+									</p>
+								</div>
+								<div class="modal-footer">
+									<button type="button" class="btn btn-secondary" @onclick="ClosePolicyModal">Đóng</button>
+									<button type="button" class="btn btn-primary" @onclick="ClosePolicyModal">Đồng ý và Tiếp tục</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				}
+
 
 				<div class="row mt-2">
 					<div class="col-md-12 d-flex align-items-center justify-content-center">
@@ -396,54 +450,6 @@
 		</div>
 	</div>
 
-	@*
-	<div class="modal fade" id="policyModal" tabindex="-1" aria-labelledby="policyModalLabel" aria-hidden="true">
-	<div class="modal-dialog modal-lg">
-	<div class="modal-content">
-	<div class="modal-header">
-	<h5 class="modal-title" id="policyModalLabel">Chính Sách Đăng Ảnh và Bài Viết</h5>
-	<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-	</div>
-	<div class="modal-body">
-	<div class="modal-content">
-	<p>
-	<span class="highlight-red">Chúng tôi hiểu rằng điều quan trọng đối với BrotherHood</span> là phải trở thành nơi mà mọi người có thể cảm thấy tự tin để giao tiếp, nhưng chúng tôi cũng biết rằng cần phải xem trọng vai trò của bản thân trong việc ngăn chặn việc lạm dụng dịch vụ của mình. Đó là lý do <span class="highlight-red">BrotherHood phát triển Tiêu chuẩn cộng đồng</span> để cung cấp cho người dùng những nguyên tắc về nội dung được phép và không được phép trên BrotherHood.
-	</p>
-	<h6 class="highlight-blue">Nội dung có khả năng vi phạm Tiêu chuẩn cộng đồng:</h6>
-	<ul>
-	<li class="highlight-yellow">Nội dung được tạo và phân phối bằng tài khoản giả.</li>
-	<li class="highlight-yellow">Nội dung chứa từ/cụm từ đã được xác định là gây thù ghét.</li>
-	<li class="highlight-yellow">Nội dung có thể khiêu khích hoặc tạo điều kiện cho tình trạng bạo lực nghiêm trọng.</li>
-	<li>Hành vi bắt nạt và quấy rối.</li>
-	<li>Spam, hình ảnh phản cảm, hoạt động tình dục và ảnh khỏa thân người lớn.</li>
-	<li>Bài viết mua bán, giao dịch hoặc quảng cáo hàng hóa hoặc dịch vụ bị hạn chế.</li>
-	</ul>
-	<h6 class="highlight-blue">Nội dung trên lằn ranh Tiêu chuẩn cộng đồng:</h6>
-	<ul>
-	<li class="highlight-yellow">Ảnh khỏa thân người lớn và hoạt động tình dục trên lằn ranh.</li>
-	<li>Nội dung bạo lực và phản cảm trên lằn ranh.</li>
-	<li>Hành vi sắp chạm ngưỡng bắt nạt & quấy rối, ngôn từ gây thù ghét và bạo lực & khích nộ.</li>
-	<li class="highlight-yellow">Nội dung đăng trong các nhóm liên quan đến hàng hóa thuộc diện kiểm soát.</li>
-	</ul>
-	<h6 class="highlight-blue">Nguyên tắc đối với bài viết có mức độ lan truyền đáng ngờ:</h6>
-	<p>
-	<span class="highlight-red">Chúng tôi muốn đảm bảo rằng nội dung mọi người thấy trên BrotherHood</span> đến từ nguồn xác thực và không vi phạm chính sách của chúng tôi. Chúng tôi có thể tạm thời hạn chế phân phối bài viết có mức độ phân phối cao đột biến cho đến khi người đăng xác minh danh tính.
-	</p>
-	<h6 class="highlight-blue">Nguyên tắc đối với người nhiều lần vi phạm chính sách:</h6>
-	<p>
-	<span class="highlight-red">Những người nhiều lần vi phạm</span> việc đăng nội dung lên trang cá nhân, Trang hoặc Nhóm sẽ bị xử lý, đặc biệt là các tài khoản được tạo để né tránh chính sách.
-	</p>
-	</div>
-
-	</div>
-	<div class="modal-footer">
-	<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-	<button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đồng ý và Tiếp tục</button>
-	</div>
-	</div>
-	</div>
-	</div> *@
-
 	<div class="row">
 		<div class="col-md-12 d-flex justify-content-end">
 			<div class="text-right mb-3">
@@ -573,9 +579,9 @@
 		{
 			var files = e.GetMultipleFiles();
 
-			if (files.Count == 0)
+			if (files.Count == 0 ||files.Count > 10)
 			{
-				ImageError = "Vui lòng chọn ít nhất 1 ảnh";
+				ImageError = "Vui lòng chọn ít nhất 1 ảnh và không quá 10 ảnh";
 				selectedFiles.Clear();
 				return;
 			}
@@ -905,6 +911,21 @@
 				}
 			}
 		}
+	}
+
+	// Biến trạng thái modal
+	private bool IsPolicyModalVisible { get; set; } = false;
+
+	// Phương thức hiển thị modal
+	private void OpenPolicyModal()
+	{
+		IsPolicyModalVisible = true;
+	}
+
+	// Phương thức ẩn modal
+	private void ClosePolicyModal()
+	{
+		IsPolicyModalVisible = false;
 	}
 }
 <script src="/js/Check.js"></script>

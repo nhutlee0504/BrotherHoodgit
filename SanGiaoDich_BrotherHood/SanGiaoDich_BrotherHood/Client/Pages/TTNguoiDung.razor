@@ -292,7 +292,7 @@ else if (userAccount != null)
 						<p><i class="fa fa-shopping-cart"></i> Tổng số đơn hàng đã mua: @totalBuyCompletedBills</p>
 						<p><i class="fa-solid fa-shopping-bag"></i> Tổng số đơn hàng đã bán: @totalSellCompletedBills</p>
 						<p>
-							Mức độ uy tín:
+							Mức độ uy tín: @averageRating
 							@for (int i = 0; i < averageRating; i++)
 							{
 								<span class="fa fa-star checked"></span>
@@ -488,7 +488,8 @@ else if (userAccount != null)
 					else
 					{
 						<p class="text-muted">Danh sách yêu thích trống.</p>
-					}			}
+					}
+				}
 			</div>
 		</div>
 
