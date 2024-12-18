@@ -19,5 +19,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public Task<Bill> DoneBill(int IdBill, string status);
 		public Task<object> GetOrderStatisticsAsync();
         public Task<MemoryStream> ExportOrderStatisticsToExcelAsync();
+
     }
 }
