@@ -12,6 +12,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Pages\ProductAdmin.razor.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Pages\ProductAdmin.razor.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BlazorDownloadFile" Version="2.4.0.2" />
+    <PackageReference Include="Blazored.TextEditor" Version="1.1.0" />
     <PackageReference Include="Dapper" Version="2.1.35" />
     <PackageReference Include="FirebaseAdmin" Version="3.1.0" />
     <PackageReference Include="FirebaseAuthentication.net" Version="4.1.0" />

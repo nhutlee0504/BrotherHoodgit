@@ -82,7 +82,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 Price = product.Price,
                 Description = product.Description,
                 IDCategory = product.CategoryId,
-                Status = "Đã duyệt",
+                Status = "Đang chờ duyệt",
                 ProrityLevel = product.ProrityLevel,
                 CreatedDate = DateTime.Now,
                 UpdatedDate = DateTime.Now,
@@ -261,6 +261,10 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 throw new InvalidOperationException("Không có sản phẩm nào để thống kê.");
             }
 
+            // Tính tổng số bài đăng
+            var totalPosts = products.Count();
+
+            // Thống kê theo trạng thái
             var statistics = products
                 .GroupBy(p => p.Status)
                 .Select(group => new
@@ -270,8 +274,16 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 })
                 .ToList();
 
+            // Thêm tổng số bài đăng vào đầu danh sách thống kê
+            statistics.Insert(0, new
+            {
+                Status = "Tổng số bài đăng",
+                Count = totalPosts
+            });
+
             return statistics;
         }
+
 
         //Phương thức ngooài
 
@@ -361,16 +373,14 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             return prodFind;
         }
 
-        // Lấy tổng doanh thu
         public async Task<decimal> GetTotalRevenueAsync()
         {
             var totalRevenue = await _context.Products
-                .Where(p => p.Status == "Đã duyệt")
-                .SumAsync(p => p.PriceUp);  // Cộng giá đã tăng (PriceUp) thay vì Price
+                                              .Where(p => p.Status == "Đã duyệt")
+                                              .SumAsync(p => p.Price); // Tổng doanh thu = giá * số lượng
             return totalRevenue;
         }
 
-        // Lấy doanh thu theo tuần
         public async Task<decimal> GetRevenueByWeekAsync(DateTime startDate)
         {
             // Xác định ngày bắt đầu và ngày kết thúc của tuần
@@ -380,12 +390,11 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             // Kiểm tra nếu không có đơn hàng trong tuần
             var revenue = await _context.Products
                 .Where(order => order.CreatedDate >= startOfWeek && order.CreatedDate < endOfWeek)
-                .SumAsync(order => (decimal?)order.PriceUp) ?? 0; // Cộng giá đã tăng (PriceUp)
+                .SumAsync(order => (decimal?)order.Price) ?? 0; // Nếu không có giá trị thì trả về 0
 
             return revenue;
         }
 
-        // Lấy doanh thu theo tháng
         public async Task<decimal> GetRevenueByMonthAsync(int month, int year)
         {
             // Kiểm tra dữ liệu đầu vào hợp lệ
@@ -399,12 +408,11 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             // Kiểm tra nếu không có đơn hàng trong tháng
             var revenue = await _context.Products
                 .Where(order => order.CreatedDate >= startOfMonth && order.CreatedDate < endOfMonth)
-                .SumAsync(order => (decimal?)order.PriceUp) ?? 0; // Cộng giá đã tăng (PriceUp)
+                .SumAsync(order => (decimal?)order.Price) ?? 0; // Nếu không có giá trị thì trả về 0
 
             return revenue;
         }
 
-        // Lấy doanh thu theo ngày
         public async Task<decimal> GetRevenueByDateAsync(DateTime date)
         {
             // Xác định ngày bắt đầu và ngày kết thúc của ngày
@@ -414,7 +422,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             // Kiểm tra nếu không có đơn hàng trong ngày
             var revenue = await _context.Products
                 .Where(order => order.CreatedDate >= startOfDay && order.CreatedDate < endOfDay && order.Status.Contains("Đã duyệt"))
-                .SumAsync(order => (decimal?)order.PriceUp) ?? 0; // Cộng giá đã tăng (PriceUp)
+                .SumAsync(order => (decimal?)order.Price) ?? 0; // Nếu không có giá trị thì trả về 0
 
             return revenue;
         }
@@ -462,9 +470,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 }
             }
         }
-
-
-
     }
 
 }

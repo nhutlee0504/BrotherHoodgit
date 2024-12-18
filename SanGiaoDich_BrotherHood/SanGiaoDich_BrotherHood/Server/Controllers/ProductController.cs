@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Routing;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using OfficeOpenXml;
+using SanGiaoDich_BrotherHood.Server.Data;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -19,10 +20,12 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
     public class ProductController : ControllerBase
     {
         private IProduct prod;
+        private readonly ApplicationDbContext _context;
 
-        public ProductController(IProduct prods)
+        public ProductController(IProduct prods, ApplicationDbContext context)
         {
             prod = prods;
+            _context = context;
         }
         [AllowAnonymous]
         [HttpGet("GetAllProduct")]
@@ -352,5 +355,61 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             public decimal Revenue { get; set; }
         }
 
+        // API lọc theo ngày
+        [HttpGet("GetProductsByDate")]
+        public IActionResult GetProductsByDate(DateTime startDate, DateTime endDate)
+        {
+            // Điều chỉnh endDate để bao gồm cả dữ liệu ngày kết thúc
+            endDate = endDate.Date.AddDays(1).AddTicks(-1);
+
+            var products = _context.Products
+                .Where(p => p.StartDate >= startDate && p.StartDate <= endDate)
+                .ToList();
+
+            return Ok(products);
+        }
+        [HttpPut("SoftDelete/{id}")]
+        public async Task<IActionResult> SoftDeleteProduct(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
+            {
+                return NotFound(new { Message = "Sản phẩm không tồn tại." });
+            }
+
+            // Đánh dấu trạng thái là "Đã xóa"
+            product.Status = "Đã xóa";
+            product.UpdatedDate = DateTime.Now;
+
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Đã xóa mềm sản phẩm thành công." });
+        }
+
+        [HttpGet("ApprovedPostsToday")]
+        public async Task<IActionResult> GetApprovedPostsToday()
+        {
+            try
+            {
+                var today = DateTime.Today;
+
+                // Lấy tất cả các bài đăng/sản phẩm
+                var posts = await prod.GetAllProductsAsync();
+
+                // Lọc bài đăng "Đã duyệt" và ngày tạo là hôm nay
+                var approvedPostsToday = posts
+                    .Where(p => p.CreatedDate.HasValue
+                                && p.CreatedDate.Value.Date == today
+                                && p.Status == "Đã duyệt")
+                    .Count();
+
+                return Ok(new { Count = approvedPostsToday });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Error = $"Lỗi khi thống kê bài đăng: {ex.Message}" });
+            }
+        }
     }
 }

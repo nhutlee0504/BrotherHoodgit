@@ -1,4 +1,4 @@
-﻿@page "/DanhGiaNguoiDung/{username}"
+﻿@page "/DanhGiaNguoiDung/{Username}"
 @using SanGiaoDich_BrotherHood.Shared.Dto
 @using SanGiaoDich_BrotherHood.Shared.Models
 @inject IJSRuntime JSRuntime
@@ -51,8 +51,8 @@
                     <div class="rating-container">
                         @for (int i = 5; i >= 1; i--) // Hiển thị số sao từ 5 đến 1
                         {
-                            int m1i = i;
-                            <input type="radio" id="star-@i" name="rating" class="rate" value="@i" @onclick="() => SetRating(m1i)" />
+                            var mi = i;
+                            <input type="radio" id="star-@i" name="rating" class="rate" value="@i" @onclick="() => SetRating(mi)" />
                         }
                     </div>
                     <img src="@image" alt="Sản phẩm" width="100%" class="rounded mb-3" style="max-width: 200px;" />
@@ -168,16 +168,13 @@ else
     </div>
 </div>
 
-
 @code {
     [Parameter]
     public string Username { get; set; }
     private bool canShowRatingButton = false;
-    private string StoredUsername;
     private string comment = "";
     private int selectedRating = 0;
     private string errorMessage = "";
-
     private Account userAccount;
     private InfoAccountDto infoAccountDto;
     private List<RatingDto> userRatings = new List<RatingDto>();
@@ -197,9 +194,7 @@ else
     {
         try
         {
-            // Lấy thông tin tài khoản người dùng
             var userAccount = await HttpClient.GetFromJsonAsync<Account>($"api/user/GetAccountInfoByName/{Username}");
-
             if (userAccount != null)
             {
                 infoAccountDto = new InfoAccountDto
@@ -215,7 +210,6 @@ else
                     };
             }
 
-            // Kiểm tra Review Info trong LocalStorage
             var reviewInfoJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "reviewInfo");
             if (!string.IsNullOrEmpty(reviewInfoJson))
             {
@@ -223,6 +217,10 @@ else
                 var reviewInfo = JsonSerializer.Deserialize<ReviewInfo>(reviewInfoJson);
                 if (reviewInfo != null)
                 {
+                    idBillDetail = reviewInfo.IdBillDetail;
+                    image = reviewInfo.Image;
+                    productname = reviewInfo.ProductName;
+
                     var isRated = await HttpClient.GetFromJsonAsync<bool>($"api/Rating/IsProductRated?billDetailId={reviewInfo.IdBillDetail}");
                     if (!isRated)
                     {
@@ -235,17 +233,8 @@ else
                 }
             }
 
-            // Lấy đánh giá của người dùng
-            try
-            {
-                var response = await HttpClient.GetFromJsonAsync<List<RatingDto>>($"api/Rating/GetRatingsUser{Username}");
-                userRatings = response ?? new List<RatingDto>();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Lỗi khi lấy đánh giá người dùng: {ex.Message}");
-                userRatings = new List<RatingDto>(); // Đảm bảo hiển thị không có đánh giá nào khi có lỗi
-            }
+            var response = await HttpClient.GetFromJsonAsync<List<RatingDto>>($"api/Rating/GetRatingsUser{Username}");
+            userRatings = response ?? new List<RatingDto>();
 
             CalculateAverageRating();
         }
@@ -291,7 +280,9 @@ else
             }
             else
             {
-                errorMessage = "Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.";
+                // Đọc lỗi trả về từ API (nếu có)
+                var errorResponse = await response.Content.ReadAsStringAsync();
+                errorMessage = $"{errorResponse}";
             }
         }
         catch (Exception ex)
@@ -300,13 +291,13 @@ else
         }
     }
 
+
     private double averageRating = 0;
 
     private void CalculateAverageRating()
     {
         if (userRatings != null && userRatings.Any())
         {
-            // Calculate the average of the ratings
             averageRating = userRatings.Average(r => r.Star);
         }
         else
@@ -314,7 +305,6 @@ else
             averageRating = 0;
         }
     }
-
 
     public class ReviewInfo
     {

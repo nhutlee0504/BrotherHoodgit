@@ -3,42 +3,52 @@
 @inject HttpClient httpClient
 @inject NavigationManager NavigationManager
 @inject IJSRuntime jsrunetime
+<!-- Breadcrumb -->
 <ul class="breadcrumb">
     <li class="breadcrumb-item"><a href="#"><i class="bi bi-house"></i> Trang chủ</a></li>
     <li class="breadcrumb-item"><a href="#">Hóa đơn của bạn</a></li>
 </ul>
 
-<div class="modal fade" id="billDetailsModal" tabindex="-1" aria-labelledby="billDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="billDetailsModalLabel">Chi Tiết Hóa Đơn</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="spinner-border text-primary" role="status" style="display:none" id="loadingSpinner">
-                    <span class="visually-hidden">Đang tải...</span>
-                </div>
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>Tên Sản Phẩm</th>
-                            <th>Số Lượng</th>
-                            <th>Đơn Giá</th>
-                            <th>Thành Tiền</th>
-                        </tr>
-                    </thead>
-                    <tbody id="billDetailsTableBody">
-                    </tbody>
-                </table>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-            </div>
-        </div>
-    </div>
-</div>
 <style>
+    /* Đảm bảo các thẻ card có chiều cao bằng nhau */
+    .card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        border: 1px solid #ddd;
+        border-radius: 0.375rem;
+    }
+
+    .card-body {
+        flex-grow: 1; /* Cho phép phần nội dung trong thẻ card mở rộng và chiếm không gian còn lại */
+        padding: 15px;
+    }
+
+    .card-header {
+        background-color: #28a745;
+        color: white;
+        font-weight: bold;
+        padding: 10px 15px;
+        border-radius: 0.375rem 0.375rem 0 0;
+    }
+
+    .card-footer {
+        padding: 10px 15px;
+        background-color: #f1f8f6;
+        border-radius: 0 0 0.375rem 0.375rem;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        margin-bottom: 15px;
+    }
+
+    /* Tạo hiệu ứng hover cho các thẻ card */
+    .card:hover {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Tab navigation */
     .nav-pills .nav-link {
         background-color: white;
         color: #28a745;
@@ -56,141 +66,36 @@
             color: #218838;
         }
 
-
-    input.form-control {
-        font-size: 1rem;
-        padding: 0.75rem;
-        border-radius: 0.375rem;
-        border: 1px solid #28a745; /* Light green border */
+    /* Sửa lại layout cho thẻ tab nội dung */
+    .tab-content {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
     }
 
-        input.form-control:focus {
-            border-color: #218838; /* Darker green on focus */
-        }
-
-    button.btn:hover {
-        background-color: #218838; /* Darker green on hover */
+    .page-item {
+        list-style-type: none;
     }
 
-    button.btn:focus {
-        outline: none;
-    }
-
-    .table {
-        border-collapse: collapse;
-        width: 100%;
-        font-family: 'Arial', sans-serif;
-    }
-
-        .table th, .table td {
-            padding: 12px 15px;
-            text-align: center;
-            border: 1px solid #ddd;
-        }
-
-        .table th {
-            background-color: #28a745;
-            color: white;
-            font-weight: bold;
-        }
-
-    .table-striped tbody tr:nth-child(odd) {
-        background-color: #f1f8f6;
-    }
-
-    .table-hover tbody tr:hover {
-        background-color: #e2f5e0;
-    }
-
-    .table-bordered {
-        border: 1px solid #ddd;
-    }
-
-    .table td {
-        font-size: 0.95rem;
-        color: #333;
-    }
-
-    .table .badge {
-        font-size: 0.85rem;
-        padding: 5px 10px;
-        border-radius: 12px;
-    }
-
-    .table .badge-success {
-        background-color: #28a745;
-        color: white;
-    }
-
-    .table .badge-warning {
-        background-color: #ffc107;
-        color: white;
-    }
-
-    .table .badge-danger {
-        background-color: #dc3545;
-        color: white;
-    }
-
-    .table .btn {
-        padding: 5px 10px;
+    .page-link {
+        display: inline-block;
+        text-align: center;
+        padding: 0.5rem 1rem;
         font-size: 0.875rem;
-        border-radius: 5px;
-        text-decoration: none;
+        font-weight: 600;
+        border-radius: 0.375rem;
     }
 
-    .table .btn-info {
-        background-color: #17a2b8;
-        color: white;
-        border: none;
+    .pagination .page-item.selected .page-link {
+        background-color: #28A745 !important;
+        color: white !important;
     }
 
-        .table .btn-info:hover {
-            background-color: #138496;
-        }
-
-    .table .btn-danger {
-        background-color: #dc3545;
-        color: white;
-        border: none;
+    .pagination .page-item .page-link:hover {
+        background-color: green;
+        color: white !important;
     }
-
-        .table .btn-danger:hover {
-            background-color: #c82333;
-        }
-
 </style>
-<div class="modal fade" id="billDetailsModal" tabindex="-1" aria-labelledby="billDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="billDetailsModalLabel">Chi Tiết Hóa Đơn</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="spinner-border text-primary" role="status" style="display:none" id="loadingSpinner">
-                    <span class="visually-hidden">Đang tải...</span>
-                </div>
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>Tên Sản Phẩm</th>
-                            <th>Số Lượng</th>
-                            <th>Đơn Giá</th>
-                            <th>Thành Tiền</th>
-                        </tr>
-                    </thead>
-                    <tbody id="billDetailsTableBody">
-                        <!-- Dữ liệu chi tiết hóa đơn sẽ được thêm vào đây -->
-                    </tbody>
-                </table>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Nav Tabs -->
 <ul class="nav nav-pills nav-justified" id="billTabs" role="tablist">
@@ -229,8 +134,8 @@
             </div>
         </div>
 
-        <!-- Bills Table -->
-        @if (bills == null)
+        <!-- Cards for Bills -->
+        @if (orderBills == null)
         {
             <div class="text-center">
                 <div class="spinner-border text-primary" role="status">
@@ -238,67 +143,100 @@
                 </div>
             </div>
         }
-        else if (!bills.Any())
+        else if (!orderBills.Any(x => x.UserName == userName))
         {
             <div class="alert alert-warning text-center">Không có hóa đơn nào.</div>
         }
         else
         {
-            <table class="table table-striped table-hover table-bordered align-middle">
-                <thead class="table-primary">
-                    <tr>
-                        <th>Mã đơn</th>
-                        <th>Họ và tên</th>
-                        <th>Số điện thoại</th>
-                        <th>Địa chỉ giao hàng</th>
-                        <th>Ngày đặt hàng</th>
-                        <th>Hình thức thanh toán</th>
-                        <th>Tổng tiền</th>
-                        <th>Trạng thái</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var bill in bills.Where(x => x.UserName == userName))
-                    {
-                        <tr>
-                            <td>@bill.IDBill</td>
-                            <td>@bill.FullName</td>
-                            <td>@bill.PhoneNumber</td>
-                            <td>@bill.DeliveryAddress</td>
-                            <td>@bill.OrderDate.ToString("dd/MM/yyyy")</td>
-                            <td>@bill.PaymentType</td>
-                            <td>@bill.Total.ToString("C")</td>
-                            <td>
+            <div class="row">
+                @foreach (var bill in orderBills)
+                {
+                    <div class="">
+                        <div class="card">
+                            <div class="card-header">
                                 <span class="badge @GetStatusBadge(bill.Status)">@bill.Status</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-info btn-sm" @onclick="() => NavigateToBillDetails(bill.IDBill)">
+                                <h5 class="card-title">Đơn #@bill.IDBill</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text"><strong>Họ và tên:</strong> @bill.FullName</p>
+                                <p class="card-text"><strong>Số điện thoại:</strong> @bill.PhoneNumber</p>
+                                <p class="card-text"><strong>Địa chỉ:</strong> @bill.DeliveryAddress</p>
+                                <p class="card-text"><strong>Ngày đặt:</strong> @bill.OrderDate.ToString("dd/MM/yyyy")</p>
+                                <p class="card-text"><strong>Tổng tiền:</strong> @bill.Total.ToString("C")</p>
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn btn-info" @onclick="() => NavigateToBillDetails(bill.IDBill)">
                                     <i class="bi bi-eye"></i> Xem chi tiết
                                 </button>
                                 @if (bill.Status == "Chờ xác nhận")
                                 {
-                                    <button class="btn btn-danger btn-sm" @onclick="() => CancelBill(bill.IDBill)">
+                                    <button class="btn btn-danger me-3" @onclick="() => CancelBill(bill.IDBill)">
                                         <i class="bi bi-x-circle"></i> Hủy xác nhận
                                     </button>
                                 }
                                 @if (bill.Status == "Đã xác nhận")
                                 {
-                                    <button class="btn btn-info btn-sm" @onclick="() => ReceivedBill(bill.IDBill)">
+                                    <button class="btn btn-info" @onclick="() => ReceivedBill(bill.IDBill)">
                                         <i class="bi bi-check-circle"></i> Đã nhận
                                     </button>
                                 }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
         }
+        <!-- Phân trang -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(currentPage == 1 ? "disabled" : "") m-2">
+                    <a class="page-link text-black" aria-label="Previous" @onclick="() => ChangePage(currentPage - 1)">
+                        <span aria-hidden="true"><i class="bi bi-caret-left-fill"></i></span>
+                    </a>
+                </li>
+                @for (var i = currentPage - 2; i <= currentPage + 2; i++)
+                {
+                    int j = i;
+                    if (i > 0 && i <= totalPages)
+                    {
+                        <li class="page-item @(currentPage == i ? "selected" : "") m-2">
+                            <a class="page-link text-black" @onclick="() => ChangePage(j)">
+                                <span>@i</span>
+                            </a>
+                        </li>
+                    }
+                }
+                <li class="page-item @(currentPage == totalPages ? "disabled" : "") m-2">
+                    <a class="page-link text-black" aria-label="Next" @onclick="() => ChangePage(currentPage + 1)">
+                        <span aria-hidden="true"><i class="bi bi-caret-right-fill"></i></span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
     </div>
 
     <!-- Đơn bán -->
     <div class="tab-pane fade" id="sale" role="tabpanel" aria-labelledby="sale-tab">
-        @if (saleBills == null)
+        <!-- Search Section -->
+        <div class="mb-4 bg-light p-3 rounded shadow-sm">
+            <div class="row gy-3">
+                <div class="col-md-6">
+                    <label for="searchByFullName" class="form-label">Tìm kiếm theo Họ và tên:</label>
+                    <input id="searchByFullName" type="text" @bind="searchSaleFullName" class="form-control" placeholder="Nhập họ và tên" />
+                </div>
+                <div class="col-md-4">
+                    <label for="searchByIDBill" class="form-label">Tìm kiếm theo ID Hóa đơn:</label>
+                    <input id="searchByIDBill" type="number" @bind="searchSaleIDBill" class="form-control" placeholder="Nhập ID hóa đơn" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" @onclick="SearchBills">
+                        <i class="bi bi-search"></i> Tìm kiếm
+                    </button>
+                </div>
+            </div>
+        </div>
+        @if (billSales == null)
         {
             <div class="text-center">
                 <div class="spinner-border text-primary" role="status">
@@ -306,64 +244,80 @@
                 </div>
             </div>
         }
-        else if (!saleBills.Any())
+        else if (!billSales.Any())
         {
             <div class="alert alert-warning text-center">Không có hóa đơn nào do bạn bán.</div>
         }
         else
         {
-            <table class="table table-striped table-hover table-bordered align-middle">
-                <thead class="table-success">
-                    <tr>
-                        <th>Mã đơn</th>
-                        <th>Họ và tên</th>
-                        <th>Số điện thoại</th>
-                        <th>Địa chỉ giao hàng</th>
-                        <th>Ngày đặt hàng</th>
-                        <th>Hình thức thanh toán</th>
-                        <th>Tổng tiền</th>
-                        <th>Trạng thái</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var bill in saleBills)
-                    {
-                        <tr>
-                            <td>@bill.IDBill</td>
-                            <td>@bill.FullName</td>
-                            <td>@bill.PhoneNumber</td>
-                            <td>@bill.DeliveryAddress</td>
-                            <td>@bill.OrderDate.ToString("dd/MM/yyyy")</td>
-                            <td>@bill.PaymentType</td>
-                            <td>@bill.Total.ToString("C")</td>
-                            <td>
+            <div class="row">
+                @foreach (var bill in billSales)
+                {
+                    <div class="">
+                        <div class="card">
+                            <div class="card-header">
                                 <span class="badge @GetStatusBadge(bill.Status)">@bill.Status</span>
-                            </td>
-                            <td>
+                                <h5 class="card-title">Đơn #@bill.IDBill</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text"><strong>Họ và tên:</strong> @bill.FullName</p>
+                                <p class="card-text"><strong>Số điện thoại:</strong> @bill.PhoneNumber</p>
+                                <p class="card-text"><strong>Địa chỉ:</strong> @bill.DeliveryAddress</p>
+                                <p class="card-text"><strong>Ngày đặt:</strong> @bill.OrderDate.ToString("dd/MM/yyyy")</p>
+                                <p class="card-text"><strong>Tổng tiền:</strong> @bill.Total.ToString("C")</p>
+                            </div>
+                            <div class="card-footer">
                                 @if (bill.Status == "Chờ xác nhận")
                                 {
-                                    <button class="btn btn-success btn-sm" @onclick="() => AcceptBill(bill.IDBill)">
+                                    <button class="btn btn-success me-3" @onclick="() => AcceptBill(bill.IDBill)">
                                         <i class="bi bi-check-circle"></i> Xác nhận
                                     </button>
-                                    <button class="btn btn-danger btn-sm" @onclick="() => CancelBill(bill.IDBill)">
+                                    <button class="btn btn-danger" @onclick="() => CancelBill(bill.IDBill)">
                                         <i class="bi bi-x-circle"></i> Hủy
                                     </button>
                                 }
                                 @if (bill.Status == "Đã xác nhận")
                                 {
-                                    <button class="btn btn-warning btn-sm" @onclick="() => CompleteBill(bill.IDBill)">
+                                    <button class="btn btn-warning me-3" @onclick="() => CompleteBill(bill.IDBill)">
                                         <i class="bi bi-check-circle"></i> Hoàn thành
                                     </button>
                                 }
-                                <button class="btn btn-info btn-sm" @onclick="() => NavigateToBillDetails(bill.IDBill)">
+                                <button class="btn btn-info" @onclick="() => NavigateToBillDetails(bill.IDBill)">
                                     <i class="bi bi-eye"></i> Chi tiết
                                 </button>
-                            </td>
-                        </tr>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Phân trang -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(currentPageSale == 1 ? "disabled" : "") m-2">
+                        <a class="page-link text-black" aria-label="Previous" @onclick="() => ChangePageSaleBills(currentPageSale - 1)">
+                            <span aria-hidden="true"><i class="bi bi-caret-left-fill"></i></span>
+                        </a>
+                    </li>
+                    @for (var i = currentPageSale - 2; i <= currentPageSale + 2; i++)
+                    {
+                        int j = i;
+                        if (i > 0 && i <= totalPageSales)
+                        {
+                            <li class="page-item @(currentPageSale == i ? "selected" : "") m-2">
+                                <a class="page-link text-black" @onclick="() => ChangePageSaleBills(j)">
+                                    <span>@i</span>
+                                </a>
+                            </li>
+                        }
                     }
-                </tbody>
-            </table>
+                    <li class="page-item @(currentPageSale == totalPageSales ? "disabled" : "") m-2">
+                        <a class="page-link text-black" aria-label="Next" @onclick="() => ChangePageSaleBills(currentPageSale + 1)">
+                            <span aria-hidden="true"><i class="bi bi-caret-right-fill"></i></span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
         }
     </div>
 </div>
@@ -382,11 +336,55 @@
     private List<BillModel> saleBills = new List<BillModel>();
     private int totalBuyCompletedBills = 0;
     private int totalSellCompletedBills = 0;
+    private string searchSaleFullName;
+    private int? searchSaleIDBill;
+    private List<BillModel> filteredSaleBills = new List<BillModel>();
+    private int currentPage = 1;
+    private int totalPages;
+    private int pageSize = 3;
+    private int currentPageSale = 1;
+    private int totalPageSales;
+    private int pageSizeSale = 3;
+    private List<BillModel> orderBills;
+    private List<BillModel> billSales;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadBill();
         CountCompletedBills();
+        filteredSaleBills = new List<BillModel>(saleBills);
+        UpdatePageBills();
+        UpdatePageSaleBills();
     }
+
+    private void UpdatePageBills()
+    {
+        var listbill = bills.Where(x => x.UserName == userName).ToList();
+        totalPages = listbill.Any() ? (int)Math.Ceiling((double)listbill.Count / pageSize) : 1;
+        orderBills = listbill.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+    }
+
+
+    private void ChangePage(int page)
+    {
+        currentPage = page;
+        UpdatePageBills();
+    }
+
+    private void UpdatePageSaleBills()
+    {
+        var listbillSale = saleBills.ToList();
+        totalPageSales = listbillSale.Any() ? (int)Math.Ceiling((double)listbillSale.Count / pageSizeSale) : 1;
+        billSales = listbillSale.Skip((currentPageSale - 1) * pageSizeSale).Take(pageSizeSale).ToList();
+    }
+
+
+    private void ChangePageSaleBills(int page)
+    {
+        currentPageSale = page;
+        UpdatePageSaleBills();
+    }
+
     private string GetStatusBadge(string status) => status switch
     {
         "Đã xác nhận" => "bg-success",
@@ -394,7 +392,6 @@
         "Đã hủy" => "bg-danger",
         _ => "bg-secondary"
     };
-
 
     private async Task SearchBills()
     {
@@ -420,6 +417,33 @@
             bills = new List<BillModel>();
         }
     }
+    private void SearchSaleBills()
+    {
+        try
+        {
+            filteredSaleBills = saleBills;
+
+            if (!string.IsNullOrWhiteSpace(searchSaleFullName))
+            {
+                filteredSaleBills = filteredSaleBills
+                    .Where(b => b.FullName.Contains(searchSaleFullName, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            if (searchSaleIDBill.HasValue)
+            {
+                filteredSaleBills = filteredSaleBills
+                    .Where(b => b.IDBill == searchSaleIDBill.Value)
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi khi tìm kiếm hóa đơn bán: " + ex.Message);
+            filteredSaleBills = new List<BillModel>();
+        }
+    }
+
 
     private async Task LoadBill()
     {

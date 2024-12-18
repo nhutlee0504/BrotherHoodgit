@@ -3,84 +3,183 @@
 @layout AdminLayout
 @inject HttpClient httpClient
 @inject NavigationManager NavigationManager
+<style>
+    /* Tùy chỉnh bảng: màu nền xen kẽ */
+    .table-striped-custom tbody tr:nth-child(odd) {
+        background-color: #f8f9fa; /* Màu xám nhạt */
+    }
 
-<h3>Danh sách hóa đơn</h3>
+    .table-striped-custom tbody tr:nth-child(even) {
+        background-color: #ffffff; /* Màu trắng */
+    }
 
-<!-- Tìm kiếm -->
-<div class="mb-3">
-    <div class="row">
-        <div class="col-md-6">
-            <label for="searchByFullName">Tìm kiếm theo Họ và tên:</label>
-            <input id="searchByFullName" type="text" @bind="searchFullName" class="form-control" placeholder="Nhập họ và tên" />
-        </div>
-        <div class="col-md-4">
-            <label for="searchByIDBill">Tìm kiếm theo ID Hóa đơn:</label>
-            <input id="searchByIDBill" type="number" @bind="searchIDBill" class="form-control" placeholder="Nhập ID hóa đơn" />
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
-            <button class="btn btn-primary" @onclick="SearchBills">Tìm kiếm</button>
+    .table-striped-custom th {
+        background-color: #343a40; /* Nền màu đen xám */
+        color: #ffffff; /* Chữ trắng */
+    }
+
+    .table-striped-custom td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+        vertical-align: middle; /* Canh giữa theo chiều dọc */
+    }
+
+    /* Nút phân trang màu xanh lá */
+    .pagination .page-link {
+        color: #28a745; /* Màu chữ xanh lá */
+        border: none; /* Bỏ đường viền */
+        border-radius: 0; /* Bo góc vuông */
+        text-decoration: underline; /* Gạch chân */
+        text-decoration-color: #28a745; /* Gạch chân màu xanh lá */
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #28a745; /* Nền xanh lá cho trang hiện tại */
+        color: #fff; /* Màu chữ trắng */
+        border: none;
+    }
+
+    .pagination .page-item .page-link:focus,
+    .pagination .page-item .page-link:hover {
+        color: #218838; /* Xanh lá đậm khi hover */
+        text-decoration-color: #218838;
+    }
+</style>
+<div class="container py-4">
+    <h3 class="mb-4 text-center text-primary">Danh Sách Hóa Đơn</h3>
+
+    <!-- Tìm kiếm -->
+    <!-- Tìm kiếm -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row gy-3">
+                <div class="col-md-5">
+                    <label for="searchByFullName" class="form-label">Tìm kiếm theo Họ và tên:</label>
+                    <input id="searchByFullName" type="text" @bind="searchFullName" class="form-control" placeholder="Nhập họ và tên" />
+                </div>
+                <div class="col-md-5">
+                    <label for="searchByIDBill" class="form-label">Tìm kiếm theo ID Hóa đơn:</label>
+                    <input id="searchByIDBill" type="number" @bind="searchIDBill" class="form-control" placeholder="Nhập ID hóa đơn" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" @onclick="SearchBills">Tìm kiếm</button>
+                </div>
+            </div>
+            <!-- Lọc theo ngày -->
+            <div class="row gy-3 mt-1">
+                <div class="col-md-5">
+                    <label for="startDate" class="form-label">Từ ngày:</label>
+                    <input id="startDate" type="date" @bind="filterStartDate" class="form-control" />
+                </div>
+                <div class="col-md-5">
+                    <label for="endDate" class="form-label">Đến ngày:</label>
+                    <input id="endDate" type="date" @bind="filterEndDate" class="form-control" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" @onclick="FilterBillsByDate">Lọc theo ngày</button>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-@if (bills == null)
-{
-    <p>Đang tải dữ liệu...</p>
-}
-else if (!bills.Any())
-{
-    <p>Không có hóa đơn nào.</p>
-}
-else
-{
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Họ và tên</th>
-                <th>Số điện thoại</th>
-                <th>Địa chỉ giao hàng</th>
-                <th>Ngày đặt hàng</th>
-                <th>Hình thức thanh toán</th>
-                <th>Tổng tiền</th>
-                <th>Trạng thái</th>
-                <th>Hành động</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var bill in bills)
-            {
-                <tr>
-                    <td>@bill.IDBill</td>
-                    <td>@bill.FullName</td>
-                    <td>@bill.PhoneNumber</td>
-                    <td>@bill.DeliveryAddress</td>
-                    <td>@bill.OrderDate.ToString("dd/MM/yyyy")</td>
-                    <td>@bill.PaymentType</td>
-                    <td>@bill.Total.ToString("C")</td>
-                    <td>@bill.Status</td>
-                    <td>
-                        <button class="btn btn-primary" @onclick="() => NavigateToBillDetails(bill.IDBill)">Xem chi tiết</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+    @if (bills == null)
+    {
+        <div class="text-center text-muted py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Đang tải dữ liệu...</p>
+        </div>
+    }
+    else if (!bills.Any())
+    {
+        <div class="alert alert-warning text-center">
+            Không có hóa đơn nào.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover table-striped-custom align-middle text-center">
+                <thead class="table-primary">
+                    <tr>
+                        <th>ID</th>
+                        <th>Họ và tên</th>
+                        <th>Số điện thoại</th>
+                        <th>Địa chỉ giao hàng</th>
+                        <th>Ngày đặt hàng</th>
+                        <th>Hình thức thanh toán</th>
+                        <th class="text-end">Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var bill in PagedBills)
+                    {
+                        <tr>
+                            <td>@bill.IDBill</td>
+                            <td>@bill.FullName</td>
+                            <td>@bill.PhoneNumber</td>
+                            <td>@bill.DeliveryAddress</td>
+                            <td>@bill.OrderDate.ToString("dd/MM/yyyy")</td>
+                            <td>@bill.PaymentType</td>
+                            <td class="text-end">@bill.Total.ToString("C")</td>
+                            <td>
+                                <span class="badge @GetStatusBadgeClass(bill.Status)">@bill.Status</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-outline-primary btn-sm" @onclick="() => NavigateToBillDetails(bill.IDBill)">
+                                    <i class="bi bi-eye"></i> Xem chi tiết
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Phân trang -->
+        <nav aria-label="Pagination" class="d-flex justify-content-center mt-4">
+            <ul class="pagination">
+                <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => ChangePage(CurrentPage - 1)" aria-label="Previous">Trang trước</button>
+                </li>
+                @for (int i = 1; i <= TotalPages; i++)
+                {
+                    <li class="page-item @(CurrentPage == i ? "active" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(i)">@i</button>
+                    </li>
+                }
+                <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => ChangePage(CurrentPage + 1)" aria-label="Next">Trang sau</button>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
 
 @code {
     private List<Bill> bills;
     private List<Bill> allBills;
+    private int CurrentPage = 1;
+    private int ItemsPerPage = 10;
+    private int TotalPages => (int)Math.Ceiling(bills.Count / (double)ItemsPerPage);
+    private List<Bill> PagedBills => bills.Skip((CurrentPage - 1) * ItemsPerPage).Take(ItemsPerPage).ToList();
+
     private string searchFullName;
     private int? searchIDBill;
+
+    // Biến cho lọc ngày
+    private DateTime? filterStartDate;
+    private DateTime? filterEndDate;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Lấy tất cả hóa đơn khi trang được khởi tạo
             allBills = await httpClient.GetFromJsonAsync<List<Bill>>("api/Bill/GetBill");
-            bills = new List<Bill>(allBills); // Hiển thị tất cả hóa đơn khi chưa tìm kiếm
+            bills = new List<Bill>(allBills);
         }
         catch (Exception ex)
         {
@@ -89,17 +188,15 @@ else
         }
     }
 
-    // Phương thức tìm kiếm hóa đơn
     private async Task SearchBills()
     {
+        CurrentPage = 1; // Reset to the first page
         try
         {
-            // Tìm kiếm theo họ và tên
             if (!string.IsNullOrWhiteSpace(searchFullName))
             {
                 bills = await httpClient.GetFromJsonAsync<List<Bill>>($"api/Bill/GetBillsByUserName/{searchFullName}");
             }
-            // Tìm kiếm theo ID Hóa đơn
             else if (searchIDBill.HasValue)
             {
                 var bill = await httpClient.GetFromJsonAsync<Bill>($"api/Bill/GetBillsByIDBill/{searchIDBill.Value}");
@@ -107,7 +204,6 @@ else
             }
             else
             {
-                // Nếu không có điều kiện tìm kiếm, hiển thị tất cả hóa đơn
                 bills = new List<Bill>(allBills);
             }
         }
@@ -118,13 +214,60 @@ else
         }
     }
 
-    // Điều hướng tới trang chi tiết hóa đơn
+    private async Task FilterBillsByDate()
+    {
+        CurrentPage = 1; // Reset to the first page
+        try
+        {
+            // Chỉ gọi API nếu ngày hợp lệ
+            if (filterStartDate.HasValue && filterEndDate.HasValue)
+            {
+                bills = await httpClient.GetFromJsonAsync<List<Bill>>(
+                    $"api/Bill/GetBillsByDate?startDate={filterStartDate.Value:yyyy-MM-dd}&endDate={filterEndDate.Value:yyyy-MM-dd}"
+                );
+            }
+            else if (filterStartDate.HasValue || filterEndDate.HasValue)
+            {
+                // Nếu chỉ nhập một trong hai ngày, thực hiện lọc cục bộ
+                bills = allBills.Where(bill =>
+                    (!filterStartDate.HasValue || bill.OrderDate >= filterStartDate.Value) &&
+                    (!filterEndDate.HasValue || bill.OrderDate <= filterEndDate.Value)).ToList();
+            }
+            else
+            {
+                bills = new List<Bill>(allBills);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi khi lọc hóa đơn theo ngày: " + ex.Message);
+            bills = new List<Bill>();
+        }
+    }
+
+    private void ChangePage(int pageNumber)
+    {
+        if (pageNumber > 0 && pageNumber <= TotalPages)
+        {
+            CurrentPage = pageNumber;
+        }
+    }
+
     private void NavigateToBillDetails(int IDBill)
     {
         NavigationManager.NavigateTo($"/Admin/BillDetails/{IDBill}");
     }
 
-    // Class Bill mô tả thông tin hóa đơn
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Đã giao" => "bg-success",
+            "Đang xử lý" => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+
     public class Bill
     {
         public int IDBill { get; set; }

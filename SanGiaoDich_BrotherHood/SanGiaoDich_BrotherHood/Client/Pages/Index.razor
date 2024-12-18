@@ -311,9 +311,11 @@
 }
 <div class="row d-flex justify-content-center container-fluid g-3">
     @foreach (var product in products
-    .Where(p => p.Status == "Đã duyệt")  
-    .OrderByDescending(p => p.ProrityLevel == "Ưu tiên") 
-    .ThenBy(p => p.Name).Take(8))
+    .Where(p => p.Status == "Đã duyệt")
+    .OrderByDescending(p => p.ProrityLevel == "Ưu tiên") // Sắp xếp theo mức độ ưu tiên "Ưu tiên" sẽ đứng đầu
+    .ThenByDescending(p => p.CreatedDate) // Sau đó sắp xếp theo ngày đăng, từ mới đến cũ
+    .Take(8) // Lấy 8 phần tử
+    )
     {
         <div class="col-md-3 col-6 mb-4 d-flex">
             <a href="@($"/ChiTietSanPham/{product.IDProduct}")" class="card shadow" style="border-radius: 25px; display: flex; flex-direction: column; height: 100%; border:none; text-decoration: none; color: inherit;">

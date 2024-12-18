@@ -4,15 +4,143 @@
 @using SanGiaoDich_BrotherHood.Shared.Models
 @inject NavigationManager NavigationManager
 @using SanGiaoDich_BrotherHood.Shared.Dto
+<style>
+    /* Tùy chỉnh thanh tìm kiếm - Nằm về bên trái */
+    .d-flex.align-items-center {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* Khoảng cách giữa input và các nút */
+        justify-content: flex-start; /* Đưa phần tìm kiếm về bên trái */
+        margin-bottom: 15px; /* Khoảng cách với bảng */
+    }
 
+        .d-flex.align-items-center input {
+            width: 250px;
+            padding: 8px 10px;
+            font-size: 14px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.075);
+            transition: all 0.3s ease;
+        }
+
+        .d-flex.align-items-center button {
+            background-color: royalblue; /* Màu xanh dương */
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+            .d-flex.align-items-center button.btn-primary {
+                background-color: royalblue; /* Màu xanh dương */
+            }
+    /* Tùy chỉnh bảng: màu nền xen kẽ */
+    .table-striped-custom tbody tr:nth-child(odd) {
+        background-color: #f8f9fa; /* Màu xám nhạt */
+    }
+
+    .table-striped-custom tbody tr:nth-child(even) {
+        background-color: #ffffff; /* Màu trắng */
+    }
+
+    .table-striped-custom th {
+        background-color: #343a40; /* Nền màu đen xám */
+        color: #ffffff; /* Chữ trắng */
+    }
+
+    .table-striped-custom td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+        vertical-align: middle; /* Canh giữa theo chiều dọc */
+    }
+
+    /* Nút phân trang màu xanh lá */
+    .pagination .page-link {
+        color: #28a745; /* Màu chữ xanh lá */
+        border: none; /* Bỏ đường viền */
+        border-radius: 0; /* Bo góc vuông */
+        text-decoration: underline; /* Gạch chân */
+        text-decoration-color: #28a745; /* Gạch chân màu xanh lá */
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #28a745; /* Nền xanh lá cho trang hiện tại */
+        color: #fff; /* Màu chữ trắng */
+        border: none;
+    }
+
+    .pagination .page-item .page-link:focus,
+    .pagination .page-item .page-link:hover {
+        color: #218838; /* Xanh lá đậm khi hover */
+        text-decoration-color: #218838;
+    }
+    /* Modal */
+    .modal-content {
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+        background-color: #007bff;
+        color: white;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        padding: 12px 20px;
+    }
+
+        .modal-header .btn-close {
+            background: #fff;
+            opacity: 0.5;
+        }
+
+    .modal-footer {
+        padding: 12px 20px;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+        .modal-footer button {
+            border-radius: 5px;
+        }
+
+    .modal-body {
+        padding: 15px;
+    }
+
+    /* Thêm nhấn mạnh các biểu mẫu */
+    input, select, textarea {
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        transition: border 0.3s ease;
+        padding: 10px;
+        font-size: 16px;
+    }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+    /* Nút đóng và button ở các modal */
+    .btn-secondary, .btn-primary {
+        border-radius: 5px;
+        font-size: 16px;
+        padding: 8px 15px;
+        transition: background-color 0.3s ease;
+    }
+</style>
 <h3>Quản lý nhân viên</h3>
 
 <!-- Thanh tìm kiếm -->
-<div class="mb-3 d-flex">
-    <input @bind="searchKeyword" class="form-control me-2" placeholder="Tìm kiếm nhân viên..." />
+<div class="mb-3 d-flex align-items-center">
+    <input @bind="searchKeyword" class="form-control" placeholder="Tìm kiếm nhân viên..." />
     <button class="btn btn-primary" @onclick="OnSearchKeywordChanged">Tìm kiếm</button>
-    <button class="btn btn-success ms-auto" @onclick="ShowAddEmployeeModal">Thêm nhân viên</button>
+    <button class="btn btn-success" @onclick="ShowAddEmployeeModal">Thêm nhân viên</button>
 </div>
+
 
 <!-- Danh sách nhân viên -->
 @if (filteredEmployees == null)
@@ -25,29 +153,58 @@ else if (!filteredEmployees.Any())
 }
 else
 {
-    <table class="table table-bordered">
+    <!-- Danh sách nhân viên -->
+    <table class="table table-hover table-striped-custom align-middle text-center">
         <thead>
-            <tr class="text-center">
+            <tr>
                 <th>Tên đăng nhập</th>
                 <th>Họ và tên</th>
                 <th>Email</th>
                 <th>Số điện thoại</th>
-               
+                <th>Trạng thái</th>
+                <th>Hành động</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var employee in filteredEmployees)
+            @foreach (var employee in PagedEmployees)
             {
                 <tr>
                     <td>@employee.UserName</td>
                     <td>@employee.FullName</td>
                     <td>@employee.Email</td>
-                    <td class="text-center">@employee.PhoneNumber</td>
-                    
+                    <td>@employee.PhoneNumber</td>
+                    <td>@(employee.IsDelete == true ? "Bị cấm" : "Hoạt động")</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-2">Chỉnh sửa</button>
+                        @if (employee.IsDelete == true)
+                        {
+                            <button class="btn btn-sm btn-success" @onclick="() => OnUnBanAccount(employee.UserName)">Mở khóa</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-sm btn-danger" @onclick="() => OnBanAccount(employee.UserName)">Khóa</button>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>
-    </table>
+    </table>    <!-- Phân trang -->
+    <nav aria-label="Phân trang" class="mt-3">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <button class="page-link" @onclick="PreviousPage">Trước</button>
+            </li>
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <button class="page-link" @onclick="() => GoToPage(i)">@i</button>
+                </li>
+            }
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <button class="page-link" @onclick="NextPage">Sau</button>
+            </li>
+        </ul>
+    </nav>
 }
 
 <!-- Modal Thêm Nhân Viên -->
@@ -130,6 +287,14 @@ else
     private string modalTitle;
     private string modalMessage;
 
+    // Biến cho phân trang
+    private int currentPage = 1;
+    private int pageSize = 10; // Số nhân viên mỗi trang
+    private int totalPages => (int)Math.Ceiling((double)filteredEmployees.Count / pageSize);
+
+    private List<Account> PagedEmployees =>
+        filteredEmployees.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+
     public class Account
     {
         public string UserName { get; set; }
@@ -139,6 +304,7 @@ else
         public string Role { get; set; } // Quyền
         public string Password { get; set; }
         public string ConformPassword { get; set; } // Xác nhận mật khẩu
+        public bool IsDelete { get; set; }
     }
     public class RegisterDto
     {
@@ -237,7 +403,47 @@ else
             ShowModal("Lỗi", $"Không thể thêm nhân viên: {ex.Message}");
         }
     }
+    private async Task OnBanAccount(string username)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync($"api/Admin/BanAccount?username={username}", username);
+            if (response.IsSuccessStatusCode)
+            {
+                ShowModal("Thành công", $"Tài khoản {username} đã bị cấm.");
+                await LoadEmployees();
+            }
+            else
+            {
+                ShowModal("Lỗi", "Không thể cấm tài khoản này.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowModal("Lỗi", ex.Message);
+        }
+    }
 
+    private async Task OnUnBanAccount(string username)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync($"api/Admin/UnBanAccount?username={username}", username);
+            if (response.IsSuccessStatusCode)
+            {
+                ShowModal("Thành công", $"Tài khoản {username} đã được mở khóa.");
+                await LoadEmployees();
+            }
+            else
+            {
+                ShowModal("Lỗi", "Không thể mở khóa tài khoản này.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowModal("Lỗi", ex.Message);
+        }
+    }
 
     private void ShowModal(string title, string message)
     {
@@ -250,5 +456,28 @@ else
     private void CloseModal()
     {
         isModalVisible = false;
+    }
+    private void GoToPage(int pageNumber)
+    {
+        if (pageNumber >= 1 && pageNumber <= totalPages)
+        {
+            currentPage = pageNumber;
+        }
+    }
+
+    private void NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+        }
+    }
+
+    private void PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+        }
     }
 }
