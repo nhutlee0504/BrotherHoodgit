@@ -13,6 +13,8 @@
 @using SanGiaoDich_BrotherHood.Shared.Models
 @using System.IO
 @using System.Text.Json
+@using System.Text.Json.Serialization
+@using System.Text
 @inject NavigationManager NavigationManager
 <style>
 	.loading-overlay {
@@ -174,6 +176,22 @@
 			box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
 		}
 
+	.error-message {
+		color: #f44336; /* Màu chữ đỏ dịu hơn */
+		background-color: #ffe6e6; /* Màu nền nhạt, nhẹ nhàng */
+		padding: 8px 12px; /* Padding ít */
+		border-radius: 5px; /* Góc bo tròn */
+		font-weight: normal; /* Giảm độ đậm của chữ */
+		margin-top: 20px;
+		text-align: left; /* Canh trái để có không gian cho icon */
+		display: flex; /* Sử dụng flex để căn chỉnh icon và chữ */
+		align-items: center; /* Căn giữa icon và chữ theo chiều dọc */
+	}
+
+		.error-message i {
+			margin-right: 10px; /* Khoảng cách giữa icon và văn bản */
+			font-size: 20px; /* Kích thước icon */
+		}
 </style>
 <div class="container-fluid">
 	<ul class="breadcrumb">
@@ -232,6 +250,8 @@
 							</div>
 						}
 					}
+
+			
 				</div>
 
 				<div class="row mt-2">
@@ -295,8 +315,20 @@
 
 
 				<div class="row mt-2">
+					@if(resultMessage != null)
+					{
+						<p class="error-message">
+							<i class="fas fa-exclamation-circle"></i> @resultMessage
+						</p>
+					}
+					else
+					{
+						
+					}
+					
+
 					<div class="col-md-12 d-flex align-items-center justify-content-center">
-						<InputFile OnChange="HandleFileSelected" multiple accept="image/*" />
+						<InputFile OnChange="HandleFileSelected" id="fileInput"  multiple accept="image/*" />
 					</div>
 				</div>
 			</div>
@@ -520,7 +552,8 @@
 	private string ProductDescriptionError { get; set; }
 	private string ProductQuantityError { get; set; }
 	private string ProrityLevelError { get; set; }
-
+	private string ImageSuccess = string.Empty;
+	private int maxImages = 10;
 	private bool isModalVisible = false;
 	private string modalMessage = string.Empty;
 	private void CloseModal()
@@ -546,6 +579,7 @@
 
 	private class ImageFile
 	{
+		public string FileName { get; set; }
 		public string DataUrl { get; set; }
 	}
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -572,45 +606,85 @@
 		ImageError = string.Empty;
 		NavigationManager.NavigateTo("/post", forceLoad: true);
 	}
-
+	private bool IsValidBase64(string base64String)
+	{
+		try
+		{
+			Convert.FromBase64String(base64String);
+			return true;
+		}
+		catch
+		{
+			return false;
+		}
+	}
 	private async Task HandleFileSelected(InputFileChangeEventArgs e)
 	{
 		try
 		{
 			var files = e.GetMultipleFiles();
-
-			if (files.Count == 0 ||files.Count > 10)
+			if (files.Count == 0)
 			{
-				ImageError = "Vui lòng chọn ít nhất 1 ảnh và không quá 10 ảnh";
+				ImageError = "Vui lòng chọn ít nhất 1 ảnh.";
 				selectedFiles.Clear();
 				return;
 			}
 
 			ImageError = string.Empty;
 
+			// Kiểm tra từng file
 			foreach (var file in files)
 			{
-				for (int i = 0; i < selectedFiles.Count; i++)
+				// Kiểm tra kích thước file
+				if (file.Size > MaxFileSize)
 				{
-					if (selectedFiles[i] == null)
-					{
-						selectedFiles[i] = new ImageFile
-							{
-								DataUrl = await GetImageDataUrl(file)
-							};
-						selectedImageCount++;
-						break;
-					}
+					resultMessage = "File vượt quá kích thước tối đa (5MB).";
+					await ResetFileInput(); // Reset input file
+					return;
 				}
+
+				// Kiểm tra định dạng file
+				var allowedFormats = new[] { "image/jpeg", "image/png", "image/gif" };
+				if (!allowedFormats.Contains(file.ContentType))
+				{
+					resultMessage = "Chỉ chấp nhận định dạng ảnh JPEG, PNG, hoặc GIF.";
+					await ResetFileInput();
+					return;
+				}
+
+				// Đọc file và chuyển thành Base64
+				using var stream = file.OpenReadStream();
+				var buffer = new byte[file.Size];
+				await stream.ReadAsync(buffer, 0, (int)file.Size);
+				var base64Image = Convert.ToBase64String(buffer);
+
+				// Gửi ảnh tới Google Vision API để kiểm tra nội dung
+				var analysisResult = await CallGoogleVisionApi(base64Image);
+				if (analysisResult != "Ảnh an toàn và đã được chấp nhận.")
+				{
+					resultMessage = analysisResult;
+					await ResetFileInput();
+					return;
+				}
+
+				// Thêm file vào danh sách nếu không có lỗi
+				selectedFiles.Add(new ImageFile
+					{
+						FileName = file.Name,
+						DataUrl = $"data:{file.ContentType};base64,{base64Image}"
+					});
 			}
+
+			resultMessage = null;
 		}
 		catch (Exception ex)
 		{
-			ImageError = "Bạn phải chọn ít nhất 1 ảnh và tối đa 3 ảnh.";
-			selectedFiles.Clear();
-			return;
+			resultMessage = $"Lỗi: {ex.Message}";
+			await ResetFileInput();
 		}
 	}
+
+
 
 	private async Task<string> GetImageDataUrl(IBrowserFile file)
 	{
@@ -927,5 +1001,134 @@
 	{
 		IsPolicyModalVisible = false;
 	}
+	private string apiKey = "AIzaSyAgNPZpXYkrNT1dowBC0JM5wFHPoKxPCfo";
+	private string resultMessage;
+	private const long MaxFileSize = 5 * 1024 * 1024;
+	    private async Task<string> CallGoogleVisionApi(string base64Image)
+    {
+        try
+        {
+            var request = new
+            {
+                requests = new[]
+                {
+                    new
+                    {
+                        image = new { content = base64Image },
+                        features = new[]
+                        {
+                            new { type = "LABEL_DETECTION" },
+                            new { type = "SAFE_SEARCH_DETECTION" }
+                        }
+                    }
+                }
+            };
+
+            var jsonRequest = JsonSerializer.Serialize(request);
+            var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+			using var httpClient = new HttpClient();
+			var response = await httpClient.PostAsync($"https://vision.googleapis.com/v1/images:annotate?key={apiKey}", content);
+            if (!response.IsSuccessStatusCode)
+            {
+                return $"Lỗi khi gọi API: {response.StatusCode}";
+            }
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            return AnalyzeApiResponse(jsonResponse);
+        }
+        catch (Exception ex)
+        {
+            return $"Lỗi: {ex.Message}";
+        }
+    }
+
+    private string AnalyzeApiResponse(string jsonResponse)
+    {
+        try
+        {
+            var result = JsonSerializer.Deserialize<VisionApiResponse>(jsonResponse);
+            if (result?.Responses == null || result.Responses.Length == 0)
+            {
+                return "Không có phản hồi từ API.";
+            }
+
+            var safeSearch = result.Responses[0].SafeSearchAnnotation;
+            var labels = result.Responses[0].LabelAnnotations;
+
+            // Kiểm tra nội dung nhạy cảm
+            if (safeSearch != null && (safeSearch.Adult == "LIKELY" || safeSearch.Adult == "VERY_LIKELY" ||
+                                       safeSearch.Violence == "LIKELY" || safeSearch.Violence == "VERY_LIKELY" ||
+                                       safeSearch.Racy == "LIKELY" || safeSearch.Racy == "VERY_LIKELY"))
+            {
+                return "Ảnh chứa nội dung nhạy cảm và không được phép thêm.";
+            }
+
+            if (labels != null)
+            {
+                foreach (var label in labels)
+                {
+                    if (label.Description.Contains("gun", StringComparison.OrdinalIgnoreCase) ||
+                        label.Description.Contains("weapon", StringComparison.OrdinalIgnoreCase) ||
+                        label.Description.Contains("firearm", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Ảnh chứa vũ khí và không được phép thêm.";
+                    }
+                }
+            }
+
+            return "Ảnh an toàn và đã được chấp nhận.";
+        }
+        catch (Exception ex)
+        {
+            return $"Lỗi khi xử lý JSON: {ex.Message}";
+        }
+    }
+
+	private async Task ResetFileInput()
+	{
+		await JSRuntime.InvokeVoidAsync("resetFileInput", "fileInput");
+	}
+
+    public class VisionApiResponse
+    {
+        [JsonPropertyName("responses")]
+        public Response[] Responses { get; set; }
+
+        public class Response
+        {
+            [JsonPropertyName("safeSearchAnnotation")]
+            public SafeSearchAnnotations SafeSearchAnnotation { get; set; }
+
+            [JsonPropertyName("labelAnnotations")]
+            public LabelAnnotation[] LabelAnnotations { get; set; }
+
+            public class SafeSearchAnnotations
+            {
+                [JsonPropertyName("adult")]
+                public string Adult { get; set; }
+
+                [JsonPropertyName("violence")]
+                public string Violence { get; set; }
+
+                [JsonPropertyName("racy")]
+                public string Racy { get; set; }
+            }
+
+            public class LabelAnnotation
+            {
+                [JsonPropertyName("description")]
+                public string Description { get; set; }
+            }
+        }
+    }
 }
+<script>
+	function resetFileInput(fileInputId) {
+		const fileInput = document.getElementById(fileInputId);
+		if (fileInput) {
+			fileInput.value = '';  // Reset file input value
+		}
+	}
+</script>
+
 <script src="/js/Check.js"></script>

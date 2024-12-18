@@ -171,6 +171,28 @@
         max-width: 200px;
     }
 
+    .banner-advertisement {
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .banner-image img {
+        border-radius: 8px;
+    }
+
+    .banner-content h4 {
+        font-weight: bold;
+    }
+
+    .banner-content ul {
+        padding-left: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .banner-content li {
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
 
 </style>
 <div class="row">
@@ -249,31 +271,30 @@
 
 
 </div>
-<div class="row">
-    <div class="col-md-12">
-        <div class="card mt-3 mb-5 shadow" style="border:none;">
-            <div class="card-body">
-                <h1>BrotherHood Trading - Kênh Mua Bán, Rao Vặt Trực Tuyến</h1>
-                <p>BrothersHood chính thức gia nhập thị trường Việt Nam vào đầu năm 2025, với mục tiêu mang đến cho bạn một nền tảng rao vặt trung gian, kết nối người mua với người bán qua những giao dịch đơn giản, tiện lợi, nhanh chóng và an toàn, đem lại hiệu quả đáng ngạc nhiên.</p>
-                <p>Đến nay, BrothersHood tự hào là website rao vặt được ưa chuộng hàng đầu. Hàng ngàn món hời từ quần áo, giày, nón hiệ được đăng tin, rao bán trên BrothersHood.</p>
-                <p>Với BrothersHood, bạn có thể dễ dàng mua bán, trao đổi bất cứ loại mặt hàng nào, từ đồ cũ đến đồ mới, trong nhiều lĩnh vực khác nhau.</p>
+<div class="container-fluid banner-advertisement mt-4 mb-4">
+    <div class="row align-items-center">
+        <!-- Cột trái: Hình ảnh -->
+        <div class="col-md-6">
+            <div class="banner-image">
+                <img src="/AnhGiaoDien/big-sale-50-off-shop-260nw-2494473089.png"
+                     alt="Advertisement" class="img-fluid rounded">
             </div>
         </div>
 
-    </div>
-</div>
-<div class="container-fluid banner-advertisement mt-4 mb-4">
-    <div class="row">
-        <div class="col-12 p-0">
-            <div class="banner-image">
-                <img src="/AnhGiaoDien/pngtree-618-years-big-promotion-bunting-geometric-gold-coins-yellow-background-picture-image_1104975.jpg" alt="Advertisement" class="img-fluid w-100">
-                <div class="banner-overlay fade-in">
-                    <h6 class="banner-title" style="font-size: 1.2rem;">🎉 Chào mừng đến với chương trình khuyến mãi mùa hè của chúng tôi! Đừng bỏ lỡ cơ hội nhận giảm chi phí đăng bài khi bạn tham gia. Đây là thời điểm tuyệt vời để quảng bá sản phẩm của bạn và tiếp cận với nhiều khách hàng hơn.</h6>
-                    <p class="banner-text" style="font-size: 0.9rem;">👉 Đăng ngay và khám phá thêm nhiều ưu đãi khác tại <a href="/promo-link" class="text-success">đây</a>!</p>
-                    <a href="/promo-link" class="btn btn-light banner-btn" style="font-size: 0.9rem;">Đăng ngay</a>
-                </div>
-
-
+        <!-- Cột phải: Nội dung -->
+        <div class="col-md-6">
+            <div class="banner-content p-3">
+                <h4 class="banner-title text-success">🎉 Chương trình khuyến mãi đặc biệt</h4>
+                <p class="banner-description" style="font-size: 1rem;">
+                    Chào mừng đến với mùa khuyến mãi lớn! Đăng bài dễ dàng và tiếp cận nhiều khách hàng hơn với chi phí thấp hơn.
+                    Hãy tận dụng cơ hội để bán các món đồ cũ của bạn một cách nhanh chóng và hiệu quả.
+                </p>
+                <ul class="list-unstyled">
+                    <li>✅ Giảm phí đăng bài lên tới <strong>50%</strong>.</li>
+                    <li>✅ Ưu đãi chỉ trong <strong>7 ngày</strong>.</li>
+                    <li>✅ Đơn giản, tiện lợi, hiệu quả cao.</li>
+                </ul>
+                <p class="banner-text" style="font-size: 0.9rem;">👉 Tham khảo thêm chi tiết và đăng bài ngay tại <a href="/promo-link" class="text-success">đây</a>.</p>
             </div>
         </div>
     </div>
@@ -309,66 +330,75 @@
     }
 
 }
-<div class="row d-flex justify-content-center container-fluid g-3">
-    @foreach (var product in products
-    .Where(p => p.Status == "Đã duyệt")
-    .OrderByDescending(p => p.ProrityLevel == "Ưu tiên") // Sắp xếp theo mức độ ưu tiên "Ưu tiên" sẽ đứng đầu
-    .ThenByDescending(p => p.CreatedDate) // Sau đó sắp xếp theo ngày đăng, từ mới đến cũ
-    .Take(8) // Lấy 8 phần tử
-    )
+<div class="container-fluid mt-4">
+    @foreach (var category in categories)
     {
-        <div class="col-md-3 col-6 mb-4 d-flex">
-            <a href="@($"/ChiTietSanPham/{product.IDProduct}")" class="card shadow" style="border-radius: 25px; display: flex; flex-direction: column; height: 100%; border:none; text-decoration: none; color: inherit;">
-                @if (productImages.ContainsKey(product.IDProduct) && productImages[product.IDProduct].Any())
-                {
-                    var firstImage = productImages[product.IDProduct].FirstOrDefault();
+        <div class="row mb-5">
+            <!-- Tiêu đề Danh Mục -->
+            <div class="col-12 mb-3 d-flex justify-content-between align-items-center">
+                <h3 class="text-success fw-bold">
+                    @category.Value
+                </h3>
+                <!-- Nút Xem Thêm -->
+                <a href="@($"/DanhMuc/{category.Key}")" class="btn btn-outline-success border-0">
+                    Xem thêm
+                </a>
+            </div>
 
-                    if (!string.IsNullOrEmpty(firstImage))
-                    {
-                        <img class="card-img-top p-3" style="border-radius: 25px;" src="@firstImage" alt="@product.Name" />
-                    }
-                    else
-                    {
-                        <img class="card-img-top p-3" style="border-radius: 25px;" src="/AnhSanPham/default.png" alt="No Image Available" />
-                    }
-                }
-                else
-                {
-                    <img class="card-img-top p-3" style="border-radius: 25px;" src="/AnhSanPham/default.png" alt="No Image Available" />
-                }
-
-                <div class="card-body">
-                    @if (product.ProrityLevel == "Ưu tiên")
-                    {
-                        <h5 class="fs-5" style="font-weight:bolder">
-                            <span class="badge text-bg-success" style="background-color: green; padding: 5px 10px;">
-                                @product.ProrityLevel
-                            </span>
-                            <div class="product-name">
-                                @product.Name
+            <!-- Sản Phẩm Trong Danh Mục -->
+            @foreach (var product in products
+           .Where(p => p.IDCategory == category.Key && p.Status == "Đã duyệt")
+           .OrderByDescending(p => p.ProrityLevel == "Ưu tiên")
+           .ThenBy(p => p.Name)
+           .Take(4)) // Giới hạn 4 sản phẩm mỗi danh mục
+            {
+                <div class="col-sm-3 col-6 mb-4 d-flex">
+                    <a href="@($"/ChiTietSanPham/{product.IDProduct}")"
+                       class="card shadow"
+                       style="border-radius: 15px; display: flex; flex-direction: column; height: 100%; border:none; text-decoration: none; color: inherit;">
+                        @if (productImages.ContainsKey(product.IDProduct) && productImages[product.IDProduct].Any())
+                        {
+                            var firstImage = productImages[product.IDProduct].FirstOrDefault();
+                            <img class="card-img-top p-3" style="border-radius: 25px;" src="@firstImage" alt="@product.Name" />
+                        }
+                        else
+                        {
+                            <img class="card-img-top p-3" style="border-radius: 25px;" src="/AnhSanPham/default.png" alt="No Image Available" />
+                        }
+                        <div class="card-body">
+                            @if (product.ProrityLevel == "Ưu tiên")
+                            {
+                                <h5 class="fs-5 fw-bold">
+                                    <span class="badge text-bg-success" style="background-color: green; padding: 5px 10px;">
+                                        @product.ProrityLevel
+                                    </span>
+                                    <div class="product-name">
+                                        @product.Name
+                                    </div>
+                                </h5>
+                            }
+                            else
+                            {
+                                <h5 class="fs-5 fw-bold">
+                                    <div class="product-name">
+                                        @product.Name
+                                    </div>
+                                </h5>
+                            }
+                            <p class="price" style="color:green; font-weight:bolder">@product.Price.ToString("N0") VND</p>
+                            <div class="row">
+                                <div class="col-md-6 col-6" style="font-style:italic">
+                                    <i class="bi bi-tag-fill"></i>
+                                    @(categories.ContainsKey(product.IDCategory) ? categories[product.IDCategory] : "Không xác định")
+                                </div>
+                                <div class="col-md-6 col-6 d-flex justify-content-end" style="color:blue; font-weight:bolder; text-decoration-line:underline">
+                                    @product.StartDate?.ToString("dd/MM/yyyy")
+                                </div>
                             </div>
-                        </h5>
-                    }
-                    else
-                    {
-                        <h5 class="fs-5" style="font-weight:bolder">
-                            <div class="product-name">
-                                @product.Name
-                            </div>
-                        </h5>
-                    }
-                    <p class="price" style="color:green; font-weight:bolder">@product.Price.ToString("N0") VND</p>
-                    <div class="row">
-                        <div class="col-md-6 col-6" style="font-style:italic">
-                            <i class="bi bi-tag-fill"></i>
-                            @(categories.ContainsKey(product.IDCategory) ? categories[product.IDCategory] : "Không xác định")
                         </div>
-                        <div class="col-md-6 col-6 d-flex justify-content-end" style="color:blue; font-weight:bolder; text-decoration-line:underline">
-                            @product.StartDate?.ToString("dd/MM/yyyy")
-                        </div>
-                    </div>
+                    </a>
                 </div>
-            </a>
+            }
         </div>
     }
 </div>
