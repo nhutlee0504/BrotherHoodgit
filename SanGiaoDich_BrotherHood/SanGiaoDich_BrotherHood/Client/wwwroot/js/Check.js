@@ -10,6 +10,7 @@
     };
 
     try {
+        // Gửi yêu cầu đến Google Cloud API để phân tích cảm xúc
         const response = await fetch(url, {
             method: "POST",
             headers: {
@@ -26,7 +27,9 @@
         }
 
         // Danh sách các từ tục tĩu
-        const inappropriateWords = ["mày", "đụ", "vãi", "cặc", "lồn", "tinh dục", "chửi", "đánh", "dao", "súng", "mìn", "bom", "chém", "giết"]; // Thêm hoặc sửa từ tục tĩu ở đây
+        const inappropriateWords = ["mày", "đụ", "vãi", "cặc", "lồn"]; // Thêm hoặc sửa từ tục tĩu ở đây
+
+        // Kiểm tra xem văn bản có chứa từ tục tĩu không
         for (let word of inappropriateWords) {
             if (text.toLowerCase().includes(word.toLowerCase())) {
                 return { error: `Văn bản chứa ngôn từ không phù hợp: ${word}` };
