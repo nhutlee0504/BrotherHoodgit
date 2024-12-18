@@ -38,6 +38,7 @@
                 "Đã duyệt",
                 "Đã hủy",
                 "Đang chờ duyệt",
+                "Đã bán",
             };
 
             statistics = statistics
@@ -45,7 +46,7 @@
                 .OrderBy(s => allStatuses.IndexOf(s.Status)) // Sắp xếp theo thứ tự trong allStatuses
                 .ToList();
 
-            // Đảm bảo danh sách luôn có đúng 5 giá trị
+            // Đảm bảo danh sách luôn có đúng 6 giá trị
             foreach (var status in allStatuses)
             {
                 if (!statistics.Any(s => s.Status == status))
@@ -72,11 +73,16 @@
         isLoadingMonthlyStats = true;
         try
         {
-            // Lấy thống kê bài đăng đã duyệt theo tháng và năm
-            var response = await Http.GetFromJsonAsync<MonthlyStatistic>($"api/Product/ApprovedPostsByMonth/{month}/{year}");
+            Console.WriteLine($"Gọi API với tháng: {month}, năm: {year}");
+            var response = await Http.GetFromJsonAsync<List<MonthlyStatistic>>($"api/Product/ApprovedPostsByMonth/{month}/{year}");
+
             if (response != null)
             {
-                monthlyStatistics = new List<MonthlyStatistic> { response };
+                monthlyStatistics = response;
+            }
+            else
+            {
+                monthlyStatistics = new List<MonthlyStatistic>();
             }
         }
         catch (Exception ex)
@@ -117,9 +123,11 @@
             "Đã duyệt" => "bg-success text-white",
             "Đã hủy" => "bg-danger text-white",
             "Đang chờ duyệt" => "bg-info text-white",
+            "Đã bán" => "bg-warning text-dark",
             _ => "bg-light text-dark",
         };
     }
+
 
     private string GetIconClass(string status)
     {
@@ -130,9 +138,11 @@
             "Đã duyệt" => "fas fa-check-circle",
             "Đã hủy" => "fas fa-times-circle",
             "Đang chờ duyệt" => "fas fa-hourglass-half",
+            "Đã bán" => "fas fa-shopping-cart", 
             _ => "fas fa-info-circle",
         };
     }
+
 }
 
 <div class="container mt-5">
@@ -206,29 +216,24 @@
             </div>
         </div>
 
-        <!-- Thống Kê Bài Đăng Theo Tháng -->
-        <!-- Thống Kê Bài Đăng Theo Tháng -->
+        <!-- Thống Kê Bài Đăng Theo Tháng Và Năm -->
         <div class="tab-pane fade" id="monthly-statistics" role="tabpanel" aria-labelledby="monthly-statistics-tab">
-            <h2 class="text-center text-primary mb-4">Thống Kê Bài Đăng Theo Tháng</h2>
-
             <!-- Card chứa phần chọn tháng và năm -->
             <div class="row justify-content-center mb-4">
-                <div class="col-md-8">
+                <div class="col-md-8" style="width: 100%;">
                     <div class="card shadow-sm">
-                        <div class="card-header text-center bg-primary text-white">
+                        <div class="card-header bg-primary text-white text-center">
                             <h5>Chọn Tháng và Năm</h5>
                         </div>
                         <div class="card-body">
-                            <div class="d-flex justify-content-center mb-4">
-                                <div class="input-group w-auto me-3">
+                            <div class="d-flex justify-content-center">
+                                <div class="input-group me-3">
                                     <span class="input-group-text">Tháng</span>
-                                    <input type="number" min="1" max="12" class="form-control"
-                                           @bind="selectedMonth" @bind:event="oninput" />
+                                    <input type="number" min="1" max="12" class="form-control" @bind="selectedMonth" />
                                 </div>
-                                <div class="input-group w-auto me-3">
+                                <div class="input-group">
                                     <span class="input-group-text">Năm</span>
-                                    <input type="number" min="2000" max="@DateTime.Now.Year" class="form-control"
-                                           @bind="selectedYear" @bind:event="oninput" />
+                                    <input type="number" min="2000" max="@DateTime.Now.Year" class="form-control" @bind="selectedYear" />
                                 </div>
                                 <button class="btn btn-primary ms-3" @onclick="() => LoadMonthlyStatistics(selectedMonth, selectedYear)">
                                     <i class="fas fa-sync"></i> Cập Nhật
@@ -241,10 +246,10 @@
 
             <!-- Card chứa thống kê bài đăng theo tháng -->
             <div class="row justify-content-center">
-                <div class="col-md-8">
+                <div class="col-md-8" style="width: 100%;">
                     <div class="card shadow-lg border-primary">
                         <div class="card-header text-center bg-success text-white">
-                            <h3>Thống Kê Bài Đăng Theo Tháng @selectedMonth, @selectedYear</h3>
+                            <h3>Thống Kê Bài Đăng Tháng @selectedMonth, @selectedYear</h3>
                         </div>
                         <div class="card-body">
                             @if (isLoadingMonthlyStats)
@@ -253,32 +258,26 @@
                             }
                             else if (monthlyStatistics.Count == 0)
                             {
-                                <p class="text-center text-muted">Không có dữ liệu thống kê cho tháng và năm này.</p>
+                                <p class="text-center text-muted">Không có dữ liệu cho tháng này.</p>
                             }
                             else
                             {
-                                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                                    @foreach (var stat in monthlyStatistics)
-                                    {
-                                        <div class="col">
-                                            <div class="card shadow-sm h-100 text-center">
-                                                <div class="card-body">
-                                                    <h5 class="card-title">Tháng @stat.Month</h5>
-                                                    <p class="fs-3 fw-bold text-success">@stat.ApprovedPosts</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
+                                @foreach (var stat in monthlyStatistics)
+                                {
+                                    <div class="text-center">
+                                        <h5>Số bài đăng đã duyệt:</h5>
+                                        <p class="fs-3 text-success" style="font-size: 10px;">@stat.ApprovedPosts</p>
+                                    </div>
+                                }
                             }
-                        </div>
-                        <div class="card-footer text-center text-muted">
-                            <small>Cập nhật lúc: @DateTime.Now.ToString("HH:mm:ss")</small>
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
+
+
     </div>
 </div>
 

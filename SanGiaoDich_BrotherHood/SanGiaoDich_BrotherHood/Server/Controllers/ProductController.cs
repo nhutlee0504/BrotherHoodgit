@@ -12,6 +12,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using OfficeOpenXml;
 using SanGiaoDich_BrotherHood.Server.Data;
+using static SanGiaoDich_BrotherHood.Client.Pages.ThongKeBaiDang;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
 {
@@ -417,15 +418,22 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             try
             {
-                // Lấy số bài đăng đã duyệt trong tháng và năm từ database
-                var approvedPostsCount = await prod.GetApprovedPostsByMonthAsync(month, year);
-                return Ok(new { Count = approvedPostsCount });
+                var approvedPosts = await prod.GetApprovedPostsByMonthAsync(month, year);
+                return Ok(new List<MonthlyStatistic> {
+            new MonthlyStatistic
+            {
+                Month = month,
+                Year = year,
+                ApprovedPosts = approvedPosts
+            }
+        });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { Error = $"Lỗi khi thống kê bài đăng theo tháng: {ex.Message}" });
             }
         }
+
 
     }
 }
