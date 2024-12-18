@@ -1,11 +1,13 @@
 ﻿
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
 using SanGiaoDich_BrotherHood.Server.Data;
 using SanGiaoDich_BrotherHood.Shared.Dto;
 using SanGiaoDich_BrotherHood.Shared.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -157,22 +159,44 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 CanceledOrders = canceledOrders
             };
         }
+        public async Task<MemoryStream> ExportOrderStatisticsToExcelAsync()
+        {
+            var statistics = await GetOrderStatisticsAsync(); // Gọi phương thức lấy thống kê đơn hàng
 
-		public async Task<object> GetOrderStatisticsAsync()
-		{
-			var totalOrders = await _context.Bills.CountAsync();
-			var completedOrders = await _context.Bills.CountAsync(b => b.Status == "Hoàn thành");
-			var canceledOrders = await _context.Bills.CountAsync(b => b.Status == "Đã hủy");
+            // Ép kiểu dynamic để truy cập các thuộc tính
+            dynamic stats = statistics;
 
-			return new
-			{
-				TotalOrders = totalOrders,
-				CompletedOrders = completedOrders,
-				CanceledOrders = canceledOrders
-			};
-		}
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Order Statistics");
 
-		private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()
+                // Tiêu đề cột
+                worksheet.Cells[1, 1].Value = "";
+                worksheet.Cells[1, 2].Value = "Số Lượng";
+
+                // Dữ liệu thống kê
+                worksheet.Cells[2, 1].Value = "Tổng Số Đơn Hàng";
+                worksheet.Cells[2, 2].Value = stats.TotalOrders;
+
+                worksheet.Cells[3, 1].Value = "Đơn Hàng Đã Duyệt";
+                worksheet.Cells[3, 2].Value = stats.CompletedOrders;
+
+                worksheet.Cells[4, 1].Value = "Đơn Hàng Đã Hủy";
+                worksheet.Cells[4, 2].Value = stats.CanceledOrders;
+
+                // Đảm bảo các ô có định dạng
+                worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+
+                // Trả về file Excel dưới dạng MemoryStream
+                var memoryStream = new MemoryStream();
+                await package.SaveAsAsync(memoryStream);
+                memoryStream.Position = 0;
+                return memoryStream;
+            }
+        }
+
+
+        private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()
         {
             var userClaim = _httpContextAccessor.HttpContext?.User;
             if (userClaim != null && userClaim.Identity.IsAuthenticated)
