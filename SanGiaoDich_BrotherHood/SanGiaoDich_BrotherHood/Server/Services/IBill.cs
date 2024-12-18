@@ -2,6 +2,7 @@
 using SanGiaoDich_BrotherHood.Shared.Dto;
 using SanGiaoDich_BrotherHood.Shared.Models;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace SanGiaoDich_BrotherHood.Server.Services
@@ -17,5 +18,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         public Task<Bill> CancelBill(int IdBill);
         public Task<Bill> DoneBill(int IdBill, string status);
 		public Task<object> GetOrderStatisticsAsync();
-	}
+        public Task<MemoryStream> ExportOrderStatisticsToExcelAsync();
+    }
 }

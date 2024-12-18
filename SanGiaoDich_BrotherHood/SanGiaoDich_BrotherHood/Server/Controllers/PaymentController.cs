@@ -175,14 +175,18 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 			}
 		}
 
-		[HttpGet("withdrawals")]
-		public async Task<IActionResult> GetAllWithdrawals()
-		{
-			var withdrawals = await _vnPayService.GetAllWithdrawals();
-			return Ok(withdrawals);
-		}
+        [HttpGet("withdrawals")]
+        public async Task<IActionResult> GetAllWithdrawals()
+        {
+            var withdrawals = await _vnPayService.GetAllWithdrawals();
+			if(withdrawals != null)
+			{
+                return Ok(withdrawals);
+            }
+			return BadRequest();
+        }
 
-		[HttpPost("withdrawals")]
+        [HttpPost("withdrawals")]
 		public async Task<IActionResult> AddWithdrawal(Withdrawal_InfomationDto withdrawal)
 		{
 			if (withdrawal == null)

@@ -112,5 +112,12 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
                 .ToList();
             return Ok(filteredBills);
         }
+
+        [HttpGet("ExportOrderStatisticsExcel")]
+        public async Task<IActionResult> ExportOrderStatisticsExcel()
+        {
+            var memoryStream = await bill.ExportOrderStatisticsToExcelAsync();
+            return File(memoryStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "OrderStatistics.xlsx");
+        }
     }
 }

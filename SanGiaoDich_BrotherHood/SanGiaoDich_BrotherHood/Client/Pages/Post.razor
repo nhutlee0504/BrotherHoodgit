@@ -407,11 +407,11 @@
 									<div class="mt-2">
 										@if (priority == "Phổ thông")
 										{
-											<span class="text-muted">Giá: 25,000 VNĐ</span>
+											<span class="text-muted">Giá: 5,000 VNĐ</span>
 										}
 										else if (priority == "Ưu tiên")
 										{
-											<span class="text-muted">Giá: 50,000 VNĐ</span>
+											<span class="text-muted">Giá: 10,000 VNĐ</span>
 										}
 									</div>
 								</div>
@@ -458,7 +458,7 @@
 				}
 			</button>
 
-			<div class="mt-4 custom-content mb-2">
+		@* 	<div class="mt-4 custom-content mb-2">
 				<button class="btn btn-secondary custom-btn" @onclick="CopyContent">
 					<i class="fa fa-copy"></i> Sao chép
 				</button>
@@ -476,7 +476,7 @@
 				{
 					<div class="alert alert-danger">@ErrorMessage</div>
 				}
-			</div>
+			</div> *@
 
 
 		</div>
@@ -529,11 +529,24 @@
 		theme: 'snow'
 	});
 </script> *@
+<script>
+	// Function to set content into the editor
+	function setEditorContent(content) {
+		// Assuming you're using a library like Quill.js for the editor
+		const editor = document.querySelector('#editor');
+		if (editor && window.Quill) {
+			const quill = Quill.find(editor);
+			quill.setText(content);
+		} else {
+			console.warn('Editor instance not found.');
+		}
+	}
+</script>
 @code {
 	private async Task CopyContent()
 	{
 		var content = string.Join("\n", FormattedResponse);
-		await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", content);
+		await JSRuntime.InvokeVoidAsync("setEditorContent", content);
 	}
 	private string ProductName { get; set; }
 	private decimal ProductPrice { get; set; }
@@ -951,6 +964,8 @@
 													.Select(line => line.Trim())
 													.Where(line => !string.IsNullOrWhiteSpace(line))
 													.ToList();
+				var content = string.Join("\n", FormattedResponse);
+				await JSRuntime.InvokeVoidAsync("setEditorContent", content);
 			}
 			else
 			{

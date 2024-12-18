@@ -52,13 +52,16 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
 
             int deductionAmount;
+            int date;
             if (product.ProrityLevel == "Ưu tiên")
             {
-                deductionAmount = 50000; // Mức trừ cho sản phẩm ưu tiên
+                deductionAmount = 10000; // Mức trừ cho sản phẩm ưu tiên
+                date = 30;
             }
             else if (product.ProrityLevel == "Phổ thông")
             {
-                deductionAmount = 25000; // Mức trừ cho sản phẩm phổ thông
+                deductionAmount = 5000; // Mức trừ cho sản phẩm phổ thông
+                date = 7;
             }
             else
             {
@@ -80,6 +83,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 Name = product.Name,
                 Quantity = product.Quantity,
                 Price = product.Price,
+                PriceUp = deductionAmount,
                 Description = product.Description,
                 IDCategory = product.CategoryId,
                 Status = "Đã duyệt",
@@ -87,6 +91,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 CreatedDate = DateTime.Now,
                 UpdatedDate = DateTime.Now,
                 StartDate = DateTime.Now,
+                EndDate = DateTime.Now.AddDays(date),
                 UserName = user.UserName,
                 AccountAccept = "Admin"
 
@@ -97,15 +102,69 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
             return newProd;
         }
-        public async Task<IEnumerable<Product>> GetAllProductsAsync()//Lấy tất cả sản phẩm
+        public async Task<IEnumerable<Product>> GetAllProductsAsync() // Lấy tất cả sản phẩm
         {
             var getP = await _context.Products.ToListAsync();
-            if (getP == null)
+
+            if (getP == null || !getP.Any())
             {
                 throw new NotImplementedException("Không có sản phẩm hoặc không tìm thấy sản phẩm của bạn");
             }
+
+            foreach (var product in getP)
+            {
+                if (product.EndDate == DateTime.Now)
+                {
+                    // Tìm người dùng đăng sản phẩm
+                    var user = await _context.Accounts.FindAsync(product.UserName);
+                    var pu = 0;
+                    var p = product.ProrityLevel;
+                    if(p == "Phổ thông")
+                    {
+                        pu = 5000;
+                    }
+                    else
+                    {
+                        pu = 10000;
+                    }
+
+                    if (user == null)
+                    {
+                        continue; // Nếu không tìm thấy người dùng, bỏ qua sản phẩm này
+                    }
+
+                    // Kiểm tra số dư của người dùng
+                    if (user.PreSystem >= pu)
+                    {
+                        // Trừ tiền và gia hạn bài đăng
+                        user.PreSystem -= pu;
+                        product.PriceUp += pu;
+                        if(product.ProrityLevel == "Phổ thông")
+                        {
+                            product.EndDate = DateTime.Now.AddDays(7); // Gia hạn thêm 1 tháng (có thể tùy chỉnh)
+                        }
+                        else
+                        {
+                            product.EndDate = DateTime.Now.AddDays(30);
+                        }
+
+                        _context.Accounts.Update(user);
+                        _context.Products.Update(product);
+                    }
+                    else
+                    {
+                        // Cập nhật trạng thái bài đăng về "Hết hạn"
+                        product.Status = "Hết hạn";
+                        _context.Products.Update(product);
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
             return getP;
         }
+
 
         public async Task<IEnumerable<Product>> GetProductsAccount()//Lấy tất cả danh sách sản phẩm của người đăng nhập
         {
@@ -227,11 +286,11 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             decimal refundAmount = 0;
             if (existingProduct.ProrityLevel == "Phổ thông")
             {
-                refundAmount = 25000 * 0.95m;
+                refundAmount = 5000 * 0.95m;
             }
             else if (existingProduct.ProrityLevel == "Ưu tiên")
             {
-                refundAmount = 50000 * 0.95m;
+                refundAmount = 10000 * 0.95m;
             }
             else
             {

@@ -3,156 +3,126 @@
 @inject HttpClient http
 @inject IJSRuntime jsruntime
 @inject NavigationManager Navigation
+
 <style>
-    /* Bo tròn và đổ bóng cho danh sách người dùng */
-    .users-list {
-        list-style-type: none; /* Loại bỏ ký hiệu danh sách mặc định */
-        padding: 0;
-        margin: 0;
-    }
-
-        .users-list .user-profile {
-            background-color: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 15px;
-            margin-bottom: 10px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-            .users-list .user-profile:hover {
-                transform: scale(1.02);
-                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-            }
-
-        .users-list .user-avatar img {
-            border-radius: 50%;
-            border: 2px solid #eaeaea;
-        }
-
-        .users-list .user-name {
-            font-size: 16px;
-            color: #333;
-        }
-
-        .users-list .active {
-            background-color: #f0f8ff;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-            font-weight: bold;
-        }
-
-    .toggle-sidebar {
-        background-color: #007bff;
-        color: #ffffff;
-        border: none;
-        border-radius: 5px;
-        padding: 10px 15px;
-        cursor: pointer;
-        font-size: 18px;
-        transition: background-color 0.2s, transform 0.2s;
-    }
-
-        .toggle-sidebar:hover {
-            background-color: #0056b3;
-            transform: scale(1.05);
-        }
-
-    form {
-        margin-top: 15px;
-    }
-
-    .input-group {
-        border-radius: 5px;
-        overflow: hidden;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .input-group-text {
-        background-color: #f8f9fa;
-        border: none;
-        color: #007bff;
-        font-size: 16px;
+    /* Chat Container */
+    .chat-container {
         display: flex;
-        align-items: center;
-        justify-content: center;
+        flex-direction: row;
+        height: 100vh; /* Đảm bảo chiều cao đầy đủ */
     }
 
+    /* Sidebar */
+    .sidebar {
+        width: 250px;
+        background-color: #f4f4f4;
+        padding: 20px;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        position: relative;
+        flex-shrink: 0;
+        overflow-y: auto;
+    }
+
+    /* Chat Frame */
+    .chat-frame {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: #fff;
+        padding: 20px;
+        overflow: hidden;
+    }
+
+    /* Tạo một container chứa khung chat và tin nhắn */
+    .chat-content {
+        display: flex;
+        flex-direction: column;
+        height: 100%; /* Chiều cao đầy đủ */
+        overflow: hidden;
+    }
+
+    /* Message History */
+    .message-history {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        border-radius: 10px;
+        background-color: #f9f9f9;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 0; /* Loại bỏ margin giữa message-history và inputs */
+        max-height: calc(100vh - 150px); /* Giới hạn chiều cao tin nhắn và không chèn vào phần nhập */
+        overflow: auto;
+    }
+
+    /* Phần nhập tin nhắn */
+    .inputs {
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-top: 1px solid #ddd;
+        margin-top: 0; /* Loại bỏ margin trên inputs */
+    }
+
+    /* Cải thiện giao diện của input tin nhắn */
     .form-control {
+        border-radius: 20px;
+        padding: 12px 15px;
+        font-size: 14px;
+        flex-grow: 1;
         border: none;
-        font-size: 16px;
-        padding: 12px;
-        outline: none;
-        box-shadow: none;
     }
 
         .form-control:focus {
-            border: none;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
         }
 
-    hr {
+    /* Button gửi tin nhắn */
+    .btn {
+        background-color: #28a745;
+        color: white;
         border: none;
-        height: 1px;
-        background-color: #ddd;
-        margin: 15px 0;
+        padding: 10px 15px;
+        cursor: pointer;
+        border-radius: 20px;
+        font-size: 16px;
+        margin-left: 10px;
+        transition: background-color 0.3s ease;
     }
 
-    .message-history {
-        background-color: #f9f9f9;
-        border-radius: 10px;
-        padding: 20px;
-        max-height: 500px;
-        overflow-y: auto;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
+        .btn:hover {
+            background-color: #218838;
+        }
 
+    /* Đảm bảo không có nội dung bị tràn ra ngoài */
     .message-line {
-        margin-bottom: 15px;
         display: flex;
         flex-direction: column;
+        margin-bottom: 15px;
     }
 
         .message-line.text-end .message {
             align-self: flex-end;
             background-color: #28a745;
-            color: #fff;
-            border-top-right-radius: 0;
-            border-top-left-radius: 10px;
-            border-bottom-left-radius: 10px;
-            border-bottom-right-radius: 10px;
+            color: white;
+            border-radius: 10px;
+            padding: 10px;
         }
 
         .message-line.text-start .message {
             align-self: flex-start;
-            background-color: #fff;
+            background-color: white;
             color: #28a745;
-            border-top-left-radius: 0;
-            border-top-right-radius: 10px;
-            border-bottom-left-radius: 10px;
-            border-bottom-right-radius: 10px;
             border: 1px solid #28a745;
+            border-radius: 10px;
+            padding: 10px;
         }
 
-    .message {
-        padding: 10px 15px;
-        max-width: 70%;
-        word-wrap: break-word;
-        font-size: 14px;
-        position: relative;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-
+    /* Date and Time in message */
     .date {
         font-size: 12px;
         color: #6c757d;
     }
 
-    .message-history .text-center {
-        font-style: italic;
-        color: #6c757d;
-        margin-top: 20px;
-    }
-
+    /* Scrollbar cho phần tin nhắn */
     .message-history::-webkit-scrollbar {
         width: 8px;
     }
@@ -170,73 +140,18 @@
         background-color: #f9f9f9;
     }
 
-    .inputs {
-        margin-top: auto;
-        padding: 10px;
-        background-color: #f8f9fa;
-        border-top: 1px solid #ddd;
-    }
-
-    .input-group {
-        display: flex;
-        align-items: center;
-    }
-
-    .form-control {
-        border: 1px solid #ccc;
-        border-radius: 20px 0 0 20px;
-        padding: 10px 15px;
-        font-size: 14px;
-        outline: none;
-        box-shadow: none;
-        flex-grow: 1;
-    }
-
-        .form-control::placeholder {
-            color: #aaa;
-            font-style: italic;
-        }
-
-        .form-control:focus {
-            border-color: #28a745;
-            box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
-        }
-
-    .btn {
-        background-color: #28a745;
-        color: #fff;
-        border: none;
-        border-radius: 0 20px 20px 0;
-        padding: 10px 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-        .btn:hover {
-            background-color: #218838;
-        }
-
-        .btn:disabled {
-            background-color: #ccc;
-            color: #fff;
-            cursor: not-allowed;
-        }
-
 </style>
+
 <div class="container-fluid mt-2 mb-2">
-    <div id="ChatBox" class="sidebar-visible">
+    <div id="ChatBox" class="chat-container">
         <!-- Sidebar -->
         <div class="sidebar">
-            <!-- Nút toggle-sidebar ở phần chat frame -->
             <button class="toggle-sidebar d-md-none" onclick="ToggleSidebar()">&#9776;</button>
             <form>
                 <div class="form-group">
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="basic-addon1"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control" placeholder="Tìm kiếm...." @bind="searchTerm">
+                        <input type="text" class="form-control" placeholder="Tìm kiếm..." @bind="searchTerm">
                     </div>
                 </div>
             </form>
@@ -249,7 +164,7 @@
                     <li class="list-group-item user-profile conversation-item d-flex align-items-center @(selectedUser == conversation.Username ? "active" : "")"
                         @onclick="() => { LoadMessages(conversation); HideSidebar(); }">
                         <div class="user-avatar me-3">
-                            <img src="@userInfo.Item1" alt="User Image" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover;" />
+                            <img src="@userInfo.Item1" alt="User Image" class="rounded-circle" style="width: 60px; height: 60px; object-fit: cover;" />
                         </div>
 
                         <div class="d-flex flex-column">
@@ -267,43 +182,52 @@
             <button class="toggle-sidebar d-md-none" onclick="ToggleSidebar()">&#9776;</button>
             <div class="action-frame d-flex align-items-center">
                 <div class="user-avatar me-3">
-                    <img src="@selectedUserImage" alt="User Avatar" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover;" />
+                    <img src="@selectedUserImage" alt="User Avatar" class="rounded-circle" style="width: 60px; height: 60px; object-fit: cover;" />
                 </div>
                 <div class="d-flex flex-column">
-                    <strong class="user-name">@selectedUser</strong>
+                    <strong class="user-name">@SelectedUserFullName</strong>
                 </div>
             </div>
-            <div class="message-history py-3">
-                @if (messageList.Any())
-                {
-                    @foreach (var message in messageList)
+
+            <!-- Chat Content (Tin nhắn và khung nhập tin nhắn) -->
+            <div class="chat-content">
+                <!-- Message History -->
+                <div class="message-history">
+                    @if (messageList.Any())
                     {
-                        <div class="message-line d-flex flex-column @(message.UserSend == username ? "text-end" : "text-start")">
-                            <p class="message">
-                                @message.Content
-                                <small class="date d-block mt-1" style="color:white">
-                                    @message.CreatedDate.ToString("HH:mm dd/MM/yyyy")
-                                </small>
-                            </p>
-                        </div>
+                        @foreach (var message in messageList)
+                        {
+                            <div class="message-line d-flex flex-column @(message.UserSend == username ? "text-end" : "text-start")">
+                                <p class="message">
+                                    @message.Content
+                                    <small class="date d-block mt-1" style="color:white">
+                                        @message.CreatedDate.ToString("HH:mm dd/MM/yyyy")
+                                    </small>
+                                </p>
+                            </div>
+                        }
                     }
-                }
-                else
-                {
-                    <p class="text-center">Chưa có tin nhắn nào.</p>
-                }
-            </div>
-            <div class="inputs mt-auto">
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" placeholder="Nhập tin nhắn" @bind="messageContent">
-                    <button class="btn" @onclick="SendMessage" disabled="@string.IsNullOrWhiteSpace(selectedUser)">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
+                    else
+                    {
+                        <p class="text-center">Chưa có tin nhắn nào.</p>
+                    }
+                </div>
+
+                <!-- Input Area -->
+                <div class="inputs mt-auto">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Nhập tin nhắn..." @bind="messageContent">
+                        <button class="btn send-btn" @onclick="SendMessage" disabled="@string.IsNullOrWhiteSpace(selectedUser)">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+
 <script>
     function ToggleSidebar() {
         const chatBox = document.getElementById('ChatBox');
@@ -319,8 +243,8 @@
 
 
 
-@code{
-    private string searchTerm = string.Empty; 
+@code {
+    private string searchTerm = string.Empty;
     private string selectedFilter = string.Empty;
     private List<Conversation> filteredConversationList = new();
     private string productName;
@@ -334,6 +258,7 @@
     private string username;
     private string selectedUserImage;
     private string selectedUser;
+    private string SelectedUserFullName;
     private string messageContent;
     private System.Timers.Timer refreshTimer;
     protected override async Task OnInitializedAsync()
@@ -417,7 +342,7 @@
 
                 var otherUser = conversation.Username == username ? conversation.UserGive : conversation.Username;
 
-     
+
                 if (!userInfoCache.ContainsKey(otherUser))
                 {
                     var (image, fullName) = await GetUserInfoFromAccount(otherUser);
@@ -442,7 +367,7 @@
             {
                 var account = await response.Content.ReadFromJsonAsync<Account>();
                 var image = account?.ImageAccount ?? "default-image.png";
-                var fullName = account?.FullName ?? "Unknown User"; 
+                var fullName = account?.FullName ?? "Unknown User";
                 return (image, fullName);
             }
         }
@@ -471,6 +396,8 @@
             if (userInfoCache.ContainsKey(selectedUser))
             {
                 selectedUserImage = userInfoCache[selectedUser].Image;
+                var userInfo = await GetUserInfoFromAccount(selectedUser);
+                SelectedUserFullName = userInfo.FullName;
             }
             else
             {
@@ -478,6 +405,7 @@
                 var userInfo = await GetUserInfoFromAccount(selectedUser);
                 selectedUserImage = userInfo.Image;
                 userInfoCache[selectedUser] = userInfo; // Cập nhật vào cache
+                SelectedUserFullName = userInfo.FullName;
             }
 
             // Tải danh sách tin nhắn
@@ -547,7 +475,7 @@
         await InvokeAsync(async () =>
         {
             await LoadConversations();
-            if (!string.IsNullOrEmpty(selectedUser)) 
+            if (!string.IsNullOrEmpty(selectedUser))
             {
                 var selectedConversation = conversationList.FirstOrDefault(c =>
                     (c.Username == username && c.UserGive == selectedUser) ||
