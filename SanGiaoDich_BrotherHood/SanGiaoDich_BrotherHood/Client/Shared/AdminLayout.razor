@@ -41,6 +41,7 @@
 @code {
     bool isLoggedIn = false;
     bool isInitialized = false;
+    private Account currentUser = new Account();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -49,9 +50,12 @@
             var loggedInUser = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "LoggedInUser");
             var loggedInRole = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "LoggedInRole");
 
-            if (!string.IsNullOrEmpty(loggedInRole))
+            if (!string.IsNullOrEmpty(loggedInUser) && !string.IsNullOrEmpty(loggedInRole))
             {
-                isLoggedIn = loggedInRole == "Chủ";
+                // Lưu thông tin người dùng vào đối tượng currentUser
+                currentUser.UserName = loggedInUser;
+                currentUser.Role = loggedInRole;
+                isLoggedIn = true;
             }
 
             isInitialized = true;
@@ -86,14 +90,28 @@
 
                 if (!string.IsNullOrEmpty(jwtToken))
                 {
-                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "JWT", jwtToken);
+                    // Giả sử API trả về vai trò của người dùng trong JWT hoặc bạn có thể lấy từ server
+                    var role = "Chủ"; // Ví dụ, vai trò lấy từ API hoặc JWT token
 
-                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "LoggedInUser", loginModel.UserName);
-                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "LoggedInRole", "Chủ");
-                    successMessage = "Đăng nhập thành công!";
-                    errorMessage = null;
-                    isLoggedIn = true;
-                    NavigationManager.NavigateTo("/admin/dashboard", forceLoad: true);
+                    if (role == "Chủ" || role == "Nhân viên")
+                    {
+                        // Lưu thông tin vào localStorage
+                        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "JWT", jwtToken);
+                        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "LoggedInUser", loginModel.UserName);
+                        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "LoggedInRole", role);
+
+                        // Cập nhật trạng thái người dùng
+                        successMessage = "Đăng nhập thành công!";
+                        errorMessage = null;
+                        isLoggedIn = true;
+                        NavigationManager.NavigateTo("/admin/dashboard", forceLoad: true);
+                    }
+                    else
+                    {
+                        errorMessage = "Không có quyền truy cập";
+                        successMessage = null;
+                        await ClearErrorMessageAfterDelay();
+                    }
                 }
                 else
                 {
@@ -117,6 +135,7 @@
         }
     }
 
+
     private async Task ClearErrorMessageAfterDelay()
     {
         await Task.Delay(3000);
@@ -138,7 +157,6 @@
         public string UserName { get; set; }
         public string Role { get; set; }
     }
-
 }
 <link rel="stylesheet" href="../assets/css/styles.min.css" />
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -265,38 +283,53 @@
                             <span class="hide-menu">Hóa đơn</span>
                         </a>
                     </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link" href="/Admin/nhanvien" aria-expanded="false">
-                                <span>
-                                    <i class="ti ti-user"></i>
-                                </span>
-                                <span class="hide-menu">Nhân viên</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link" href="/Admin/ThongKeNguoiDung" aria-expanded="false">
-                                <span>
-                                    <i class="ti ti-typography"></i>
-                                </span>
-                                <span class="hide-menu">Thống kê người dùng</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link" href="/Admin/ThongKeBaiDang" aria-expanded="false">
-                                <span>
-                                    <i class="ti ti-typography"></i>
-                                </span>
-                                <span class="hide-menu">Thống kê bài đăng</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link" href="/Admin/ThongKeDoanhThu" aria-expanded="false">
-                                <span>
-                                    <i class="ti ti-typography"></i>
-                                </span>
-                                <span class="hide-menu">Thống kê doanh thu</span>
-                            </a>
-                        </li>
+                        @if(currentUser.Role == "Chủ")
+                        {
+                            <li class="sidebar-item">
+                                <a class="sidebar-link" href="/Admin/nhanvien" aria-expanded="false">
+                                    <span>
+                                        <i class="ti ti-user"></i>
+                                    </span>
+                                    <span class="hide-menu">Nhân viên</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link" href="/Admin/ThongKeNguoiDung" aria-expanded="false">
+                                    <span>
+                                        <i class="ti ti-typography"></i>
+                                    </span>
+                                    <span class="hide-menu">Thống kê người dùng</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link" href="/Admin/ThongKeBaiDang" aria-expanded="false">
+                                    <span>
+                                        <i class="ti ti-typography"></i>
+                                    </span>
+                                    <span class="hide-menu">Thống kê bài đăng</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link" href="/Admin/ThongKeDoanhThu" aria-expanded="false">
+                                    <span>
+                                        <i class="ti ti-typography"></i>
+                                    </span>
+                                    <span class="hide-menu">Thống kê doanh thu</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link" href="/Admin/ThongKeDonHang" aria-expanded="false">
+                                    <span>
+                                        <i class="ti ti-typography"></i>
+                                    </span>
+                                    <span class="hide-menu">Thống kê đơn hàng</span>
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            
+                        }
                 </ul>
               
             </nav>

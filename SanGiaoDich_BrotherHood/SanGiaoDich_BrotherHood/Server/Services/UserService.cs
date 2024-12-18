@@ -87,17 +87,21 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 		.FirstOrDefaultAsync(u => EF.Functions.Collate(u.UserName, "Latin1_General_BIN") == loginDto.UserName);
 			if (userInfo == null || !VerifyPassword(loginDto.Password, userInfo.Password))
             {
-                throw new UnauthorizedAccessException("Tên đăng nhập hoặc mật khẩu không đúng.");
+                throw new UnauthorizedAccessException("Tên đăng nhập hoặc mật khẩu không đúng");
             }
             if (userInfo.IsDelete == true)
             {
-                throw new UnauthorizedAccessException("Tài khoản này đã bị khóa vô thời hạn.");
+                throw new UnauthorizedAccessException("Tài khoản này đã bị khóa vô thời hạn");
             }
             if (userInfo.TimeBanned.HasValue && userInfo.TimeBanned > DateTime.UtcNow)
             {
                 var remainingDays = (userInfo.TimeBanned.Value - DateTime.UtcNow).TotalDays;
                 throw new UnauthorizedAccessException($"Tài khoản này đã bị khóa. Số ngày còn lại: {Math.Ceiling(remainingDays)}.");
             }
+            if(userInfo.Role == "Chủ" || userInfo.Role == "Nhân viên")
+            {
+				throw new UnauthorizedAccessException("Không có quyền truy cập");
+			}
             var token = GenerateJwtToken(userInfo);
 
             return token;
@@ -291,6 +295,32 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             Regex regex = new Regex(pattern);
             return regex.IsMatch(phone);
         }
+        public async Task<Dictionary<string, int>> GetUserStatisticsAsync()
+        {
+            try
+            {
+                // Đếm tổng số người dùng
+                int totalUsers = await _context.Accounts.CountAsync();
+
+                // Đếm số người dùng hoạt động
+                int activeUsers = await _context.Accounts.CountAsync(a =>
+                        (a.IsDelete == false || a.IsDelete == null) && a.IsActived == true);
+
+                // Số người dùng ngừng hoạt động
+                int inactiveUsers = totalUsers - activeUsers;
+
+                return new Dictionary<string, int>
+                {
+                    { "TotalUsers", totalUsers },
+                    { "ActiveUsers", activeUsers },
+                    { "InactiveUsers", inactiveUsers }
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi lấy thống kê người dùng: {ex.Message}");
+            }
+        }
         private (string UserName, string Email, string FullName, string PhoneNumber, string Gender, string IDCard, DateTime? Birthday, string ImageAccount, string Role, bool IsDelete, DateTime? TimeBanned) GetUserInfoFromClaims()
         {
             var userClaim = _httpContextAccessor.HttpContext?.User;
@@ -376,33 +406,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             return account;
         }
 
-        public async Task<Dictionary<string, int>> GetUserStatisticsAsync()
-        {
-            try
-            {
-                // Đếm tổng số người dùng
-                int totalUsers = await _context.Accounts.CountAsync();
-
-                // Đếm số người dùng hoạt động
-                int activeUsers = await _context.Accounts.CountAsync(a =>
-                        (a.IsDelete == false || a.IsDelete == null) && a.IsActived == true);
-
-                // Số người dùng ngừng hoạt động
-                int inactiveUsers = totalUsers - activeUsers;
-
-                return new Dictionary<string, int>
-                {
-                    { "TotalUsers", totalUsers },
-                    { "ActiveUsers", activeUsers },
-                    { "InactiveUsers", inactiveUsers }
-                };
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Lỗi khi lấy thống kê người dùng: {ex.Message}");
-            }
-        }
-
         public async Task<MemoryStream> ExportUserStatisticsToExcelAsync()
         {
             var statistics = await GetUserStatisticsAsync(); // Gọi phương thức lấy thống kê người dùng
@@ -435,6 +438,5 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 return memoryStream;
             }
         }
-
     }
 }

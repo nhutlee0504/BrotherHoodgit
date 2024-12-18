@@ -1,5 +1,6 @@
 ﻿
 using Microsoft.AspNetCore.Http;
+using SanGiaoDich_BrotherHood.Client.Pages;
 using SanGiaoDich_BrotherHood.Server.Dto;
 using SanGiaoDich_BrotherHood.Shared.Models;
 using System;
@@ -28,6 +29,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
         Task<decimal> GetRevenueByWeekAsync(DateTime startDate);
         Task<decimal> GetRevenueByMonthAsync(int month, int year);
         Task<byte[]> ExportProductsToExcelAsync();
-
+        Task<int> GetApprovedPostsByMonthAsync(int month, int year);
+        
     }
 }

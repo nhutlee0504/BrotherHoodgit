@@ -67,7 +67,7 @@
         try
         {
             await CheckLogined();
-            addresses = await http.GetFromJsonAsync<List<AddressDetail>>($"api/AddressDetail/GetAddressDetailsByUserName/{account.UserName}");
+            addresses = await http.GetFromJsonAsync<List<AddressDetail>>($"api/AddressDetail/{account.UserName}");
         }
         catch (Exception ex)
         {

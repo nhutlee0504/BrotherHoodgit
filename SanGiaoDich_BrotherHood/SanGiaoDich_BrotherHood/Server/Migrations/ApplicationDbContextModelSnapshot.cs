@@ -138,7 +138,7 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                         .HasColumnType("varchar(150)");
 
                     b.Property<string>("FullName")
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
@@ -603,6 +603,47 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.ToTable("Reports");
                 });
 
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Withdrawal_information", b =>
+                {
+                    b.Property<int>("PaymentReqID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("AccountNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Amount")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Bank")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FullName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OrderDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("PaymentReqID");
+
+                    b.HasIndex("UserName");
+
+                    b.ToTable("withdrawal_Information");
+                });
+
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.AddressDetail", b =>
                 {
                     b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Account", "Account")
@@ -768,6 +809,15 @@ namespace SanGiaoDich_BrotherHood.Server.Migrations
                     b.Navigation("Account");
 
                     b.Navigation("BillDetail");
+                });
+
+            modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Withdrawal_information", b =>
+                {
+                    b.HasOne("SanGiaoDich_BrotherHood.Shared.Models.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("UserName");
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("SanGiaoDich_BrotherHood.Shared.Models.Account", b =>

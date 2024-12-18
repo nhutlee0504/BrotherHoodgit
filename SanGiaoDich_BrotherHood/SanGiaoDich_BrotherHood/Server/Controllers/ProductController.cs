@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Routing;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using OfficeOpenXml;
-using static SanGiaoDich_BrotherHood.Client.Pages.ThongKeBaiDang;
 using SanGiaoDich_BrotherHood.Server.Data;
 
 namespace SanGiaoDich_BrotherHood.Server.Controllers
@@ -231,12 +230,13 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             try
             {
-                // Lấy tổng doanh thu từ service
+                // Lấy tổng doanh thu
                 var totalRevenue = await prod.GetTotalRevenueAsync();
-                return Ok(totalRevenue);
+                return Ok(totalRevenue); // Trả về kết quả dưới dạng HTTP 200 với dữ liệu
             }
             catch (Exception ex)
             {
+                // Nếu có lỗi, trả về HTTP 500 (Internal Server Error)
                 return StatusCode(500, $"Lỗi khi tính toán doanh thu: {ex.Message}");
             }
         }
@@ -246,8 +246,9 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             try
             {
+                // Lấy doanh thu theo ngày
                 var revenue = await prod.GetRevenueByDateAsync(date);
-                return Ok(revenue);
+                return Ok(revenue); // Trả về doanh thu theo ngày
             }
             catch (Exception ex)
             {
@@ -260,8 +261,9 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             try
             {
+                // Lấy doanh thu theo tuần, với ngày bắt đầu tuần
                 var revenue = await prod.GetRevenueByWeekAsync(startDate);
-                return Ok(revenue);
+                return Ok(revenue); // Trả về doanh thu theo tuần
             }
             catch (Exception ex)
             {
@@ -274,14 +276,16 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
         {
             try
             {
+                // Lấy doanh thu theo tháng và năm
                 var revenue = await prod.GetRevenueByMonthAsync(month, year);
-                return Ok(revenue);
+                return Ok(revenue); // Trả về doanh thu theo tháng
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Lỗi khi tính doanh thu theo tháng: {ex.Message}");
             }
         }
+
         [HttpGet("export-revenue")]
         public async Task<IActionResult> ExportRevenue()
         {
@@ -293,18 +297,18 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
 
                 // Create a list to hold the revenue data
                 var revenueData = new List<RevenueExportModel>
-                {
-                    new RevenueExportModel
-                    {
-                        Period = "Doanh Thu Theo Ngày",
-                        Revenue = dailyRevenue // Ensure using decimal zero (0m)
-                    },
-                    new RevenueExportModel
-                    {
-                        Period = "Doanh Thu Theo Tháng",
-                        Revenue = monthlyRevenue // Ensure using decimal zero (0m)
-                    }
-                };
+        {
+            new RevenueExportModel
+            {
+                Period = "Doanh Thu Theo Ngày",
+                Revenue = dailyRevenue // Ensure using decimal zero (0m)
+            },
+            new RevenueExportModel
+            {
+                Period = "Doanh Thu Theo Tháng",
+                Revenue = monthlyRevenue // Ensure using decimal zero (0m)
+            }
+        };
 
                 // Export the data to Excel
                 var excelFile = await ExportRevenueToExcelAsync(revenueData);
@@ -351,6 +355,38 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             public decimal Revenue { get; set; }
         }
 
+        // API lọc theo ngày
+        [HttpGet("GetProductsByDate")]
+        public IActionResult GetProductsByDate(DateTime startDate, DateTime endDate)
+        {
+            // Điều chỉnh endDate để bao gồm cả dữ liệu ngày kết thúc
+            endDate = endDate.Date.AddDays(1).AddTicks(-1);
+
+            var products = _context.Products
+                .Where(p => p.StartDate >= startDate && p.StartDate <= endDate)
+                .ToList();
+
+            return Ok(products);
+        }
+        [HttpPut("SoftDelete/{id}")]
+        public async Task<IActionResult> SoftDeleteProduct(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
+            {
+                return NotFound(new { Message = "Sản phẩm không tồn tại." });
+            }
+
+            // Đánh dấu trạng thái là "Đã xóa"
+            product.Status = "Đã xóa";
+            product.UpdatedDate = DateTime.Now;
+
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Đã xóa mềm sản phẩm thành công." });
+        }
+
         [HttpGet("ApprovedPostsToday")]
         public async Task<IActionResult> GetApprovedPostsToday()
         {
@@ -376,29 +412,20 @@ namespace SanGiaoDich_BrotherHood.Server.Controllers
             }
         }
 
-        //[HttpGet("StatisticsByMonthYear")]
-        //public async Task<ActionResult<List<StatisticDto>>> GetStatisticsByMonthYear(int year, int month)
-        //{
-        //    try
-        //    {
-        //        var statistics = await _context.Posts
-        //            .Where(p => p.DatePosted.Year == year && p.DatePosted.Month == month)
-        //            .GroupBy(p => p.Status)
-        //            .Select(g => new StatisticDto
-        //            {
-        //                Status = g.Key,
-        //                Count = g.Count()
-        //            })
-        //            .ToListAsync();
-
-        //        return Ok(statistics);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(new { message = $"Error: {ex.Message}" });
-        //    }
-        //}
-
+        [HttpGet("ApprovedPostsByMonth/{month}/{year}")]
+        public async Task<IActionResult> GetApprovedPostsByMonth(int month, int year)
+        {
+            try
+            {
+                // Lấy số bài đăng đã duyệt trong tháng và năm từ database
+                var approvedPostsCount = await prod.GetApprovedPostsByMonthAsync(month, year);
+                return Ok(new { Count = approvedPostsCount });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Error = $"Lỗi khi thống kê bài đăng theo tháng: {ex.Message}" });
+            }
+        }
 
     }
 }

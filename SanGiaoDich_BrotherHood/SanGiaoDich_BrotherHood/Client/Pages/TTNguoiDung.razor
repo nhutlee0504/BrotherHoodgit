@@ -134,7 +134,7 @@ else if (userAccount != null)
 						<!-- Số điện thoại -->
 						<div class="mb-3 col-md-6">
 							<label for="modalPhone" class="form-label">Số điện thoại</label>
-							<input type="text" class="form-control @(fieldErrors.ContainsKey("Phone") ? "is-invalid" : "")" id="modalPhone" @bind="infoAccountDto.Phone" />
+							<input type="text" class="form-control @(fieldErrors.ContainsKey("Phone") ? "is-invalid" : "")" id="modalPhone" @bind="infoAccountDto.PhoneNumber" />
 							@if (fieldErrors.ContainsKey("Phone"))
 							{
 								<small class="text-danger">@fieldErrors["Phone"]</small>
@@ -158,11 +158,11 @@ else if (userAccount != null)
 
 						<!-- Ngày sinh -->
 						<div class="mb-3 col-md-6">
-							<label for="modalBirthday" class="form-label">Ngày sinh</label>
-							<input type="date" class="form-control @(fieldErrors.ContainsKey("Birthday") ? "is-invalid" : "")" id="modalBirthday" @bind="infoAccountDto.Birthday" disabled />
-							@if (fieldErrors.ContainsKey("Birthday"))
+							<label for="modalDob" class="form-label">Ngày sinh</label>
+							<input type="text" class="form-control @(fieldErrors.ContainsKey("Dob") ? "is-invalid" : "")" id="modalDob" @bind="infoAccountDto.Dob" disabled />
+							@if (fieldErrors.ContainsKey("Dob"))
 							{
-								<small class="text-danger">@fieldErrors["Birthday"]</small>
+								<small class="text-danger">@fieldErrors["Dob"]</small>
 							}
 						</div>
 
@@ -261,7 +261,7 @@ else if (userAccount != null)
 										<i class="fas fa-lock"></i> Đổi mật khẩu
 									</button>
 								</a>
-								<a href="post">
+								<a @onclick="NavigatePost">
 									<button class="btn btn-success">
 										<i class="fas fa-plus-circle"></i> Đăng bài
 									</button>
@@ -292,7 +292,7 @@ else if (userAccount != null)
 						<p><i class="fa fa-shopping-cart"></i> Tổng số đơn hàng đã mua: @totalBuyCompletedBills</p>
 						<p><i class="fa-solid fa-shopping-bag"></i> Tổng số đơn hàng đã bán: @totalSellCompletedBills</p>
 						<p>
-							Mức độ uy tín:
+							Mức độ uy tín: @averageRating
 							@for (int i = 0; i < averageRating; i++)
 							{
 								<span class="fa fa-star checked"></span>
@@ -488,11 +488,28 @@ else if (userAccount != null)
 					else
 					{
 						<p class="text-muted">Danh sách yêu thích trống.</p>
-					}			}
+					}
+				}
 			</div>
 		</div>
 
 	</div>
+	<div class="modal" tabindex="-1" role="dialog" id="infoModal" style="display:@(isModalVisible ? "block" : "none")">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">Thông báo</h5>
+				</div>
+				<div class="modal-body">
+					<p>Cần xác nhận đầy đủ thông tin người dùng trước khi đăng bài.</p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-primary" @onclick="CloseModal">Đóng</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 }
 <style>
 	.checked {

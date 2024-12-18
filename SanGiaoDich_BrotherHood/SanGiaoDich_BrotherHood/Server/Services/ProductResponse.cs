@@ -471,7 +471,15 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             }
         }
 
+        public async Task<int> GetApprovedPostsByMonthAsync(int month, int year)
+        {
+            // Truy vấn lấy số lượng sản phẩm đã duyệt trong tháng và năm cho trước
+            var approvedPostsCount = await _context.Products
+                .Where(p => p.Status == "Đã duyệt" && p.CreatedDate.HasValue && p.CreatedDate.Value.Month == month && p.CreatedDate.Value.Year == year)
+                .CountAsync();
 
+            return approvedPostsCount;
+        }
 
     }
 
