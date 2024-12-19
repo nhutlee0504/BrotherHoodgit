@@ -99,16 +99,40 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             {
                 BillFind.Status = status;
             }
+
+            // Lấy danh sách chi tiết hóa đơn
             var billdetail = await _context.BillDetails.Where(x => x.IDBill == BillFind.IDBill).ToListAsync();
-            foreach(var item in billdetail)
+
+            foreach (var item in billdetail)
             {
+                // Tìm sản phẩm từ IDProduct
                 var prodFind = await _context.Products.FindAsync(item.IDProduct);
-                prodFind.Status = "Đã bán";
+
+                if (prodFind != null)
+                {
+                    // Cập nhật trạng thái sản phẩm
+                    prodFind.Status = "Đã bán";
+
+                    // Tìm người bán dựa trên sản phẩm
+                    var seller = await _context.Accounts.FindAsync(prodFind.UserName); // Assuming IDSeller is the seller's ID
+
+                    if (seller != null)
+                    {
+                        // Cộng tiền cho tài khoản người bán
+                        seller.PreSystem += item.Quantity * item.Price; // Cộng tiền dựa trên số lượng và giá sản phẩm
+                    }
+                }
+
+                // Lưu thay đổi sau khi cập nhật sản phẩm và người bán
                 await _context.SaveChangesAsync();
             }
+
+            // Lưu thay đổi trạng thái hóa đơn
             await _context.SaveChangesAsync();
+
             return BillFind;
         }
+
 
         public async Task<Bill> GetBillByIDBill(int IDBill)
         {
