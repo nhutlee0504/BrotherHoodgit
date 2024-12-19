@@ -200,7 +200,7 @@ namespace SanGiaoDich_BrotherHood.Server.Services
             existingProduct.Price = product.Price;
             existingProduct.Description = product.Description;
             existingProduct.IDCategory = product.CategoryId;
-
+            existingProduct.Status = "Đang chờ duyệt";
             await _context.SaveChangesAsync(); // Save changes for the updated product
             return existingProduct;
         }
