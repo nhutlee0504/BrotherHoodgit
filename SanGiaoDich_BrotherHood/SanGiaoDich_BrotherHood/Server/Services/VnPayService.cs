@@ -42,7 +42,6 @@ namespace SanGiaoDich_BrotherHood.Server.Services
                 UserName = user.UserName,
                 FullName = user.FullName,
             };
-            fU.PreSystem = (fU.PreSystem - (decimal)newWI.Amount);
             await _context.withdrawal_Infomations.AddAsync(newWI);
             await _context.SaveChangesAsync();
             return newWI;
@@ -264,6 +263,21 @@ namespace SanGiaoDich_BrotherHood.Server.Services
 
                 // Cộng lại số tiền đã bị trừ
                 user.PreSystem += (decimal)withdrawal.Amount;
+
+                // Cập nhật thông tin người dùng
+                _context.Accounts.Update(user);
+            }
+            if(status == "Đã xác nhận")
+            {
+                // Lấy thông tin người dùng từ UserId của giao dịch
+                var user = await _context.Accounts.FindAsync(withdrawal.UserName);
+                if (user == null)
+                {
+                    throw new KeyNotFoundException("Không tìm thấy thông tin người dùng.");
+                }
+
+                // Cộng lại số tiền đã bị trừ
+                user.PreSystem -= (decimal)withdrawal.Amount;
 
                 // Cập nhật thông tin người dùng
                 _context.Accounts.Update(user);
